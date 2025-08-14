@@ -23,6 +23,7 @@ Piattaforma Health&Fitness basata su microservizi con architettura scalabile, sv
 ### DevOps & Infrastructure
 - **CI/CD**: GitHub Actions (2000 min/mese FREE)
 - **Deploy**: Render.com (750 ore/mese FREE)
+- **Container Registry**: GitHub Container Registry (GHCR)
 - **Containers**: Docker
 - **API Gateway**: Traefik
 
@@ -56,9 +57,9 @@ gymbro-platform/
 
 ### 🚀 Fase 1: Foundation MVP (Settimane 1-2)
 - [x] Setup repository e ambiente Docker
-- [ ] Configurazione CI/CD GitHub Actions
-- [ ] Setup Supabase (DB + Auth)
-- [ ] Servizio User Management
+- [x] Configurazione CI/CD GitHub Actions + GitHub Container Registry
+- [x] Setup Supabase (DB + Auth)
+- [x] Servizio User Management
 - [ ] GraphQL Gateway base
 
 ### 🔧 Fase 2: Core Services (Settimane 3-6)
@@ -77,7 +78,7 @@ gymbro-platform/
 ## 💰 Strategia Zero-Cost
 
 ### Servizi Gratuiti Utilizzati
-- **GitHub**: Repository + CI/CD (2000 min/mese)
+- **GitHub**: Repository + CI/CD (2000 min/mese) + Container Registry
 - **Supabase**: DB + Auth + Storage (500MB, 50k users)
 - **Render.com**: Hosting (750 ore/mese)
 - **Firebase**: Push notifications (FCM illimitato)
@@ -142,6 +143,26 @@ curl http://localhost:8001/health
 curl http://localhost:8000/graphql
 ```
 
+## 🚀 CI/CD Pipeline
+
+### GitHub Actions Automation
+- **Test automatici** su ogni push/PR
+- **Docker builds** con GitHub Container Registry
+- **Security scanning** con Trivy
+- **Deploy automatico** su Render.com
+
+### Docker Images
+- **Registry**: `ghcr.io/giamma80/gymbro-*`
+- **Login automatico**: Zero configurazione richiesta
+- **Multi-arch**: linux/amd64 support
+
+### Pipeline Features
+- ✅ Test coverage minimo 80%
+- ✅ Code quality gates (Black, Flake8, MyPy)
+- ✅ Security vulnerability checks
+- ✅ Automatic deployment staging/production
+- ✅ Health checks post-deploy
+
 ## 📊 Metriche di Successo
 - **Uptime**: >99.9%
 - **Response Time**: <200ms (95° percentile)
@@ -173,6 +194,19 @@ curl http://localhost:8000/graphql
 Utilizziamo [Semantic Versioning](https://semver.org/) con Git tags per tracciare le release.
 
 ### 📋 Changelog
+
+#### v0.1.1 (15 Gennaio 2025) - CI/CD Pipeline Complete
+##### ✨ Features
+- **CI/CD Pipeline**: GitHub Actions completamente automatizzata
+- **Docker Registry**: GitHub Container Registry (GHCR) integrato
+- **Quality Gates**: Test coverage 80%, linting, security scan
+- **Deploy Automation**: Staging/production su Render.com
+
+##### 🔧 Technical Improvements  
+- **Zero Docker config**: Login automatico con GITHUB_TOKEN
+- **Multi-service matrix**: Pipeline pronta per 8 microservizi
+- **Security scanning**: Trivy integration per vulnerability detection
+- **Test automation**: Setup environment completamente automatizzato
 
 #### v0.1.0 (14 Agosto 2025) - Initial MVP
 ##### ✨ Features

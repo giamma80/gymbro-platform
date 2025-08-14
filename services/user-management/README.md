@@ -4,6 +4,19 @@ Servizio di gestione utenti per la piattaforma GymBro con autenticazione JWT e g
 
 ## 📋 Changelog
 
+### v0.1.1 (15 Gennaio 2025)
+#### 🚀 CI/CD Integration
+- **Docker Registry**: Integrato con GitHub Container Registry
+- **Automated Testing**: Pipeline CI/CD con 14 test passanti
+- **Quality Gates**: Coverage 80%, code formatting, security scan
+- **Container Image**: `ghcr.io/giamma80/gymbro-user-management`
+
+#### 🔧 Technical Improvements
+- **Poetry Migration**: Dockerfile aggiornato per usare Poetry
+- **Pydantic v2**: Migrazione completa con model_config
+- **Environment Setup**: Script automatizzato per testing
+- **SQLAlchemy 2.0**: Compatibility fixes per raw queries
+
 ### v0.1.0 (14 Agosto 2025)
 #### 🎉 Initial Release
 - **Service Launch**: Prima versione stabile del servizio User Management
@@ -104,6 +117,31 @@ poetry run mypy .
 Una volta avviato il servizio, la documentazione è disponibile su:
 - Swagger UI: http://localhost:8001/docs
 - ReDoc: http://localhost:8001/redoc
+
+## 🐳 Docker Deployment
+
+### Container Image
+- **Registry**: GitHub Container Registry (GHCR)
+- **Image**: `ghcr.io/giamma80/gymbro-user-management:latest`
+- **Base**: Python 3.11-slim con Poetry
+
+### Docker Commands
+```bash
+# Pull dell'immagine (automatico da CI/CD)
+docker pull ghcr.io/giamma80/gymbro-user-management:latest
+
+# Run del container
+docker run -p 8001:8001 \
+  -e DATABASE_URL="postgresql://user:pass@host:5432/db" \
+  -e REDIS_URL="redis://host:6379" \
+  ghcr.io/giamma80/gymbro-user-management:latest
+```
+
+### CI/CD Integration
+- **Automatic builds** su ogni push al main branch
+- **Test automatici** con 14 test coverage
+- **Security scanning** con Trivy vulnerability detection
+- **Multi-stage build** per immagini ottimizzate
 
 ## Struttura del progetto
 

@@ -82,7 +82,7 @@ make test-e2e
 - `docs/versioning-strategy.md`: Creata strategia di versionamento
 - `docs/release-process.md`: Processo dettagliato di release
 - `docs/changelog-templates.md`: Template standardizzati
-- `.github/workflows/ci-cd.yml`: **COMPLETATA** - Pipeline CI/CD production-ready
+- `.github/workflows/ci-cd.yml`: **COMPLETATA** - Pipeline CI/CD + GitHub Container Registry
 - `docker-compose.test.yml`: Environment isolato per test
 - `services/user-management/tests/`: Suite di test completa
 - `scripts/quality-check.sh`: Script automatico per QA
@@ -119,23 +119,40 @@ make test-e2e
 ### 🔄 CI/CD Pipeline
 - **GitHub Actions**: `.github/workflows/ci-cd.yml`
 - **Test automatici** su ogni push/PR con setup environment automatico
-- **Build Docker images** per 8 microservizi con error handling
+- **Build Docker images** per 8 microservizi con GitHub Container Registry (GHCR)
+- **Docker Registry**: `ghcr.io/giamma80/gymbro-*` - integrato con GitHub
 - **Deploy staging/production** su Render.com con health checks
 - **Security scan** con Trivy per vulnerability detection
 - **Code quality** con Black, Flake8, MyPy
 - **Test coverage** reporting con coverage minimo 80%
 - **Slack notifications** per deployment status
 - **Zero manual steps**: Pipeline completamente automatizzata
-- **Graceful degradation**: Funziona anche senza secrets configurati
+- **Zero configurazione Docker**: Usa GITHUB_TOKEN automaticamente
 
 ### 🔗 Links Utili
 - **GitHub Repository**: https://github.com/giamma80/gymbro-platform
+- **Docker Images**: https://github.com/giamma80/gymbro-platform/pkgs/container/gymbro-user-management
 - **API Docs**: http://localhost:8001/docs
 - **Health Check**: http://localhost:8001/health
 - **Versioning Docs**: `docs/versioning-strategy.md`
 - **Release Process**: `docs/release-process.md`
 
-### 📦 Repository Setup
+### � Docker Registry Configuration
+- **Registry**: GitHub Container Registry (GHCR)
+- **Base URL**: `ghcr.io/giamma80/gymbro-*`
+- **Authentication**: Automatica con `GITHUB_TOKEN`
+- **Visibilità**: Packages visibili nella tab GitHub repository
+- **Configurazione**: Zero secrets manuali richiesti
+- **Esempio immagine**: `ghcr.io/giamma80/gymbro-user-management:latest`
+
+#### Vantaggi GHCR vs Docker Hub:
+- ✅ **Zero configurazione**: Login automatico con credenziali GitHub
+- ✅ **Integrazione nativa**: Collegato direttamente al repository
+- ✅ **Sicurezza**: Token gestito automaticamente da GitHub Actions
+- ✅ **Gratuito**: Illimitato per repository pubblici
+- ✅ **Visibilità**: Immagini integrate nella UI GitHub
+
+### �📦 Repository Setup
 - **Git Remote**: Configurato per GitHub
 - **Branch Main**: Protetto con CI/CD
 - **Tags**: v0.1.1 con pipeline CI/CD completa e strategia microservizi
@@ -161,9 +178,9 @@ make test-e2e
 #### 2. **Pipeline CI/CD Production-Ready & Scalable**
 - ✅ **GitHub Actions corretta**: Fix job dependencies e error handling
 - ✅ **Docker build strategico**: Solo servizi implementati (user-management)
+- ✅ **GitHub Container Registry**: Login automatico con GITHUB_TOKEN (zero secrets)
 - ✅ **Servizi commentati**: Pronti per attivazione incrementale via uncommenting
 - ✅ **Deploy automation**: Render.com integration con proper error handling
-- ✅ **Secrets management**: Optional secrets con continue-on-error
 - ✅ **Integration tests**: Framework completo con health checks
 - ✅ **Security scanning**: Trivy integration per vulnerability detection
 
@@ -172,8 +189,8 @@ make test-e2e
 - 🔄 **Altri 7 servizi**: Commentati in CI/CD, pronti per attivazione
 - 📋 **Roadmap chiara**: Ogni servizio può essere attivato decommentando una riga
 - 🚀 **Zero refactoring**: Pipeline pronta per scaling orizzontale
+- ✅ **Docker Registry**: GitHub Container Registry (ghcr.io) integrato
 - ✅ **Deploy automation**: Render.com integration con proper error handling
-- ✅ **Secrets management**: Optional secrets con continue-on-error
 - ✅ **Integration tests**: Framework completo con health checks
 - ✅ **Security scanning**: Trivy integration per vulnerability detection
 
@@ -185,6 +202,7 @@ make test-e2e
 - ✅ **Error handling**: Continue-on-error per steps opzionali
 - ✅ **Docker build fix**: Commentati servizi non implementati in docker-compose.yml
 - ✅ **Dockerfile Poetry**: Aggiornato user-management Dockerfile per usare Poetry invece di pip
+- ✅ **GitHub Container Registry**: Switch da Docker Hub a GHCR per zero configurazione
 
 #### 4. **Validazione Completa**
 - ✅ **Test automation**: Zero manual steps richiesti
@@ -210,7 +228,8 @@ make test-e2e
 
 #### **Pipeline Features:**
 - 🔄 **Multi-service support**: 8 microservices configured
-- 🐳 **Docker integration**: Build + registry push
+- 🐳 **GitHub Container Registry**: Immagini Docker su ghcr.io/giamma80/*
+- 🔑 **Zero Docker config**: Login automatico con GITHUB_TOKEN
 - 🚀 **Auto-deploy**: Render.com integration
 - 🔒 **Security scanning**: Trivy vulnerability checks
 - 📊 **Notifications**: Slack integration for deployments

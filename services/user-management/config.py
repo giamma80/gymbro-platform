@@ -61,9 +61,7 @@ class Settings(BaseSettings):
     # ==========================================
     # 🔄 Redis Settings
     # ==========================================
-    REDIS_URL: str = Field(
-        default="redis://localhost:6379", description="Redis URL"
-    )
+    REDIS_URL: str = Field(default="redis://localhost:6379", description="Redis URL")
     CACHE_TTL: int = Field(default=3600, description="Cache TTL")  # 1 hour
 
     # ==========================================
@@ -109,9 +107,7 @@ class Settings(BaseSettings):
     # 📧 Email Settings (SendGrid FREE)
     # ==========================================
     SENDGRID_API_KEY: str = Field(default="", description="SendGrid API Key")
-    FROM_EMAIL: str = Field(
-        default="noreply@gymbro.app", description="From Email"
-    )
+    FROM_EMAIL: str = Field(default="noreply@gymbro.app", description="From Email")
 
     # ==========================================
     # 🚩 Feature Flags

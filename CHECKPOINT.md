@@ -177,18 +177,22 @@ make test-e2e
 - ✅ **Integration tests**: Framework completo con health checks
 - ✅ **Security scanning**: Trivy integration per vulnerability detection
 
-#### 3. **Correzioni Tecniche Critiche**
+#### 4. **Correzioni Tecniche Critiche**
 - ✅ **SQLAlchemy 2.0 fix**: Aggiunto `text()` wrapper per raw SQL queries
 - ✅ **Docker job ID fix**: `docker-build` → `build-images` per dependencies
 - ✅ **Slack notifications**: Corretta configurazione action
 - ✅ **Secrets conditions**: Rimosse condizioni invalide su secrets in `if`
 - ✅ **Error handling**: Continue-on-error per steps opzionali
+- ✅ **Docker build fix**: Commentati servizi non implementati in docker-compose.yml
+- ✅ **Dockerfile Poetry**: Aggiornato user-management Dockerfile per usare Poetry invece di pip
 
 #### 4. **Validazione Completa**
 - ✅ **Test automation**: Zero manual steps richiesti
-- ✅ **Docker builds**: Funzionano senza push quando secrets mancanti
+- ✅ **Docker builds**: Funzionano perfettamente solo con servizi implementati (user-management)
 - ✅ **Deploy stages**: Staging → Production con approvals
 - ✅ **Monitoring**: Health checks e notifications
+- ✅ **Makefile build**: `make build` funziona senza errori
+- ✅ **Servizi commentati**: Pronti per attivazione incrementale (v0.2.0+)
 
 ### 🚀 **RISULTATO: PIPELINE CI/CD PRODUCTION-READY!**
 
@@ -198,7 +202,7 @@ make test-e2e
 #### **Workflow Produzione:**
 1. **Push/PR** → GitHub Actions triggera pipeline completa
 2. **Test automatici** → Setup environment + test execution
-3. **Docker builds** → Multi-service container builds
+3. **Docker builds** → Multi-service container builds (solo servizi implementati)
 4. **Integration tests** → Health checks e verifica end-to-end
 5. **Deploy staging** → Automatic deployment con verification
 6. **Deploy production** → Manual approval + automatic deployment
@@ -212,6 +216,26 @@ make test-e2e
 - 📊 **Notifications**: Slack integration for deployments
 - 🏥 **Health monitoring**: Automated health checks
 - 🛡️ **Error handling**: Graceful degradation
+
+#### **🔧 STRATEGIA ATTIVAZIONE SERVIZI:**
+
+**Docker-Compose Strategy** (Locale/Produzione):
+- ✅ `user-service`: Attivo e funzionante
+- 🔄 Altri servizi: Commentati con TODO e versione target
+- 🚀 **Attivazione**: Scommentare il servizio quando implementato
+
+**Esempio per GraphQL Gateway (v0.2.0):**
+```yaml
+# Da:
+# graphql-gateway:  # TODO: Implement service (v0.2.0)
+# A:
+graphql-gateway:    # ✅ Implementato (v0.2.0)
+```
+
+**CI/CD Strategy** (GitHub Actions):
+- ✅ Matrix strategy pronta per 8 servizi
+- 🔄 Solo `user-management` attivo nel matrix
+- 🚀 **Attivazione**: Decommentare nel matrix quando servizio è pronto
 
 ## 🎯 SUMMARY: Test Strategy & CI/CD Implementation
 

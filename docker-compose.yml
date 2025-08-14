@@ -57,158 +57,158 @@ services:
       - ./services/user-management:/app
     restart: unless-stopped
 
-  # Data Ingestion Service
-  data-ingestion:
-    build:
-      context: ./services/data-ingestion
-      dockerfile: Dockerfile
-    container_name: gymbro_data_ingestion
-    ports:
-      - "8002:8000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres123@postgres:5432/gymbro_db
-      - REDIS_URL=redis://redis:6379
-      - GOOGLE_FIT_API_KEY=${GOOGLE_FIT_API_KEY}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./services/data-ingestion:/app
-    restart: unless-stopped
+  # Data Ingestion Service - TODO: Implement service (v0.3.0)
+  # data-ingestion:
+  #   build:
+  #     context: ./services/data-ingestion
+  #     dockerfile: Dockerfile
+  #   container_name: gymbro_data_ingestion
+  #   ports:
+  #     - "8002:8000"
+  #   environment:
+  #     - DATABASE_URL=postgresql://postgres:postgres123@postgres:5432/gymbro_db
+  #     - REDIS_URL=redis://redis:6379
+  #     - GOOGLE_FIT_API_KEY=${GOOGLE_FIT_API_KEY}
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   volumes:
+  #     - ./services/data-ingestion:/app
+  #   restart: unless-stopped
 
-  # Calorie Service
-  calorie-service:
-    build:
-      context: ./services/calorie-service
-      dockerfile: Dockerfile
-    container_name: gymbro_calorie_service
-    ports:
-      - "8003:8000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres123@postgres:5432/gymbro_db
-      - REDIS_URL=redis://redis:6379
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./services/calorie-service:/app
-    restart: unless-stopped
+  # Calorie Service - TODO: Implement service (v0.4.0)
+  # calorie-service:
+  #   build:
+  #     context: ./services/calorie-service
+  #     dockerfile: Dockerfile
+  #   container_name: gymbro_calorie_service
+  #   ports:
+  #     - "8003:8000"
+  #   environment:
+  #     - DATABASE_URL=postgresql://postgres:postgres123@postgres:5432/gymbro_db
+  #     - REDIS_URL=redis://redis:6379
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   volumes:
+  #     - ./services/calorie-service:/app
+  #   restart: unless-stopped
 
-  # Meal Service
-  meal-service:
-    build:
-      context: ./services/meal-service
-      dockerfile: Dockerfile
-    container_name: gymbro_meal_service
-    ports:
-      - "8004:8000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres123@postgres:5432/gymbro_db
-      - REDIS_URL=redis://redis:6379
-      - USDA_API_KEY=${USDA_API_KEY}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./services/meal-service:/app
-    restart: unless-stopped
+  # Meal Service - TODO: Implement service (v0.5.0)
+  # meal-service:
+  #   build:
+  #     context: ./services/meal-service
+  #     dockerfile: Dockerfile
+  #   container_name: gymbro_meal_service
+  #   ports:
+  #     - "8004:8000"
+  #   environment:
+  #     - DATABASE_URL=postgresql://postgres:postgres123@postgres:5432/gymbro_db
+  #     - REDIS_URL=redis://redis:6379
+  #     - USDA_API_KEY=${USDA_API_KEY}
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   volumes:
+  #     - ./services/meal-service:/app
+  #   restart: unless-stopped
 
-  # Analytics Service
-  analytics-service:
-    build:
-      context: ./services/analytics-service
-      dockerfile: Dockerfile
-    container_name: gymbro_analytics_service
-    ports:
-      - "8005:8000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres123@postgres:5432/gymbro_db
-      - REDIS_URL=redis://redis:6379
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./services/analytics-service:/app
-    restart: unless-stopped
+  # Analytics Service - TODO: Implement service (v0.6.0)
+  # analytics-service:
+  #   build:
+  #     context: ./services/analytics-service
+  #     dockerfile: Dockerfile
+  #   container_name: gymbro_analytics_service
+  #   ports:
+  #     - "8005:8000"
+  #   environment:
+  #     - DATABASE_URL=postgresql://postgres:postgres123@postgres:5432/gymbro_db
+  #     - REDIS_URL=redis://redis:6379
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   volumes:
+  #     - ./services/analytics-service:/app
+  #   restart: unless-stopped
 
-  # Notification Service
-  notification-service:
-    build:
-      context: ./services/notification-service
-      dockerfile: Dockerfile
-    container_name: gymbro_notification_service
-    ports:
-      - "8006:8000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres123@postgres:5432/gymbro_db
-      - REDIS_URL=redis://redis:6379
-      - FIREBASE_CREDENTIALS=${FIREBASE_CREDENTIALS}
-      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./services/notification-service:/app
-    restart: unless-stopped
+  # Notification Service - TODO: Implement service (v0.7.0)
+  # notification-service:
+  #   build:
+  #     context: ./services/notification-service
+  #     dockerfile: Dockerfile
+  #   container_name: gymbro_notification_service
+  #   ports:
+  #     - "8006:8000"
+  #   environment:
+  #     - DATABASE_URL=postgresql://postgres:postgres123@postgres:5432/gymbro_db
+  #     - REDIS_URL=redis://redis:6379
+  #     - FIREBASE_CREDENTIALS=${FIREBASE_CREDENTIALS}
+  #     - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   volumes:
+  #     - ./services/notification-service:/app
+  #   restart: unless-stopped
 
-  # GraphQL Gateway
-  graphql-gateway:
-    build:
-      context: ./services/graphql-gateway
-      dockerfile: Dockerfile
-    container_name: gymbro_graphql_gateway
-    ports:
-      - "8000:8000"
-    environment:
-      - USER_SERVICE_URL=http://user-service:8000
-      - DATA_INGESTION_URL=http://data-ingestion:8000
-      - CALORIE_SERVICE_URL=http://calorie-service:8000
-      - MEAL_SERVICE_URL=http://meal-service:8000
-      - ANALYTICS_SERVICE_URL=http://analytics-service:8000
-      - NOTIFICATION_SERVICE_URL=http://notification-service:8000
-      - LLM_SERVICE_URL=http://llm-query-service:8000
-      - REDIS_URL=redis://redis:6379
-    depends_on:
-      - user-service
-      - data-ingestion
-      - calorie-service
-      - meal-service
-      - analytics-service
-      - notification-service
-    volumes:
-      - ./services/graphql-gateway:/app
-    restart: unless-stopped
+  # GraphQL Gateway - TODO: Implement service (v0.2.0)
+  # graphql-gateway:
+  #   build:
+  #     context: ./services/graphql-gateway
+  #     dockerfile: Dockerfile
+  #   container_name: gymbro_graphql_gateway
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     - USER_SERVICE_URL=http://user-service:8000
+  #     - DATA_INGESTION_URL=http://data-ingestion:8000
+  #     - CALORIE_SERVICE_URL=http://calorie-service:8000
+  #     - MEAL_SERVICE_URL=http://meal-service:8000
+  #     - ANALYTICS_SERVICE_URL=http://analytics-service:8000
+  #     - NOTIFICATION_SERVICE_URL=http://notification-service:8000
+  #     - LLM_SERVICE_URL=http://llm-query-service:8000
+  #     - REDIS_URL=redis://redis:6379
+  #   depends_on:
+  #     - user-service
+  #     - data-ingestion
+  #     - calorie-service
+  #     - meal-service
+  #     - analytics-service
+  #     - notification-service
+  #   volumes:
+  #     - ./services/graphql-gateway:/app
+  #   restart: unless-stopped
 
-  # LLM Query Service
-  llm-query-service:
-    build:
-      context: ./services/llm-query-service
-      dockerfile: Dockerfile
-    container_name: gymbro_llm_service
-    ports:
-      - "8007:8000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres123@postgres:5432/gymbro_db
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - REDIS_URL=redis://redis:6379
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./services/llm-query-service:/app
-    restart: unless-stopped
+  # LLM Query Service - TODO: Implement service (v0.8.0)
+  # llm-query-service:
+  #   build:
+  #     context: ./services/llm-query-service
+  #     dockerfile: Dockerfile
+  #   container_name: gymbro_llm_service
+  #   ports:
+  #     - "8007:8000"
+  #   environment:
+  #     - DATABASE_URL=postgresql://postgres:postgres123@postgres:5432/gymbro_db
+  #     - OPENAI_API_KEY=${OPENAI_API_KEY}
+  #     - REDIS_URL=redis://redis:6379
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   volumes:
+  #     - ./services/llm-query-service:/app
+  #   restart: unless-stopped
 
   # Traefik API Gateway
   traefik:

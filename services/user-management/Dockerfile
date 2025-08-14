@@ -24,10 +24,17 @@ RUN useradd --create-home --shell /bin/bash app
 # 📁 Set work directory
 WORKDIR /app
 
-# 📋 Copy requirements and install Python dependencies
-COPY requirements.txt .
-RUN pip install --upgrade pip && \
-    pip install -r requirements.txt
+# Install Poetry
+RUN pip install poetry
+
+# Copy Poetry files
+COPY pyproject.toml poetry.lock ./
+
+# Configure Poetry to not create virtual environments (we're already in a container)
+RUN poetry config virtualenvs.create false
+
+# Install dependencies
+RUN poetry install --only=main
 
 # 📄 Copy application code
 COPY . .

@@ -78,11 +78,12 @@ make test-e2e
 - `services/user-management/config.py`: Aggiunta configurazione `model_config`
 - `services/user-management/main.py`: Disabilitato Sentry per sviluppo
 - `Makefile`: Aggiornato comando `dev-user` + target test e QA
-- `README.md`: Aggiunto changelog e versioning strategy
+- `README.md`: Aggiunto changelog e versioning strategy + CI/CD documentation
+- `services/user-management/README.md`: Aggiunta sezione Docker deployment
 - `docs/versioning-strategy.md`: Creata strategia di versionamento
 - `docs/release-process.md`: Processo dettagliato di release
 - `docs/changelog-templates.md`: Template standardizzati
-- `.github/workflows/ci-cd.yml`: **COMPLETATA** - Pipeline CI/CD + GitHub Container Registry
+- `.github/workflows/ci-cd.yml`: **COMPLETATA** - Pipeline CI/CD + GHCR + Actions v4
 - `docker-compose.test.yml`: Environment isolato per test
 - `services/user-management/tests/`: Suite di test completa
 - `scripts/quality-check.sh`: Script automatico per QA
@@ -118,6 +119,7 @@ make test-e2e
 
 ### 🔄 CI/CD Pipeline
 - **GitHub Actions**: `.github/workflows/ci-cd.yml`
+- **Actions v4**: Tutte le azioni aggiornate (upload-artifact, cache) per compatibilità
 - **Test automatici** su ogni push/PR con setup environment automatico
 - **Build Docker images** per 8 microservizi con GitHub Container Registry (GHCR)
 - **Docker Registry**: `ghcr.io/giamma80/gymbro-*` - integrato con GitHub
@@ -159,7 +161,7 @@ make test-e2e
 - **CI/CD**: GitHub Actions attive per ogni push/PR
 
 ---
-*Ultimo aggiornamento: 15 Gennaio 2025 - v0.1.1*
+*Ultimo aggiornamento: 15 Gennaio 2025 - v0.1.1 + GitHub Actions v4*
 
 ---
 
@@ -177,6 +179,7 @@ make test-e2e
 
 #### 2. **Pipeline CI/CD Production-Ready & Scalable**
 - ✅ **GitHub Actions corretta**: Fix job dependencies e error handling
+- ✅ **Actions v4**: Aggiornate tutte le azioni deprecate per compatibilità futura
 - ✅ **Docker build strategico**: Solo servizi implementati (user-management)
 - ✅ **GitHub Container Registry**: Login automatico con GITHUB_TOKEN (zero secrets)
 - ✅ **Servizi commentati**: Pronti per attivazione incrementale via uncommenting
@@ -203,6 +206,7 @@ make test-e2e
 - ✅ **Docker build fix**: Commentati servizi non implementati in docker-compose.yml
 - ✅ **Dockerfile Poetry**: Aggiornato user-management Dockerfile per usare Poetry invece di pip
 - ✅ **GitHub Container Registry**: Switch da Docker Hub a GHCR per zero configurazione
+- ✅ **GitHub Actions v4**: Aggiornate azioni deprecate (upload-artifact, cache)
 
 #### 4. **Validazione Completa**
 - ✅ **Test automation**: Zero manual steps richiesti

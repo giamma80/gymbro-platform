@@ -120,7 +120,7 @@ jobs:
 
       - name: 🔍 Load cached venv
         id: cached-poetry-dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ./services/user-management/.venv
           key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('services/user-management/poetry.lock') }}
@@ -267,7 +267,7 @@ jobs:
 
       - name: 📁 Upload Logs
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: integration-test-logs
           path: integration-test-logs.txt
@@ -420,7 +420,7 @@ jobs:
           bandit -r . -f json -o bandit-report.json || true
 
       - name: 📁 Upload Security Reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: security-reports
           path: |

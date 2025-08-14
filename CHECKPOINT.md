@@ -3,7 +3,7 @@
 ## 📅 Data: 14 Agosto 2025
 ## 📍 Stato: User Management Service Attivo
 
-### 🏷️ Versione Corrente: v0.1.0
+### 🏷️ Versione Corrente: v0.1.1
 
 ### ✅ Servizi Funzionanti
 - PostgreSQL: `localhost:5432`
@@ -68,10 +68,10 @@ make test-e2e
 ```
 
 ### 🎯 Roadmap Progress
-✅ **v0.1.0**: User Management Service (completato)
-🔄 **v0.2.0**: Data Ingestion Service (prossimo)
-🔄 **v0.3.0**: Calorie Service
-🔄 **v0.4.0**: GraphQL Gateway
+✅ **v0.1.1**: CI/CD Pipeline & Docker Strategy (completato)
+🔄 **v0.2.0**: GraphQL Gateway (prossimo)
+🔄 **v0.3.0**: Data Ingestion Service
+🔄 **v0.4.0**: Calorie Service
 🔄 **v1.0.0**: MVP Complete
 
 ### 📁 File Modificati in Questa Release
@@ -138,11 +138,11 @@ make test-e2e
 ### 📦 Repository Setup
 - **Git Remote**: Configurato per GitHub
 - **Branch Main**: Protetto con CI/CD
-- **Tags**: v0.1.0 con test infrastructure completa
+- **Tags**: v0.1.1 con pipeline CI/CD completa e strategia microservizi
 - **CI/CD**: GitHub Actions attive per ogni push/PR
 
 ---
-*Ultimo aggiornamento: 14 Agosto 2025 - v0.1.0*
+*Ultimo aggiornamento: 15 Gennaio 2025 - v0.1.1*
 
 ---
 

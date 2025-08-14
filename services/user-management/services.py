@@ -6,40 +6,44 @@ Business logic per gestione utenti, autenticazione e profili.
 Questo layer orchestra le operazioni tra database, cache e servizi esterni.
 """
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete, and_, or_
-from sqlalchemy.orm import selectinload
-from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any
-import uuid
 import logging
+import uuid
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
+from sqlalchemy import and_, delete, or_, select, update
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
+from auth import (
+    calculate_lockout_until,
+    hash_password,
+    validate_password_strength,
+    verify_password,
+)
+from config import ACTIVITY_MULTIPLIERS, DEFAULT_PREFERENCES, settings
+from database import (
+    User,
+    UserAuditLog,
+)
+from database import UserPreferences as UserPreferencesDB
+from database import (
+    UserSession,
+    UserStatsCache,
+)
 
 # Local imports
 from models import (
-    UserRegistration,
-    UserProfileUpdate,
-    UserProfile,
-    UserStats,
-    UserPreferences,
-    UserListResponse,
-    Gender,
     ActivityLevel,
+    Gender,
+    UserListResponse,
+    UserPreferences,
+    UserProfile,
+    UserProfileUpdate,
+    UserRegistration,
     UserRole,
+    UserStats,
 )
-from database import (
-    User,
-    UserPreferences as UserPreferencesDB,
-    UserStatsCache,
-    UserSession,
-    UserAuditLog,
-)
-from auth import (
-    hash_password,
-    verify_password,
-    validate_password_strength,
-    calculate_lockout_until,
-)
-from config import settings, ACTIVITY_MULTIPLIERS, DEFAULT_PREFERENCES
 
 logger = logging.getLogger(__name__)
 

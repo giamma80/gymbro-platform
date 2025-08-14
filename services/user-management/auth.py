@@ -6,18 +6,20 @@ Gestione autenticazione JWT, password hashing e sicurezza.
 Integrato con Supabase Auth per OAuth e autenticazione esterna.
 """
 
-from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
-from passlib.context import CryptContext
-from jose import JWTError, jwt
-from fastapi import HTTPException, status
-import secrets
 import re
+import secrets
+from datetime import datetime, timedelta
+from typing import Any, Dict, Optional
+
+from fastapi import HTTPException, status
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+
 from config import (
-    settings,
-    PASSWORD_MIN_LENGTH,
-    MAX_LOGIN_ATTEMPTS,
     LOCKOUT_DURATION_MINUTES,
+    MAX_LOGIN_ATTEMPTS,
+    PASSWORD_MIN_LENGTH,
+    settings,
 )
 
 # ==========================================

@@ -1,14 +1,16 @@
 """
 Test per auth module
 """
+
 import pytest
+
 from auth import (
-    hash_password,
-    verify_password,
-    validate_password_strength,
     create_access_token,
-    verify_token,
+    hash_password,
     is_email_valid,
+    validate_password_strength,
+    verify_password,
+    verify_token,
 )
 
 
@@ -19,7 +21,7 @@ class TestPasswordSecurity:
         """Test password hashing."""
         password = "TestPassword123!"
         hashed = hash_password(password)
-        
+
         assert hashed != password
         assert len(hashed) > 0
 
@@ -27,7 +29,7 @@ class TestPasswordSecurity:
         """Test password verification."""
         password = "TestPassword123!"
         hashed = hash_password(password)
-        
+
         assert verify_password(password, hashed) is True
         assert verify_password("wrong_password", hashed) is False
 
@@ -37,7 +39,7 @@ class TestPasswordSecurity:
         result = validate_password_strength("StrongPassword123!")
         assert result["is_valid"] is True
         assert result["score"] >= 4
-        
+
         # Weak password
         result = validate_password_strength("weak")
         assert result["is_valid"] is False
@@ -51,7 +53,7 @@ class TestJWTTokens:
         """Test access token creation."""
         data = {"sub": "user123", "role": "user"}
         token = create_access_token(data)
-        
+
         assert isinstance(token, str)
         assert len(token) > 0
 

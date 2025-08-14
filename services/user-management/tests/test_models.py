@@ -1,17 +1,20 @@
 """
 Test per models/schemas
 """
+
+from datetime import datetime
+
 import pytest
 from pydantic import ValidationError
+
 from models import (
-    UserRegistration,
-    UserProfile,
-    UserPreferences,
-    Gender,
     ActivityLevel,
+    Gender,
+    UserPreferences,
+    UserProfile,
+    UserRegistration,
     UserRole,
 )
-from datetime import datetime
 
 
 class TestUserModels:
@@ -30,7 +33,7 @@ class TestUserModels:
             "weight_kg": 75.5,
             "activity_level": "moderately_active",
         }
-        
+
         user = UserRegistration(**user_data)
         assert user.email == "test@example.com"
         assert user.gender == Gender.MALE
@@ -49,14 +52,14 @@ class TestUserModels:
             "weight_kg": 75.5,
             "activity_level": "MODERATELY_ACTIVE",
         }
-        
+
         with pytest.raises(ValidationError):
             UserRegistration(**user_data)
 
     def test_user_preferences_defaults(self):
         """Test user preferences with defaults."""
         prefs = UserPreferences()
-        
+
         assert prefs.timezone == "Europe/Rome"
         assert prefs.language == "it"
         assert prefs.push_notifications is True

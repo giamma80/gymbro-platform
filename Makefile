@@ -128,15 +128,73 @@ format-user: ## Formattazione per user-management
 	@cd services/user-management && poetry run black . && poetry run isort .
 
 # ==========================================
-# 🧪 Testing (Legacy - in migrazione)
+# 🧪 Testing
 # ==========================================
 
 test: test-all ## Esegui tutti i test (alias per test-all)
 
+test-ci: ## Test completi per CI/CD con coverage
+	@echo "🧪 Running CI tests with coverage..."
+	@cd services/user-management && poetry run pytest tests/ -v --cov=. --cov-report=xml --cov-report=html --cov-report=term
+	@echo "✅ CI tests completed with coverage report"
+
+test-unit: ## Esegui solo test unitari
+	@echo "🧪 Running unit tests..."
+	@cd services/user-management && poetry run pytest tests/ -v -m "not integration and not slow"
+	@echo "✅ Unit tests completed"
+
 test-integration: ## Test di integrazione con servizi reali
 	@echo "🔗 Running integration tests..."
-	@docker-compose -f docker-compose.test.yml up --abort-on-container-exit
+	@docker-compose -f docker-compose.test.yml up -d test-postgres test-redis
+	@sleep 10
+	@cd services/user-management && poetry run pytest tests/ -v -m integration
 	@docker-compose -f docker-compose.test.yml down
+	@echo "✅ Integration tests completed"
+
+test-e2e: ## Test end-to-end completi
+	@echo "🔗 Running end-to-end tests..."
+	@docker-compose -f docker-compose.test.yml up --build -d
+	@sleep 30
+	@curl -f http://localhost:8011/health || (echo "❌ Service not ready" && exit 1)
+	@cd services/user-management && poetry run pytest tests/test_api_endpoints.py::TestIntegrationScenarios -v
+	@docker-compose -f docker-compose.test.yml down -v
+	@echo "✅ End-to-end tests completed"
+
+test-performance: ## Test di performance
+	@echo "🚀 Running performance tests..."
+	@cd services/user-management && poetry run pytest tests/ -v -m slow
+	@echo "✅ Performance tests completed"
+
+test-watch: ## Test in modalità watch (riavvio automatico)
+	@echo "👀 Running tests in watch mode..."
+	@cd services/user-management && poetry run ptw tests/ -- -v
+
+# ==========================================
+# 🔍 Quality Assurance
+# ==========================================
+
+qa: ## Quality Assurance completo (formattazione, linting, test, coverage)
+	@echo "🔍 Running complete Quality Assurance..."
+	@./scripts/quality-check.sh
+	@echo "✅ Quality Assurance completed"
+
+qa-integration: ## QA completo con test di integrazione
+	@echo "🔍 Running complete QA with integration tests..."
+	@./scripts/quality-check.sh --integration
+	@echo "✅ Complete QA with integration tests completed"
+
+qa-docker: ## QA completo con test Docker build
+	@echo "🔍 Running complete QA with Docker build test..."
+	@./scripts/quality-check.sh --docker
+	@echo "✅ Complete QA with Docker build completed"
+
+pre-commit: qa ## Controlli pre-commit (alias per qa)
+	@echo "🚀 Pre-commit checks completed - ready to commit!"
+
+ci-checks: ## Controlli per CI/CD pipeline
+	@echo "🔄 Running CI/CD checks..."
+	@./scripts/quality-check.sh --integration --docker
+	@echo "✅ CI/CD checks completed"
 
 # ==========================================
 # 🗄️ Database

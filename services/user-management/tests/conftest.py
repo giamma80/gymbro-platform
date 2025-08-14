@@ -1,18 +1,21 @@
 # Test configuration
 import asyncio
 import os
-import pytest
 from unittest.mock import patch
+
+import pytest
 from fastapi.testclient import TestClient
 
 # Set environment variables BEFORE any imports
-os.environ.update({
-    "DATABASE_URL": "postgresql://postgres:postgres123@localhost:5432/gymbro_test_db",
-    "REDIS_URL": "redis://localhost:6379",
-    "JWT_SECRET": "test-secret-key-for-ci",
-    "ENVIRONMENT": "test",
-    "DEBUG": "true",
-})
+os.environ.update(
+    {
+        "DATABASE_URL": "postgresql://postgres:postgres123@localhost:5432/gymbro_test_db",
+        "REDIS_URL": "redis://localhost:6379",
+        "JWT_SECRET": "test-secret-key-for-ci",
+        "ENVIRONMENT": "test",
+        "DEBUG": "true",
+    }
+)
 
 # Configure pytest for asyncio
 pytest_plugins = ("pytest_asyncio",)
@@ -32,7 +35,7 @@ def client():
     """Create a test client with proper environment setup."""
     # Import app after env setup to ensure correct config loading
     from main import app
-    
+
     # Use TestClient with explicit loop handling
     with TestClient(app) as test_client:
         yield test_client

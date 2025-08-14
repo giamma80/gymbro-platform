@@ -6,8 +6,9 @@ Configurazione specifica per i test per evitare problemi di
 connessione database durante CI/CD.
 """
 
-from config import Settings
 import tempfile
+
+from config import Settings
 
 
 class TestSettings(Settings):

@@ -72,7 +72,8 @@ jobs:
     name: 🧪 Test User Management
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: needs.detect-changes.outputs.user-management == 'true'
+    # Run tests on all pushes and PRs for core service
+    if: always()
     
     services:
       postgres:
@@ -170,10 +171,10 @@ jobs:
   # 🐳 Build Docker Images
   # ==========================================
   build-images:
-    name: � Build Docker Images
+    name: 🐳 Build Docker Images
     runs-on: ubuntu-latest
     needs: test-user-management
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    # Build Docker images for validation (don't push on PRs)
     strategy:
       matrix:
         service: [user-management, graphql-gateway, data-ingestion, calorie-service, meal-service, analytics-service, notification-service, llm-query-service]
@@ -223,7 +224,7 @@ jobs:
     name: 🔗 Integration Tests
     runs-on: ubuntu-latest
     needs: [build-images]
-    if: github.ref == 'refs/heads/main'
+    # Run integration tests after successful builds
 
     steps:
       - name: 📥 Checkout Code

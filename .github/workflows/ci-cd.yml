@@ -1,0 +1,454 @@
+# ==========================================
+# 🏋️ GymBro Platform - CI/CD Pipeline
+# ==========================================
+# Zero-cost CI/CD usando GitHub Actions (2000 min/mese FREE)
+# Deploy automatico su Render.com (750 ore/mese FREE)
+
+name: 🚀 GymBro Platform CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "18"
+
+jobs:
+  # ==========================================
+  # 🔍 Detect Changes
+  # ==========================================
+  detect-changes:
+    name: 🔍 Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      user-management: ${{ steps.changes.outputs.user-management }}
+      graphql-gateway: ${{ steps.changes.outputs.graphql-gateway }}
+      data-ingestion: ${{ steps.changes.outputs.data-ingestion }}
+      calorie-service: ${{ steps.changes.outputs.calorie-service }}
+      meal-service: ${{ steps.changes.outputs.meal-service }}
+      analytics-service: ${{ steps.changes.outputs.analytics-service }}
+      notification-service: ${{ steps.changes.outputs.notification-service }}
+      llm-query-service: ${{ steps.changes.outputs.llm-query-service }}
+      infrastructure: ${{ steps.changes.outputs.infrastructure }}
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔍 Detect Service Changes
+        uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            user-management:
+              - 'services/user-management/**'
+            graphql-gateway:
+              - 'services/graphql-gateway/**'
+            data-ingestion:
+              - 'services/data-ingestion/**'
+            calorie-service:
+              - 'services/calorie-service/**'
+            meal-service:
+              - 'services/meal-service/**'
+            analytics-service:
+              - 'services/analytics-service/**'
+            notification-service:
+              - 'services/notification-service/**'
+            llm-query-service:
+              - 'services/llm-query-service/**'
+            infrastructure:
+              - 'infrastructure/**'
+              - 'docker-compose.yml'
+              - '.github/workflows/**'
+
+  # ==========================================
+  # 🧪 Test User Management Service
+  # ==========================================
+  test-user-management:
+    name: 🧪 Test User Management
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.user-management == 'true'
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: postgres123
+          POSTGRES_USER: postgres
+          POSTGRES_DB: gymbro_test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 3s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+
+      - name: 🔍 Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: ./services/user-management/.venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('services/user-management/poetry.lock') }}
+
+      - name: 📦 Install Dependencies
+        working-directory: ./services/user-management
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+
+      - name: 🔧 Setup Environment
+        working-directory: ./services/user-management
+        run: |
+          cp .env.example .env
+          echo "DATABASE_URL=postgresql://postgres:postgres123@localhost:5432/gymbro_test_db" >> .env
+          echo "REDIS_URL=redis://localhost:6379" >> .env
+          echo "JWT_SECRET=test-secret-key-for-ci" >> .env
+
+      - name: 🗄️ Run Database Migrations
+        working-directory: ./services/user-management
+        run: |
+          # TODO: Add alembic migrations
+          echo "Running database migrations..."
+
+      - name: 🧪 Run Tests
+        working-directory: ./services/user-management
+        run: |
+          poetry run pytest tests/ -v --cov=app --cov-report=xml --cov-report=html
+        env:
+          DATABASE_URL: postgresql://postgres:postgres123@localhost:5432/gymbro_test_db
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test-secret-key-for-ci
+
+      - name: 📊 Upload Coverage Reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./services/user-management/coverage.xml
+          flags: user-management
+          name: user-management-coverage
+
+      - name: 🔍 Run Linting
+        working-directory: ./services/user-management
+        run: |
+          poetry run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          poetry run mypy . --ignore-missing-imports
+
+  # ==========================================
+  # 🔨 Build Docker Images
+  # ==========================================
+  build-images:
+    name: 🔨 Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [detect-changes, test-user-management]
+    if: always() && (needs.test-user-management.result == 'success' || needs.test-user-management.result == 'skipped')
+    
+    strategy:
+      matrix:
+        service: [user-management, graphql-gateway, data-ingestion, calorie-service, meal-service, analytics-service, notification-service, llm-query-service]
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔑 Login to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: 📋 Extract Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ secrets.DOCKER_USERNAME }}/gymbro-${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: 🔨 Build and Push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/${{ matrix.service }}
+          file: ./services/${{ matrix.service }}/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+  # ==========================================
+  # 🧪 Integration Tests
+  # ==========================================
+  integration-tests:
+    name: 🔗 Integration Tests
+    runs-on: ubuntu-latest
+    needs: [build-images]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🐳 Start Services
+        run: |
+          cp .env.example .env
+          echo "JWT_SECRET=test-secret-key-for-integration" >> .env
+          docker-compose -f docker-compose.test.yml up -d
+          sleep 30  # Wait for services to start
+
+      - name: 🏥 Health Checks
+        run: |
+          curl -f http://localhost:8001/health || exit 1
+          # curl -f http://localhost:8000/health || exit 1
+
+      - name: 🧪 Run Integration Tests
+        run: |
+          # TODO: Add integration test suite
+          echo "Running integration tests..."
+
+      - name: 📊 Collect Logs
+        if: failure()
+        run: |
+          docker-compose -f docker-compose.test.yml logs > integration-test-logs.txt
+
+      - name: 📁 Upload Logs
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: integration-test-logs
+          path: integration-test-logs.txt
+
+      - name: 🛑 Cleanup
+        if: always()
+        run: |
+          docker-compose -f docker-compose.test.yml down -v
+
+  # ==========================================
+  # 🚀 Deploy to Staging
+  # ==========================================
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [integration-tests]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: staging
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🚀 Deploy to Render (Staging)
+        run: |
+          echo "🚀 Triggering Render deployment..."
+          curl -X POST "${{ secrets.RENDER_STAGING_DEPLOY_HOOK }}"
+
+      - name: ⏳ Wait for Deployment
+        run: |
+          echo "⏳ Waiting for deployment to complete..."
+          sleep 60
+
+      - name: 🏥 Verify Staging Deployment
+        run: |
+          echo "🏥 Verifying staging deployment..."
+          curl -f "${{ secrets.STAGING_URL }}/health" || exit 1
+
+      - name: 📢 Notify Slack
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: '#deployments'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+  # ==========================================
+  # 🚀 Deploy to Production
+  # ==========================================
+  deploy-production:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[deploy-prod]')
+    environment: production
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🏷️ Create Release Tag
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          TAG="v$(date +'%Y%m%d-%H%M%S')"
+          git tag -a "$TAG" -m "Production release $TAG"
+          echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
+
+      - name: 🚀 Deploy to Render (Production)
+        run: |
+          echo "🚀 Triggering production deployment..."
+          curl -X POST "${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK }}"
+
+      - name: ⏳ Wait for Deployment
+        run: |
+          echo "⏳ Waiting for production deployment..."
+          sleep 120
+
+      - name: 🏥 Verify Production Deployment
+        run: |
+          echo "🏥 Verifying production deployment..."
+          curl -f "${{ secrets.PRODUCTION_URL }}/health" || exit 1
+
+      - name: 📢 Notify Success
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          channel: '#deployments'
+          text: |
+            🎉 Production deployment successful!
+            Release: ${{ env.RELEASE_TAG }}
+            Commit: ${{ github.sha }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+  # ==========================================
+  # 🔒 Security Scan
+  # ==========================================
+  security-scan:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔒 Run Trivy Vulnerability Scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: 📊 Upload Trivy Scan Results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: 🔍 Python Security Check
+        working-directory: ./services/user-management
+        run: |
+          pip install safety bandit
+          safety check
+          bandit -r . -f json -o bandit-report.json || true
+
+      - name: 📁 Upload Security Reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-reports
+          path: |
+            trivy-results.sarif
+            services/user-management/bandit-report.json
+
+  # ==========================================
+  # 📊 Code Quality
+  # ==========================================
+  code-quality:
+    name: 📊 Code Quality
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Install Quality Tools
+        run: |
+          pip install black isort flake8 mypy
+
+      - name: ✨ Check Code Formatting
+        working-directory: ./services/user-management
+        run: |
+          black --check --diff .
+          isort --check-only --diff .
+
+      - name: 🔍 Run Linting
+        working-directory: ./services/user-management
+        run: |
+          flake8 . --statistics --format=github
+
+      - name: 🎯 Type Checking
+        working-directory: ./services/user-management
+        run: |
+          mypy . --ignore-missing-imports || true
+
+  # ==========================================
+  # 🧹 Cleanup
+  # ==========================================
+  cleanup:
+    name: 🧹 Cleanup
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [deploy-staging, deploy-production]
+
+    steps:
+      - name: 🧹 Clean up Docker
+        run: |
+          docker system prune -f
+          docker volume prune -f
+
+      - name: 📊 Report Usage
+        run: |
+          echo "🏋️ GymBro Platform CI/CD Pipeline Completed!"
+          echo "📊 GitHub Actions minutes used: $(date)"
+          echo "🐳 Docker builds: Completed"
+          echo "🚀 Deployments: Check Render dashboard"

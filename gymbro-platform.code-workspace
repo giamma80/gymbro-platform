@@ -1,0 +1,332 @@
+{
+  "folders": [
+    {
+      "name": "🏋️ GymBro Platform",
+      "path": "."
+    },
+    {
+      "name": "👤 User Management",
+      "path": "./services/user-management"
+    },
+    {
+      "name": "🚪 GraphQL Gateway",
+      "path": "./services/graphql-gateway"
+    },
+    {
+      "name": "📊 Data Ingestion",
+      "path": "./services/data-ingestion"
+    },
+    {
+      "name": "🔥 Calorie Service",
+      "path": "./services/calorie-service"
+    },
+    {
+      "name": "🍽️ Meal Service",
+      "path": "./services/meal-service"
+    },
+    {
+      "name": "📈 Analytics",
+      "path": "./services/analytics-service"
+    },
+    {
+      "name": "🔔 Notifications",
+      "path": "./services/notification-service"
+    },
+    {
+      "name": "🤖 LLM Service",
+      "path": "./services/llm-query-service"
+    },
+    {
+      "name": "🔄 Automations",
+      "path": "./automation"
+    },
+    {
+      "name": "🏗️ Infrastructure",
+      "path": "./infrastructure"
+    },
+    {
+      "name": "📚 Documentation",
+      "path": "./docs"
+    }
+  ],
+  "settings": {
+    "python.defaultInterpreterPath": "python3",
+    "python.linting.enabled": true,
+    "python.linting.flake8Enabled": true,
+    "python.linting.mypyEnabled": true,
+    "python.formatting.provider": "black",
+    "python.sortImports.provider": "isort",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit",
+      "source.fixAll": "explicit"
+    },
+    "files.exclude": {
+      "**/.git": true,
+      "**/.svn": true,
+      "**/.hg": true,
+      "**/.DS_Store": true,
+      "**/Thumbs.db": true,
+      "**/__pycache__": true,
+      "**/*.pyc": true,
+      "**/.pytest_cache": true,
+      "**/.mypy_cache": true,
+      "**/.coverage": true,
+      "**/htmlcov": true,
+      "**/.env": true,
+      "**/node_modules": true,
+      ".mule": true
+    },
+    "search.exclude": {
+      "**/__pycache__": true,
+      "**/*.pyc": true,
+      "**/.pytest_cache": true,
+      "**/.mypy_cache": true,
+      "**/htmlcov": true,
+      "**/node_modules": true,
+      "**/.git": true
+    },
+    "docker.enableDockerfileIntelliSense": true,
+    "yaml.schemas": {
+      "https://json.schemastore.org/github-workflow": ".github/workflows/*.yml",
+      "https://json.schemastore.org/docker-compose": "docker-compose*.yml"
+    },
+    "makefile.configureOnOpen": true,
+    "terminal.integrated.defaultProfile.osx": "zsh",
+    "terminal.integrated.profiles.osx": {
+      "gymbro-dev": {
+        "path": "zsh",
+        "args": [
+          "-c",
+          "cd ${workspaceFolder} && zsh"
+        ]
+      }
+    },
+    "extensions.recommendations": [
+      "ms-python.python",
+      "ms-python.flake8",
+      "ms-python.black-formatter",
+      "ms-python.isort",
+      "ms-azuretools.vscode-docker",
+      "redhat.vscode-yaml",
+      "ms-vscode.makefile-tools",
+      "GraphQL.vscode-graphql",
+      "bradlc.vscode-tailwindcss",
+      "ms-vscode.vscode-json",
+      "ms-vscode-remote.remote-containers"
+    ],
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestArgs": [
+      "tests"
+    ],
+    "git.ignoreLimitWarning": true,
+    "typescript.preferences.quoteStyle": "double",
+    "javascript.preferences.quoteStyle": "double"
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "🏋️ Debug User Management",
+        "type": "python",
+        "request": "launch",
+        "program": "${workspaceFolder}/services/user-management/main.py",
+        "cwd": "${workspaceFolder}/services/user-management",
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}/services/user-management"
+        },
+        "console": "integratedTerminal",
+        "justMyCode": false
+      },
+      {
+        "name": "🧪 Debug Tests",
+        "type": "python",
+        "request": "launch",
+        "module": "pytest",
+        "args": [
+          "tests/",
+          "-v"
+        ],
+        "cwd": "${workspaceFolder}/services/user-management",
+        "console": "integratedTerminal",
+        "justMyCode": false
+      },
+      {
+        "name": "🐳 Attach to Container",
+        "type": "python",
+        "request": "attach",
+        "host": "localhost",
+        "port": 5678,
+        "pathMappings": [
+          {
+            "localRoot": "${workspaceFolder}/services/user-management",
+            "remoteRoot": "/app"
+          }
+        ]
+      }
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "🚀 Start GymBro Platform",
+        "type": "shell",
+        "command": "make start",
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared",
+          "showReuseMessage": true,
+          "clear": false
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "🛑 Stop GymBro Platform",
+        "type": "shell",
+        "command": "make stop",
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "🏥 Health Check",
+        "type": "shell",
+        "command": "./scripts/health-check.sh",
+        "group": "test",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "🧪 Test APIs",
+        "type": "shell",
+        "command": "python3 ./scripts/test-api.py",
+        "group": "test",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "📊 Show Logs",
+        "type": "shell",
+        "command": "make logs",
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "🔄 Restart Platform",
+        "type": "shell",
+        "command": "make restart",
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "🧹 Clean & Reset",
+        "type": "shell",
+        "command": "make clean",
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "📦 Build Images",
+        "type": "shell",
+        "command": "make build",
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "🧪 Run Python Tests",
+        "type": "shell",
+        "command": "python -m pytest tests/ -v",
+        "options": {
+          "cwd": "${workspaceFolder}/services/user-management"
+        },
+        "group": "test",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "✨ Format Code",
+        "type": "shell",
+        "command": "make format",
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      }
+    ]
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-python.python",
+      "ms-python.flake8",
+      "ms-python.black-formatter",
+      "ms-python.isort",
+      "ms-azuretools.vscode-docker",
+      "redhat.vscode-yaml",
+      "ms-vscode.makefile-tools",
+      "GraphQL.vscode-graphql-syntax",
+      "ms-vscode.vscode-json",
+      "ms-vscode-remote.remote-containers",
+      "GitHub.vscode-pull-request-github",
+      "ms-vscode.git-graph",
+      "eamodio.gitlens",
+      "streetsidesoftware.code-spell-checker",
+      "ms-python.debugpy"
+    ]
+  }
+}

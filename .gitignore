@@ -1,0 +1,169 @@
+# ===========================================
+# 🏋️ GymBro Platform - .gitignore
+# ===========================================
+
+# 🔐 Environment Variables
+.env
+.env.local
+.env.production
+.env.staging
+*.env
+
+# 🐍 Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# 🧪 Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# 🔍 Linting
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+
+# 📝 IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 🐳 Docker
+*.log
+.docker/
+
+# 🗄️ Databases
+*.db
+*.sqlite3
+*.sqlite
+postgres_data/
+redis_data/
+
+# 🔑 SSL Certificates
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# 📊 Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 🏃‍♂️ Runtime
+.DS_Store
+Thumbs.db
+*.pid
+*.seed
+*.pid.lock
+
+# 📦 Dependencies
+node_modules/
+.npm
+.yarn/
+.pnp.*
+
+# 🔄 n8n
+n8n_data/
+.n8n/
+
+# 🤖 AI Models (if downloaded locally)
+models/
+*.pkl
+*.joblib
+*.h5
+*.pt
+*.pth
+
+# 📈 Monitoring Data
+prometheus_data/
+grafana_data/
+
+# 🔧 Build Tools
+.cache/
+.parcel-cache/
+.next/
+out/
+
+# 📱 Mobile
+ios/
+android/
+.expo/
+.expo-shared/
+
+# 🧪 Test Results
+test-results/
+playwright-report/
+test-results.xml
+
+# 🗃️ Backup Files
+*.bak
+*.backup
+*.old
+
+# 🔒 Security
+secrets/
+credentials/
+private/
+*.priv
+*.private
+
+# 📊 Data Files (large datasets)
+data/
+datasets/
+*.csv
+*.json.gz
+*.parquet
+
+# 🎯 Temporary Files
+tmp/
+temp/
+.tmp/
+.temp/
+
+# 🚀 Deploy Artifacts
+*.tar.gz
+*.zip
+release/
+
+# ===========================================
+# 📝 IMPORTANT NOTES:
+# ===========================================
+# - Never commit .env files
+# - Keep API keys secure
+# - Don't commit large data files
+# - Use environment variables for secrets
+# ===========================================

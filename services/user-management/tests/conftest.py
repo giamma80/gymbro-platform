@@ -30,13 +30,17 @@ def event_loop():
     loop.close()
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def client():
     """Create a test client with proper environment setup."""
+    # Set test database to avoid PostgreSQL connection issues in CI
+    os.environ["DATABASE_URL"] = "sqlite:///./test.db"
+    os.environ["ENVIRONMENT"] = "test"
+    
     # Import app after env setup to ensure correct config loading
     from main import app
-
-    # Use TestClient with explicit loop handling
+    
+    # Create test client
     with TestClient(app) as test_client:
         yield test_client
 

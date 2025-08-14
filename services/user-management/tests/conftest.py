@@ -4,8 +4,8 @@ import os
 import sys
 from pathlib import Path
 
-import pytest
 import httpx
+import pytest
 
 # Set environment variables BEFORE any imports
 os.environ.update(
@@ -42,11 +42,13 @@ async def client():
     """Create an async test client."""
     # Ensure clean import of app
     import importlib
+
     import main
+
     importlib.reload(main)
-    
+
     app = main.app
-    
+
     async with httpx.AsyncClient(app=app, base_url="http://test") as ac:
         yield ac
 

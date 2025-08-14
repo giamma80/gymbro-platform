@@ -159,9 +159,11 @@ curl http://localhost:8000/graphql
 ### Pipeline Features
 - ✅ Test coverage minimo 80%
 - ✅ Code quality gates (Black, Flake8, MyPy)
-- ✅ Security vulnerability checks
+- ✅ Security vulnerability checks (Trivy)
 - ✅ Automatic deployment staging/production
 - ✅ Health checks post-deploy
+- ✅ GitHub Actions v4 compatibility
+- ✅ Zero deprecation warnings
 
 ## 📊 Metriche di Successo
 - **Uptime**: >99.9%
@@ -195,18 +197,25 @@ Utilizziamo [Semantic Versioning](https://semver.org/) con Git tags per tracciar
 
 ### 📋 Changelog
 
-#### v0.1.1 (15 Gennaio 2025) - CI/CD Pipeline Complete
+#### v0.1.1 (14 Agosto 2025) - CI/CD Pipeline Complete
 ##### ✨ Features
 - **CI/CD Pipeline**: GitHub Actions completamente automatizzata
 - **Docker Registry**: GitHub Container Registry (GHCR) integrato
 - **Quality Gates**: Test coverage 80%, linting, security scan
 - **Deploy Automation**: Staging/production su Render.com
+- **GitHub Actions v4**: Aggiornate tutte le azioni deprecate
 
 ##### 🔧 Technical Improvements  
 - **Zero Docker config**: Login automatico con GITHUB_TOKEN
 - **Multi-service matrix**: Pipeline pronta per 8 microservizi
 - **Security scanning**: Trivy integration per vulnerability detection
 - **Test automation**: Setup environment completamente automatizzato
+- **Documentation**: README e service docs completamente aggiornati
+
+##### 🐛 Bug Fixes
+- **Deprecation warnings**: Risolte tutte le GitHub Actions deprecate
+- **Docker Registry**: Switch da Docker Hub a GHCR
+- **Pydantic v2**: Migrazione completa con model_config
 
 #### v0.1.0 (14 Agosto 2025) - Initial MVP
 ##### ✨ Features
@@ -236,9 +245,13 @@ Utilizziamo [Semantic Versioning](https://semver.org/) con Git tags per tracciar
 - Python 3.11+
 
 ### 🎯 Roadmap
-- **v0.2.0**: Data Ingestion Service (Google Fit, Apple HealthKit)
-- **v0.3.0**: Calorie Service (BMR/TDEE calculations)
-- **v0.4.0**: GraphQL Gateway (unified API)
+- **v0.2.0**: GraphQL Gateway (API unificata)
+- **v0.3.0**: Data Ingestion Service (Google Fit, Apple HealthKit)
+- **v0.4.0**: Calorie Service (BMR/TDEE calculations)
+- **v0.5.0**: Meal Service (gestione pasti e ricette)
+- **v0.6.0**: Analytics Service (insights e reportistica)
+- **v0.7.0**: Notification Service (notifiche intelligenti)
+- **v0.8.0**: LLM Query Service (AI/LLM integrazione)
 - **v1.0.0**: MVP Complete with real-time features
 
 ---

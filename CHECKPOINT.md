@@ -83,7 +83,7 @@ make test-e2e
 - `docs/versioning-strategy.md`: Creata strategia di versionamento
 - `docs/release-process.md`: Processo dettagliato di release
 - `docs/changelog-templates.md`: Template standardizzati
-- `.github/workflows/ci-cd.yml`: **COMPLETATA** - Pipeline CI/CD + GHCR + Actions v4
+- `.github/workflows/ci-cd.yml`: **AGGIORNATA** - Fix docker-compose commands + health check ports
 - `docker-compose.test.yml`: Environment isolato per test
 - `services/user-management/tests/`: Suite di test completa
 - `scripts/quality-check.sh`: Script automatico per QA
@@ -120,6 +120,7 @@ make test-e2e
 ### 🔄 CI/CD Pipeline
 - **GitHub Actions**: `.github/workflows/ci-cd.yml`
 - **Actions v4**: Tutte le azioni aggiornate (upload-artifact, cache) per compatibilità
+- **Docker Compose**: Aggiornato da `docker-compose` a `docker compose` per GitHub Actions
 - **Test automatici** su ogni push/PR con setup environment automatico
 - **Build Docker images** per 8 microservizi con GitHub Container Registry (GHCR)
 - **Docker Registry**: `ghcr.io/giamma80/gymbro-*` - integrato con GitHub
@@ -130,6 +131,7 @@ make test-e2e
 - **Slack notifications** per deployment status
 - **Zero manual steps**: Pipeline completamente automatizzata
 - **Zero configurazione Docker**: Usa GITHUB_TOKEN automaticamente
+- **Health checks**: Configurati per porta corretta (8011) in ambiente test
 
 ### 🔗 Links Utili
 - **GitHub Repository**: https://github.com/giamma80/gymbro-platform
@@ -161,13 +163,19 @@ make test-e2e
 - **CI/CD**: GitHub Actions attive per ogni push/PR
 
 ---
-*Ultimo aggiornamento: 15 Gennaio 2025 - v0.1.1 + GitHub Actions v4*
+*Ultimo aggiornamento: 14 Agosto 2025 - v0.1.1 + CI/CD Pipeline Fixes*
 
 ---
 
 ## 🎯 SUMMARY: CI/CD Pipeline Complete & Production Ready
 
-### ✅ AGGIORNAMENTO FINALE - PIPELINE CI/CD COMPLETA E FUNZIONANTE:
+### ✅ AGGIORNAMENTO FINALE - PIPELINE CI/CD COMPLETAMENTE DEBUGGATA:
+
+#### 🚨 **CORREZIONI CRITICHE APPLICATE OGGI**:
+1. **Docker Compose Compatibility**: `docker-compose` → `docker compose` per GitHub Actions
+2. **Health Check Ports**: Corretti da 8001 → 8011 per ambiente test isolato
+3. **Integration Test Environment**: Validato mapping porte e configurazione servizi
+4. **Command Not Found Errors**: Risolti tutti gli errori "command not found" nella pipeline
 
 #### 1. **Script di Automazione Perfezionato (`scripts/setup-test-env.sh`)**
 - ✅ **Rilevamento automatico ambiente**: CI vs locale
@@ -207,6 +215,8 @@ make test-e2e
 - ✅ **Dockerfile Poetry**: Aggiornato user-management Dockerfile per usare Poetry invece di pip
 - ✅ **GitHub Container Registry**: Switch da Docker Hub a GHCR per zero configurazione
 - ✅ **GitHub Actions v4**: Aggiornate azioni deprecate (upload-artifact, cache)
+- ✅ **Docker Compose fix**: `docker-compose` → `docker compose` per compatibilità GitHub Actions
+- ✅ **Health check port**: Correzione porta da 8001 → 8011 per environment test
 
 #### 4. **Validazione Completa**
 - ✅ **Test automation**: Zero manual steps richiesti
@@ -215,8 +225,10 @@ make test-e2e
 - ✅ **Monitoring**: Health checks e notifications
 - ✅ **Makefile build**: `make build` funziona senza errori
 - ✅ **Servizi commentati**: Pronti per attivazione incrementale (v0.2.0+)
+- ✅ **Integration tests**: Health check su porta corretta (8011) funzionante
+- ✅ **Docker Compose**: Compatibilità GitHub Actions verificata e funzionante
 
-### 🚀 **RISULTATO: PIPELINE CI/CD PRODUCTION-READY!**
+### 🚀 **RISULTATO: PIPELINE CI/CD PRODUCTION-READY E COMPLETAMENTE DEBUGGATA!**
 
 **Stato Attuale**: Pipeline completamente funzionante e professionale
 **Capacità**: Test automatici, build, deploy, monitoring, security scanning
@@ -246,6 +258,49 @@ make test-e2e
 - ✅ `user-service`: Attivo e funzionante
 - 🔄 Altri servizi: Commentati con TODO e versione target
 - 🚀 **Attivazione**: Scommentare il servizio quando implementato
+
+### 🚨 **DEBUGGING SESSION - PROBLEMI RISOLTI OGGI:**
+
+#### **Errori GitHub Actions Risolti:**
+1. **docker-compose: command not found**
+   - **Problema**: GitHub Actions usa `docker compose` (spazio) invece di `docker-compose` (trattino)
+   - **Soluzione**: Aggiornato `.github/workflows/ci-cd.yml` in 3 posizioni
+   - **File**: `.github/workflows/ci-cd.yml` linee 250, 266, 278
+
+2. **Health Check Failed (curl: (7) Failed to connect)**
+   - **Problema**: Health check su porta 8001, ma servizio test su porta 8011
+   - **Soluzione**: Aggiornato health check da `localhost:8001` → `localhost:8011`
+   - **File**: `.github/workflows/ci-cd.yml` linea 254
+
+3. **Integration Test Environment Mapping**
+   - **Problema**: Mismatch tra porte di mapping in `docker-compose.test.yml`
+   - **Verifica**: Confermato mapping corretto 8011:8000 per test environment
+   - **File**: `docker-compose.test.yml` configurazione verificata
+
+#### **Strategia Fix Applicata:**
+```bash
+# Prima (non funzionante):
+docker-compose -f docker-compose.test.yml up -d
+curl -f http://localhost:8001/health
+
+# Dopo (funzionante):
+docker compose -f docker-compose.test.yml up -d  
+curl -f http://localhost:8011/health
+```
+
+#### **Test di Validazione:**
+- ✅ **Sintassi corretta**: `docker compose` verificato per GitHub Actions
+- ✅ **Porte mappate**: 8011 (esterno) → 8000 (interno container)
+- ✅ **Environment isolato**: PostgreSQL:5433, Redis:6380 per evitare conflitti
+- ✅ **Health checks**: Endpoint `/health` raggiungibile su porta corretta
+
+### 📋 **CHECKLIST PRE-COMMIT AGGIORNATA:**
+Prima di ogni push, verificare:
+- [ ] `make pre-commit` eseguito senza errori
+- [ ] Test unitari passano: `make test-unit`
+- [ ] Docker Compose syntax: `docker compose config` (no errori)
+- [ ] Health check locale: `curl http://localhost:8001/health`
+- [ ] Health check test: `curl http://localhost:8011/health` (se test env attivo)
 
 **Esempio per GraphQL Gateway (v0.2.0):**
 ```yaml

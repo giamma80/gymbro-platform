@@ -4,18 +4,20 @@ Servizio di gestione utenti per la piattaforma GymBro con autenticazione JWT e g
 
 ## 📋 Changelog
 
-### v0.1.1 (15 Gennaio 2025)
+### v0.1.1 (14 Agosto 2025)
 #### 🚀 CI/CD Integration
 - **Docker Registry**: Integrato con GitHub Container Registry
 - **Automated Testing**: Pipeline CI/CD con 14 test passanti
 - **Quality Gates**: Coverage 80%, code formatting, security scan
 - **Container Image**: `ghcr.io/giamma80/gymbro-user-management`
+- **GitHub Actions v4**: Aggiornate tutte le azioni deprecate
 
 #### 🔧 Technical Improvements
 - **Poetry Migration**: Dockerfile aggiornato per usare Poetry
 - **Pydantic v2**: Migrazione completa con model_config
 - **Environment Setup**: Script automatizzato per testing
 - **SQLAlchemy 2.0**: Compatibility fixes per raw queries
+- **Zero Deprecations**: Risolte tutte le deprecation warnings
 
 ### v0.1.0 (14 Agosto 2025)
 #### 🎉 Initial Release

@@ -247,12 +247,12 @@ jobs:
         run: |
           cp .env.example .env
           echo "JWT_SECRET=test-secret-key-for-integration" >> .env
-          docker-compose -f docker-compose.test.yml up -d
+          docker compose -f docker-compose.test.yml up -d
           sleep 30  # Wait for services to start
 
       - name: 🏥 Health Checks
         run: |
-          curl -f http://localhost:8001/health || exit 1
+          curl -f http://localhost:8011/health || exit 1
           # curl -f http://localhost:8000/health || exit 1
 
       - name: 🧪 Run Integration Tests
@@ -263,7 +263,7 @@ jobs:
       - name: 📊 Collect Logs
         if: failure()
         run: |
-          docker-compose -f docker-compose.test.yml logs > integration-test-logs.txt
+          docker compose -f docker-compose.test.yml logs > integration-test-logs.txt
 
       - name: 📁 Upload Logs
         if: failure()
@@ -275,7 +275,7 @@ jobs:
       - name: 🛑 Cleanup
         if: always()
         run: |
-          docker-compose -f docker-compose.test.yml down -v
+          docker compose -f docker-compose.test.yml down -v
 
   # ==========================================
   # 🚀 Deploy to Staging

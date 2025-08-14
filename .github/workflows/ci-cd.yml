@@ -176,9 +176,20 @@ jobs:
     runs-on: ubuntu-latest
     needs: test-user-management
     # Build Docker images for validation (don't push on PRs)
+    # Currently only user-management service is implemented
+    # TODO: Uncomment services as they are developed
     strategy:
       matrix:
-        service: [user-management, graphql-gateway, data-ingestion, calorie-service, meal-service, analytics-service, notification-service, llm-query-service]
+        service: [
+          user-management
+          # graphql-gateway,      # 🔄 TODO: Implement service
+          # data-ingestion,       # 🔄 TODO: Implement service  
+          # calorie-service,      # 🔄 TODO: Implement service
+          # meal-service,         # 🔄 TODO: Implement service
+          # analytics-service,    # 🔄 TODO: Implement service
+          # notification-service, # 🔄 TODO: Implement service
+          # llm-query-service     # 🔄 TODO: Implement service
+        ]
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4

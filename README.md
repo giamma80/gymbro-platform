@@ -168,6 +168,47 @@ curl http://localhost:8000/graphql
 4. Push branch (`git push origin feature/AmazingFeature`)
 5. Apri Pull Request
 
+## 🏷️ Versioning & Releases
+
+Utilizziamo [Semantic Versioning](https://semver.org/) con Git tags per tracciare le release.
+
+### 📋 Changelog
+
+#### v0.1.0 (14 Agosto 2025) - Initial MVP
+##### ✨ Features
+- **User Management Service**: Registrazione, login, autenticazione JWT completa
+- **Database Setup**: PostgreSQL con migrazioni automatiche
+- **Environment Management**: Configurazione centralizzata per sviluppo
+
+##### 🔧 Technical Improvements
+- FastAPI framework con supporto async
+- Pydantic settings per environment variables  
+- Docker Compose per ambiente di sviluppo
+- Makefile con comandi standardizzati
+
+##### 🐛 Bug Fixes
+- Risolto conflitto Pydantic Config vs model_config
+- Sentry disabilitato per sviluppo locale
+- Environment variables loading ottimizzato
+
+##### 📊 Performance  
+- Endpoint response time <200ms
+- Database connection pooling attivo
+- Health checks implementati
+
+##### 🔗 Compatibility
+- PostgreSQL 15+
+- Redis 7+
+- Python 3.11+
+
+### 🎯 Roadmap
+- **v0.2.0**: Data Ingestion Service (Google Fit, Apple HealthKit)
+- **v0.3.0**: Calorie Service (BMR/TDEE calculations)
+- **v0.4.0**: GraphQL Gateway (unified API)
+- **v1.0.0**: MVP Complete with real-time features
+
+---
+
 ## 📄 License
 Distributed under the MIT License. See `LICENSE` for more information.
 

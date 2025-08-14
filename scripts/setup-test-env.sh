@@ -135,10 +135,11 @@ if [ "${CI}" = "true" ] || [ "${GITHUB_ACTIONS}" = "true" ]; then
     if poetry run python -c "
 import asyncio
 from database import engine
+from sqlalchemy import text
 async def test_db():
     try:
         async with engine.begin() as conn:
-            result = await conn.execute('SELECT 1')
+            result = await conn.execute(text('SELECT 1'))
             print('✅ Database connection test passed!')
     except Exception as e:
         print(f'❌ Database test failed: {e}')

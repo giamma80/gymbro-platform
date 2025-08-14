@@ -28,39 +28,43 @@ class Settings(BaseSettings):
     # ==========================================
     APP_NAME: str = "GymBro User Management"
     APP_VERSION: str = "1.0.0"
-    DEBUG: bool = Field(default=False, env="DEBUG")
-    ENVIRONMENT: str = Field(default="development", env="ENVIRONMENT")
+    DEBUG: bool = Field(default=False, description="Debug mode")
+    ENVIRONMENT: str = Field(default="development", description="Environment")
 
     # ==========================================
     # 🗄️ Database Settings
     # ==========================================
-    DATABASE_URL: str = Field(default="", env="DATABASE_URL")
-    DB_ECHO: bool = Field(default=False, env="DB_ECHO")
+    DATABASE_URL: str = Field(default="", description="Database URL")
+    DB_ECHO: bool = Field(default=False, description="Database echo")
 
     # ==========================================
     # 🔐 Security Settings
     # ==========================================
-    JWT_SECRET: str = Field(default="test-secret", env="JWT_SECRET")
-    JWT_ALGORITHM: str = Field(default="HS256", env="JWT_ALGORITHM")
+    JWT_SECRET: str = Field(default="test-secret", description="JWT Secret")
+    JWT_ALGORITHM: str = Field(default="HS256", description="JWT Algorithm")
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(
-        default=15, env="JWT_ACCESS_TOKEN_EXPIRE_MINUTES"
+        default=15, description="JWT Access token expire minutes"
     )
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = Field(
-        default=30, env="JWT_REFRESH_TOKEN_EXPIRE_DAYS"
+        default=30, description="JWT Refresh token expire days"
     )
 
     # ==========================================
     # 🏢 Supabase Settings (FREE TIER)
     # ==========================================
-    SUPABASE_URL: str = Field(default="", env="SUPABASE_URL")
-    SUPABASE_KEY: str = Field(default="", env="SUPABASE_KEY")
-    SUPABASE_SERVICE_ROLE_KEY: str = Field(default="", env="SUPABASE_SERVICE_ROLE_KEY")
+    SUPABASE_URL: str = Field(default="", description="Supabase URL")
+    SUPABASE_KEY: str = Field(default="", description="Supabase Key")
+    SUPABASE_SERVICE_ROLE_KEY: str = Field(
+        default="", description="Supabase Service Role Key"
+    )
 
     # ==========================================
     # 🔄 Redis Settings
     # ==========================================
-    REDIS_URL: str = Field(default="redis://localhost:6379", env="REDIS_URL")
-    CACHE_TTL: int = Field(default=3600, env="CACHE_TTL")  # 1 hour
+    REDIS_URL: str = Field(
+        default="redis://localhost:6379", description="Redis URL"
+    )
+    CACHE_TTL: int = Field(default=3600, description="Cache TTL")  # 1 hour
 
     # ==========================================
     # 🌐 CORS & Security
@@ -71,46 +75,50 @@ class Settings(BaseSettings):
             "http://localhost:5173",
             "http://localhost:8080",
         ],
-        env="CORS_ORIGINS",
+        description="CORS Origins",
     )
     ALLOWED_HOSTS: List[str] = Field(
-        default=["localhost", "127.0.0.1"], env="ALLOWED_HOSTS"
+        default=["localhost", "127.0.0.1"], description="Allowed Hosts"
     )
 
     # ==========================================
     # 📊 Monitoring Settings
     # ==========================================
-    SENTRY_DSN: str = Field(default="", env="SENTRY_DSN")
-    LOG_LEVEL: str = Field(default="INFO", env="LOG_LEVEL")
+    SENTRY_DSN: str = Field(default="", description="Sentry DSN")
+    LOG_LEVEL: str = Field(default="INFO", description="Log Level")
 
     # ==========================================
     # 🎯 Rate Limiting
     # ==========================================
     RATE_LIMIT_REQUESTS_PER_MINUTE: int = Field(
-        default=60, env="RATE_LIMIT_REQUESTS_PER_MINUTE"
+        default=60, description="Rate limit requests per minute"
     )
-    RATE_LIMIT_BURST: int = Field(default=10, env="RATE_LIMIT_BURST")
+    RATE_LIMIT_BURST: int = Field(default=10, description="Rate limit burst")
 
     # ==========================================
     # 🔄 Background Tasks
     # ==========================================
     CELERY_BROKER_URL: str = Field(
-        default="redis://localhost:6379/0", env="CELERY_BROKER_URL"
+        default="redis://localhost:6379/0", description="Celery Broker URL"
     )
     CELERY_RESULT_BACKEND: str = Field(
-        default="redis://localhost:6379/0", env="CELERY_RESULT_BACKEND"
+        default="redis://localhost:6379/0", description="Celery Result Backend"
     )
 
     # ==========================================
     # 📧 Email Settings (SendGrid FREE)
     # ==========================================
-    SENDGRID_API_KEY: str = Field(default="", env="SENDGRID_API_KEY")
-    FROM_EMAIL: str = Field(default="noreply@gymbro.app", env="FROM_EMAIL")
+    SENDGRID_API_KEY: str = Field(default="", description="SendGrid API Key")
+    FROM_EMAIL: str = Field(
+        default="noreply@gymbro.app", description="From Email"
+    )
 
     # ==========================================
     # 🚩 Feature Flags
     # ==========================================
-    FLAGSMITH_ENVIRONMENT_KEY: str = Field(default="", env="FLAGSMITH_ENVIRONMENT_KEY")
+    FLAGSMITH_ENVIRONMENT_KEY: str = Field(
+        default="", description="Flagsmith Environment Key"
+    )
 
 
 # Istanza globale delle settings

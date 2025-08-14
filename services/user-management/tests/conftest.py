@@ -1,34 +1,39 @@
 # Test configuration
 import asyncio
-
+import os
 import pytest
+from unittest.mock import patch
 from fastapi.testclient import TestClient
 
-from main import app
+# Set environment variables BEFORE any imports
+os.environ.update({
+    "DATABASE_URL": "postgresql://postgres:postgres123@localhost:5432/gymbro_test_db",
+    "REDIS_URL": "redis://localhost:6379",
+    "JWT_SECRET": "test-secret-key-for-ci",
+    "ENVIRONMENT": "test",
+    "DEBUG": "true",
+})
 
-# Configure async testing
+# Configure pytest for asyncio
 pytest_plugins = ("pytest_asyncio",)
 
 
 @pytest.fixture(scope="session")
 def event_loop():
     """Create an instance of the default event loop for the test session."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
+    policy = asyncio.get_event_loop_policy()
+    loop = policy.new_event_loop()
     yield loop
     loop.close()
 
 
 @pytest.fixture
-async def db_session():
-    """Create a test database session."""
-    # In a real implementation, you would create a test database
-    # For now, this is a placeholder
-    yield None
-
-
-@pytest.fixture
 def client():
-    """Create a test client."""
+    """Create a test client with proper environment setup."""
+    # Import app after env setup to ensure correct config loading
+    from main import app
+    
+    # Use TestClient with explicit loop handling
     with TestClient(app) as test_client:
         yield test_client
 

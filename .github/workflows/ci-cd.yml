@@ -127,30 +127,28 @@ jobs:
       - name: 📦 Install Dependencies
         working-directory: ./services/user-management
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
-
-      - name: 🔧 Setup Environment
-        working-directory: ./services/user-management
         run: |
-          cp .env.example .env
-          echo "DATABASE_URL=postgresql://postgres:postgres123@localhost:5432/gymbro_test_db" >> .env
-          echo "REDIS_URL=redis://localhost:6379" >> .env
-          echo "JWT_SECRET=test-secret-key-for-ci" >> .env
+          poetry install --no-interaction
 
-      - name: 🗄️ Run Database Migrations
-        working-directory: ./services/user-management
+      - name: 🔧 Setup Test Environment
         run: |
-          # TODO: Add alembic migrations
-          echo "Running database migrations..."
-
-      - name: 🧪 Run Tests
-        working-directory: ./services/user-management
-        run: |
-          poetry run pytest tests/ -v --cov=app --cov-report=xml --cov-report=html
+          # Make sure script is executable
+          chmod +x scripts/setup-test-env.sh
+          # Install PostgreSQL client for pg_isready
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          # Run automated test setup
+          ./scripts/setup-test-env.sh
         env:
           DATABASE_URL: postgresql://postgres:postgres123@localhost:5432/gymbro_test_db
           REDIS_URL: redis://localhost:6379
           JWT_SECRET: test-secret-key-for-ci
+
+      - name: 🧪 Run Tests
+        working-directory: ./services/user-management
+        run: |
+          # Load test environment
+          export $(cat .env.test | xargs)
+          poetry run pytest tests/ -v --cov=. --cov-report=xml --cov-report=html --cov-report=term-missing
 
       - name: 📊 Upload Coverage Reports
         uses: codecov/codecov-action@v3

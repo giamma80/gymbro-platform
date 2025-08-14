@@ -158,9 +158,20 @@ make test-e2e
 - ✅ **Test di validazione**: Import app e database connectivity con `text()` wrapper
 - ✅ **Gestione errori robusti**: Exit codes e messaggi informativi
 
-#### 2. **Pipeline CI/CD Production-Ready**
+#### 2. **Pipeline CI/CD Production-Ready & Scalable**
 - ✅ **GitHub Actions corretta**: Fix job dependencies e error handling
-- ✅ **Docker build funzionante**: Graceful fallback quando secrets non configurati
+- ✅ **Docker build strategico**: Solo servizi implementati (user-management)
+- ✅ **Servizi commentati**: Pronti per attivazione incrementale via uncommenting
+- ✅ **Deploy automation**: Render.com integration con proper error handling
+- ✅ **Secrets management**: Optional secrets con continue-on-error
+- ✅ **Integration tests**: Framework completo con health checks
+- ✅ **Security scanning**: Trivy integration per vulnerability detection
+
+#### 3. **Strategia Servizi Microservizi**
+- ✅ **user-management**: Attivo e completamente testato (14/14 test)
+- 🔄 **Altri 7 servizi**: Commentati in CI/CD, pronti per attivazione
+- 📋 **Roadmap chiara**: Ogni servizio può essere attivato decommentando una riga
+- 🚀 **Zero refactoring**: Pipeline pronta per scaling orizzontale
 - ✅ **Deploy automation**: Render.com integration con proper error handling
 - ✅ **Secrets management**: Optional secrets con continue-on-error
 - ✅ **Integration tests**: Framework completo con health checks
@@ -269,3 +280,60 @@ make pre-commit  # Obbligatorio prima di ogni commit
 
 ### 🚀 RISULTATO FINALE:
 **Il GymBro Platform è ora completamente protetto da regressioni con una pipeline CI/CD professionale che impedisce modifiche non testate di raggiungere la produzione.**
+
+## 🎯 STRATEGIA MICROSERVIZI: Attivazione Incrementale
+
+### 📋 **Come Attivare Nuovi Servizi nella Pipeline**
+
+Quando implementi un nuovo servizio, segui questi passi:
+
+#### 1. **Implementa il Servizio**
+```bash
+# Esempio per graphql-gateway
+cd services/graphql-gateway
+# ... sviluppa il servizio con Dockerfile, test, etc.
+```
+
+#### 2. **Attiva nella Pipeline CI/CD**
+Nel file `.github/workflows/ci-cd.yml`, decommentare il servizio:
+```yaml
+strategy:
+  matrix:
+    service: [
+      user-management,
+      graphql-gateway,      # ✅ Decommentato!
+      # data-ingestion,     # 🔄 TODO: Implement service  
+      # calorie-service,    # 🔄 TODO: Implement service
+      # ... altri servizi
+    ]
+```
+
+#### 3. **Aggiorna Documentazione**
+Aggiorna questo CHECKPOINT.md spostando il servizio da "🔄 TODO" a "✅ Attivo".
+
+### 📊 **Stato Servizi**
+
+#### ✅ **Servizi Attivi**
+- **user-management**: Completo con 14 test, Docker, CI/CD
+
+#### 🔄 **Servizi Pronti per Attivazione**
+- **graphql-gateway**: Gateway GraphQL per API unificata
+- **data-ingestion**: Ingestion dati da wearables e app
+- **calorie-service**: Calcolo calorie e macro
+- **meal-service**: Gestione pasti e ricette
+- **analytics-service**: Analytics e reportistica
+- **notification-service**: Notifiche push e email
+- **llm-query-service**: AI/LLM per consigli personalizzati
+
+### 🎯 **Roadmap Implementazione**
+```
+v0.1.0 ✅ User Management (COMPLETATO)
+v0.2.0 🔄 GraphQL Gateway (PROSSIMO)
+v0.3.0 🔄 Data Ingestion
+v0.4.0 🔄 Calorie Service
+v0.5.0 🔄 Meal Service
+v0.6.0 🔄 Analytics Service
+v0.7.0 🔄 Notification Service
+v0.8.0 🔄 LLM Query Service
+v1.0.0 🚀 MVP COMPLETO
+```

@@ -5,18 +5,16 @@ Test per API endpoints
 import json
 
 import pytest
-from fastapi.testclient import TestClient
-from httpx import AsyncClient
-
-from main import app
 
 
 class TestHealthEndpoints:
     """Test per endpoint di health check."""
 
-    def test_health_check(self, client):
+    @pytest.mark.asyncio
+    async @pytest.mark.asyncio
+ async def test_health_check(self, client):
         """Test health check endpoint."""
-        response = client.get("/health")
+        response = await client.get("/health")
         assert response.status_code == 200
 
         data = response.json()
@@ -25,9 +23,11 @@ class TestHealthEndpoints:
         assert "timestamp" in data
         assert "version" in data
 
-    def test_readiness_check(self, client):
+    @pytest.mark.asyncio
+    async @pytest.mark.asyncio
+ async def test_readiness_check(self, client):
         """Test readiness endpoint."""
-        response = client.get("/ready")
+        response = await client.get("/ready")
         assert response.status_code == 200
 
         data = response.json()
@@ -38,9 +38,11 @@ class TestHealthEndpoints:
 class TestAuthenticationEndpoints:
     """Test per endpoint di autenticazione."""
 
-    def test_register_user_success(self, client, sample_user_data):
+    @pytest.mark.asyncio
+    async @pytest.mark.asyncio
+ async def test_register_user_success(self, client, sample_user_data):
         """Test successful user registration."""
-        response = client.post("/auth/register", json=sample_user_data)
+        response = await client.post("/auth/register", json=sample_user_data)
         assert response.status_code == 201
 
         data = response.json()
@@ -48,39 +50,51 @@ class TestAuthenticationEndpoints:
         assert "user_id" in data
         assert data["message"] == "User registered successfully"
 
-    def test_register_user_duplicate_email(self, client, sample_user_data):
+    @pytest.mark.asyncio
+
+
+    async def test_register_user_duplicate_email(self, client, sample_user_data):
         """Test registration with duplicate email."""
         # First registration
-        response = client.post("/auth/register", json=sample_user_data)
+        response = await client.post("/auth/register", json=sample_user_data)
         assert response.status_code == 201
 
         # Second registration with same email
-        response = client.post("/auth/register", json=sample_user_data)
+        response = await client.post("/auth/register", json=sample_user_data)
         assert response.status_code == 400
 
         data = response.json()
         assert "detail" in data
         assert "already exists" in data["detail"].lower()
 
-    def test_register_user_invalid_email(self, client, sample_user_data):
+    @pytest.mark.asyncio
+
+
+    async def test_register_user_invalid_email(self, client, sample_user_data):
         """Test registration with invalid email."""
         sample_user_data["email"] = "invalid-email"
 
-        response = client.post("/auth/register", json=sample_user_data)
+        response = await client.post("/auth/register", json=sample_user_data)
         assert response.status_code == 422  # Validation error
 
-    def test_register_user_weak_password(self, client, sample_user_data):
+    @pytest.mark.asyncio
+
+
+    async def test_register_user_weak_password(self, client, sample_user_data):
         """Test registration with weak password."""
         sample_user_data["password"] = "weak"
 
-        response = client.post("/auth/register", json=sample_user_data)
+        response = await client.post("/auth/register", json=sample_user_data)
         assert response.status_code == 400
 
         data = response.json()
         assert "detail" in data
         assert "password" in data["detail"].lower()
 
-    def test_login_success(self, client, sample_user_data):
+    @pytest.mark.asyncio
+
+
+    async def test_login_success(self, client, sample_user_data):
         """Test successful login."""
         # Register user first
         client.post("/auth/register", json=sample_user_data)
@@ -90,7 +104,7 @@ class TestAuthenticationEndpoints:
             "email": sample_user_data["email"],
             "password": sample_user_data["password"],
         }
-        response = client.post("/auth/login", json=login_data)
+        response = await client.post("/auth/login", json=login_data)
         assert response.status_code == 200
 
         data = response.json()
@@ -98,35 +112,44 @@ class TestAuthenticationEndpoints:
         assert "token_type" in data
         assert data["token_type"] == "bearer"
 
-    def test_login_invalid_credentials(self, client, sample_user_data):
+    @pytest.mark.asyncio
+
+
+    async def test_login_invalid_credentials(self, client, sample_user_data):
         """Test login with invalid credentials."""
         # Register user first
         client.post("/auth/register", json=sample_user_data)
 
         # Login with wrong password
         login_data = {"email": sample_user_data["email"], "password": "wrong_password"}
-        response = client.post("/auth/login", json=login_data)
+        response = await client.post("/auth/login", json=login_data)
         assert response.status_code == 401
 
         data = response.json()
         assert "detail" in data
 
-    def test_login_nonexistent_user(self, client):
+    @pytest.mark.asyncio
+
+
+    async def test_login_nonexistent_user(self, client):
         """Test login with non-existent user."""
         login_data = {
             "email": "nonexistent@example.com",
             "password": "SomePassword123!",
         }
-        response = client.post("/auth/login", json=login_data)
+        response = await client.post("/auth/login", json=login_data)
         assert response.status_code == 401
 
 
 class TestUserProfileEndpoints:
     """Test per endpoint del profilo utente."""
 
-    def test_get_profile_success(self, client, auth_headers):
+    @pytest.mark.asyncio
+
+
+    async def test_get_profile_success(self, client, auth_headers):
         """Test successful profile retrieval."""
-        response = client.get("/users/profile", headers=auth_headers)
+        response = await client.get("/users/profile", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -135,18 +158,27 @@ class TestUserProfileEndpoints:
         assert "last_name" in data
         assert "user_id" in data
 
-    def test_get_profile_unauthorized(self, client):
+    @pytest.mark.asyncio
+
+
+    async def test_get_profile_unauthorized(self, client):
         """Test profile retrieval without authentication."""
-        response = client.get("/users/profile")
+        response = await client.get("/users/profile")
         assert response.status_code == 401
 
-    def test_get_profile_invalid_token(self, client):
+    @pytest.mark.asyncio
+
+
+    async def test_get_profile_invalid_token(self, client):
         """Test profile retrieval with invalid token."""
         headers = {"Authorization": "Bearer invalid_token"}
-        response = client.get("/users/profile", headers=headers)
+        response = await client.get("/users/profile", headers=headers)
         assert response.status_code == 401
 
-    def test_update_profile_success(self, client, auth_headers):
+    @pytest.mark.asyncio
+
+
+    async def test_update_profile_success(self, client, auth_headers):
         """Test successful profile update."""
         update_data = {
             "first_name": "Updated",
@@ -155,7 +187,7 @@ class TestUserProfileEndpoints:
             "weight_kg": 80.0,
         }
 
-        response = client.put("/users/profile", json=update_data, headers=auth_headers)
+        response = await client.put("/users/profile", json=update_data, headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -163,34 +195,46 @@ class TestUserProfileEndpoints:
         assert data["last_name"] == "Name"
         assert data["height_cm"] == 185
 
-    def test_update_profile_unauthorized(self, client):
+    @pytest.mark.asyncio
+
+
+    async def test_update_profile_unauthorized(self, client):
         """Test profile update without authentication."""
         update_data = {"first_name": "Updated"}
 
-        response = client.put("/users/profile", json=update_data)
+        response = await client.put("/users/profile", json=update_data)
         assert response.status_code == 401
 
-    def test_delete_account_success(self, client, auth_headers):
+    @pytest.mark.asyncio
+
+
+    async def test_delete_account_success(self, client, auth_headers):
         """Test successful account deletion."""
-        response = client.delete("/users/account", headers=auth_headers)
+        response = await client.delete("/users/account", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
         assert "message" in data
         assert "deleted" in data["message"].lower()
 
-    def test_delete_account_unauthorized(self, client):
+    @pytest.mark.asyncio
+
+
+    async def test_delete_account_unauthorized(self, client):
         """Test account deletion without authentication."""
-        response = client.delete("/users/account")
+        response = await client.delete("/users/account")
         assert response.status_code == 401
 
 
 class TestUserPreferencesEndpoints:
     """Test per endpoint delle preferenze utente."""
 
-    def test_get_preferences_success(self, client, auth_headers):
+    @pytest.mark.asyncio
+
+
+    async def test_get_preferences_success(self, client, auth_headers):
         """Test successful preferences retrieval."""
-        response = client.get("/users/preferences", headers=auth_headers)
+        response = await client.get("/users/preferences", headers=auth_headers)
         assert response.status_code == 200
 
         data = response.json()
@@ -198,7 +242,10 @@ class TestUserPreferencesEndpoints:
         assert "language" in data
         assert "push_notifications" in data
 
-    def test_update_preferences_success(self, client, auth_headers):
+    @pytest.mark.asyncio
+
+
+    async def test_update_preferences_success(self, client, auth_headers):
         """Test successful preferences update."""
         preferences_data = {
             "timezone": "Europe/Rome",
@@ -207,7 +254,7 @@ class TestUserPreferencesEndpoints:
             "email_notifications": True,
         }
 
-        response = client.put(
+        response = await client.put(
             "/users/preferences", json=preferences_data, headers=auth_headers
         )
         assert response.status_code == 200
@@ -217,11 +264,14 @@ class TestUserPreferencesEndpoints:
         assert data["language"] == "en"
         assert data["push_notifications"] is False
 
-    def test_update_preferences_invalid_timezone(self, client, auth_headers):
+    @pytest.mark.asyncio
+
+
+    async def test_update_preferences_invalid_timezone(self, client, auth_headers):
         """Test preferences update with invalid timezone."""
         preferences_data = {"timezone": "Invalid/Timezone"}
 
-        response = client.put(
+        response = await client.put(
             "/users/preferences", json=preferences_data, headers=auth_headers
         )
         assert response.status_code == 400
@@ -231,10 +281,13 @@ class TestUserPreferencesEndpoints:
 class TestIntegrationScenarios:
     """Test di integrazione end-to-end."""
 
-    def test_complete_user_journey(self, client, sample_user_data):
+    @pytest.mark.asyncio
+
+
+    async def test_complete_user_journey(self, client, sample_user_data):
         """Test complete user journey from registration to deletion."""
         # 1. Register
-        response = client.post("/auth/register", json=sample_user_data)
+        response = await client.post("/auth/register", json=sample_user_data)
         assert response.status_code == 201
 
         # 2. Login
@@ -242,30 +295,33 @@ class TestIntegrationScenarios:
             "email": sample_user_data["email"],
             "password": sample_user_data["password"],
         }
-        response = client.post("/auth/login", json=login_data)
+        response = await client.post("/auth/login", json=login_data)
         assert response.status_code == 200
         token = response.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
 
         # 3. Get profile
-        response = client.get("/users/profile", headers=headers)
+        response = await client.get("/users/profile", headers=headers)
         assert response.status_code == 200
 
         # 4. Update profile
         update_data = {"first_name": "Updated"}
-        response = client.put("/users/profile", json=update_data, headers=headers)
+        response = await client.put("/users/profile", json=update_data, headers=headers)
         assert response.status_code == 200
 
         # 5. Update preferences
         prefs_data = {"language": "en", "push_notifications": False}
-        response = client.put("/users/preferences", json=prefs_data, headers=headers)
+        response = await client.put("/users/preferences", json=prefs_data, headers=headers)
         assert response.status_code == 200
 
         # 6. Delete account
-        response = client.delete("/users/account", headers=headers)
+        response = await client.delete("/users/account", headers=headers)
         assert response.status_code == 200
 
-    def test_multiple_users_registration(self, client):
+    @pytest.mark.asyncio
+
+
+    async def test_multiple_users_registration(self, client):
         """Test registration of multiple users."""
         users_data = [
             {
@@ -283,7 +339,7 @@ class TestIntegrationScenarios:
         ]
 
         for user_data in users_data:
-            response = client.post("/auth/register", json=user_data)
+            response = await client.post("/auth/register", json=user_data)
             assert response.status_code == 201
 
 
@@ -291,7 +347,10 @@ class TestIntegrationScenarios:
 class TestPerformanceTests:
     """Test di performance."""
 
-    def test_concurrent_registrations(self, client):
+    @pytest.mark.asyncio
+
+
+    async def test_concurrent_registrations(self, client):
         """Test registrazioni concorrenti."""
         import threading
         import time
@@ -311,7 +370,7 @@ class TestPerformanceTests:
                 "activity_level": "moderately_active",
             }
             start_time = time.time()
-            response = client.post("/auth/register", json=user_data)
+            response = await client.post("/auth/register", json=user_data)
             end_time = time.time()
 
             results.append(

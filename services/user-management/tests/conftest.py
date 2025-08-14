@@ -1,21 +1,26 @@
 # Test configuration
 import asyncio
 import os
-from unittest.mock import patch
+import sys
+from pathlib import Path
 
 import pytest
-from fastapi.testclient import TestClient
+import httpx
 
 # Set environment variables BEFORE any imports
 os.environ.update(
     {
-        "DATABASE_URL": "postgresql://postgres:postgres123@localhost:5432/gymbro_test_db",
+        "DATABASE_URL": "sqlite:///./test.db",
         "REDIS_URL": "redis://localhost:6379",
         "JWT_SECRET": "test-secret-key-for-ci",
         "ENVIRONMENT": "test",
         "DEBUG": "true",
     }
 )
+
+# Add current directory to Python path for imports
+current_dir = Path(__file__).parent
+sys.path.insert(0, str(current_dir))
 
 # Configure pytest for asyncio
 pytest_plugins = ("pytest_asyncio",)
@@ -24,25 +29,26 @@ pytest_plugins = ("pytest_asyncio",)
 @pytest.fixture(scope="session")
 def event_loop():
     """Create an instance of the default event loop for the test session."""
-    policy = asyncio.get_event_loop_policy()
-    loop = policy.new_event_loop()
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
     yield loop
-    loop.close()
 
 
 @pytest.fixture(scope="function")
-def client():
-    """Create a test client with proper environment setup."""
-    # Set test database to avoid PostgreSQL connection issues in CI
-    os.environ["DATABASE_URL"] = "sqlite:///./test.db"
-    os.environ["ENVIRONMENT"] = "test"
+async def client():
+    """Create an async test client."""
+    # Ensure clean import of app
+    import importlib
+    import main
+    importlib.reload(main)
     
-    # Import app after env setup to ensure correct config loading
-    from main import app
+    app = main.app
     
-    # Create test client
-    with TestClient(app) as test_client:
-        yield test_client
+    async with httpx.AsyncClient(app=app, base_url="http://test") as ac:
+        yield ac
 
 
 @pytest.fixture

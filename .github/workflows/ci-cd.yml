@@ -147,8 +147,8 @@ jobs:
       - name: 🧪 Run Tests
         working-directory: ./services/user-management
         run: |
-          # Load test environment
-          export $(cat .env.test | xargs)
+          # Load test environment (filter comments and empty lines)
+          export $(cat .env.test | grep -v '^#' | grep -v '^$' | xargs)
           poetry run pytest tests/ -v --cov=. --cov-report=xml --cov-report=html --cov-report=term-missing
 
       - name: 📊 Upload Coverage Reports

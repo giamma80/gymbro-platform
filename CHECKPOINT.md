@@ -118,10 +118,17 @@ make test-e2e
 - **Test coverage** reporting con Codecov
 
 ### 🔗 Links Utili
+- **GitHub Repository**: https://github.com/giamma80/gymbro-platform
 - **API Docs**: http://localhost:8001/docs
 - **Health Check**: http://localhost:8001/health
 - **Versioning Docs**: `docs/versioning-strategy.md`
 - **Release Process**: `docs/release-process.md`
+
+### 📦 Repository Setup
+- **Git Remote**: Configurato per GitHub
+- **Branch Main**: Protetto con CI/CD
+- **Tags**: v0.1.0 con test infrastructure completa
+- **CI/CD**: GitHub Actions attive per ogni push/PR
 
 ---
 *Ultimo aggiornamento: 14 Agosto 2025 - v0.1.0*

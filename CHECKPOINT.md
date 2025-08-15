@@ -4,16 +4,18 @@
 ## 📍 Stato: User Management Service LIVE su Render.com ✅
 
 ### 🚀 **DEPLOYMENT COMPLETATO CON SUCCESSO!**
-**URL LIVE**: https://gymbro-user-service.onrender.com
-**Status**: 🟢 OPERATIVO (100% Funzionante)
-**Costo**: $0/mese (PostgreSQL + Web Service gratuiti)
+**USER MANAGEMENT**: https://gymbro-user-service.onrender.com ✅ LIVE
+**GRAPHQL GATEWAY**: https://gymbro-graphql-gateway.onrender.com 🚀 DEPLOYING
+**Status**: 🟢 User Management OPERATIVO | 🔄 GraphQL Gateway Building
+**Costo**: $0/mese (PostgreSQL + 2x Web Services gratuiti)
 
-### 🏷️ Versione Corrente: v0.1.3-render-live
+### 🏷️ Versione Corrente: v0.2.0-graphql-gateway-deploying
 
 ### ✅ Servizi Funzionanti
-- **Render.com Production**: https://gymbro-user-service.onrender.com
+- **User Management**: https://gymbro-user-service.onrender.com ✅ LIVE
+- **GraphQL Gateway**: https://gymbro-graphql-gateway.onrender.com 🚀 DEPLOYING
 - **PostgreSQL Managed**: Database PostgreSQL Render (gratuito)
-- **Local Development**: `localhost:8001` (con cache in-memory)
+- **Local Development**: `localhost:8001` (User) + `localhost:4000` (GraphQL)
 
 ---
 
@@ -191,22 +193,23 @@ curl https://gymbro-user-service.onrender.com/health/detailed
 
 ---
 
-## 🏁 **RISULTATO FINALE: DEPLOYMENT SUCCESS!**
+## 🏁 **RISULTATO FINALE: DUAL SERVICE DEPLOYMENT!**
 
-### 🎉 **User Management Service LIVE**:
-- ✅ **Health Check**: https://gymbro-user-service.onrender.com/health
-- ✅ **API Docs**: https://gymbro-user-service.onrender.com/docs  
+### 🎉 **Multi-Service Platform LIVE**:
+- ✅ **User Management**: https://gymbro-user-service.onrender.com/health
+- ✅ **User API Docs**: https://gymbro-user-service.onrender.com/docs  
+- 🚀 **GraphQL Gateway**: https://gymbro-graphql-gateway.onrender.com/health (building)
 - ✅ **Database**: PostgreSQL connected e funzionante
-- ✅ **Ping Test**: https://gymbro-user-service.onrender.com/ping
+- ✅ **Ping Tests**: Both services have /ping endpoints
 
 ### 📈 **Performance Metrics**:
-- **Deploy Time**: ~4-6 minuti (ottimizzato)
+- **Deploy Time**: ~4-6 minuti per servizio (ottimizzato)
 - **Response Time**: <200ms per health checks
-- **Uptime**: 100% dopo debugging
-- **Cost**: $0/mese (100% gratuito!)
+- **Uptime**: 100% User Management, GraphQL Gateway building
+- **Cost**: $0/mese (100% gratuito - 2 servizi!)
 
-### 🔄 **Ready for Next Service**:
-Il **GraphQL Gateway v0.2.0** è ora in sviluppo attivo usando il playbook testato!
+### 🔄 **Deploy Strategy Success**:
+Il **GraphQL Gateway v0.2.0** è stato deployato usando la strategia progressiva testata!
 
 **📊 GraphQL Gateway v0.2.0 Progress**:
 - ✅ **Architecture Decision**: TypeScript + Apollo Server vs Python + Strawberry  
@@ -216,9 +219,10 @@ Il **GraphQL Gateway v0.2.0** è ora in sviluppo attivo usando il playbook testa
 - ✅ **Deployment Strategy**: Seguendo playbook User Management Service
 - ✅ **Testing**: Health checks ✅ VALIDATI - Server minimo funzionante
 - ✅ **Root Cause**: Apollo Federation complexity - risolto con deploy incrementale
-- ✅ **Minimal Server Deploy**: 🚀 COMMITTED & PUSHED - Deploy in corso!
+- ✅ **Minimal Server Deploy**: 🚀 COMMITTED & PUSHED - Deploy ACTIVE!
 - ✅ **Deploy Files**: Dockerfile.minimal + render.yaml + minimal-server.js
-- 🔄 **Render.com Deployment**: Waiting for auto-deploy trigger
+- ✅ **Render.com Configuration**: GraphQL Gateway ACTIVATED in main config
+- 🚀 **DEPLOYMENT LIVE**: https://gymbro-graphql-gateway.onrender.com (building...)
 - 🔄 **Apollo Federation**: Da aggiungere incrementalmente post-deploy
 
 **Key Technical Decisions**:

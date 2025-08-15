@@ -216,8 +216,10 @@ Il **GraphQL Gateway v0.2.0** è ora in sviluppo attivo usando il playbook testa
 - ✅ **Deployment Strategy**: Seguendo playbook User Management Service
 - ✅ **Testing**: Health checks ✅ VALIDATI - Server minimo funzionante
 - ✅ **Root Cause**: Apollo Federation complexity - risolto con deploy incrementale
-- 🔄 **Next Step**: Refactor per server base + Apollo graduale
-- 🔄 **CI/CD Integration**: Da attivare dopo refactor completato
+- ✅ **Minimal Server Deploy**: 🚀 COMMITTED & PUSHED - Deploy in corso!
+- ✅ **Deploy Files**: Dockerfile.minimal + render.yaml + minimal-server.js
+- 🔄 **Render.com Deployment**: Waiting for auto-deploy trigger
+- 🔄 **Apollo Federation**: Da aggiungere incrementalmente post-deploy
 
 **Key Technical Decisions**:
 - **Stack Ibrido**: TypeScript Gateway + Python Business Logic Services
@@ -313,7 +315,7 @@ make test-e2e
 ### 🎯 Roadmap Progress
 ✅ **v0.1.3**: Production Deployment su Render.com (completato)
 ✅ **v0.1.2**: Redis Removal & Zero-Cost MVP (completato) 
-🔄 **v0.2.0**: GraphQL Gateway - TypeScript + Apollo Server (80% completo - testing in corso)
+� **v0.2.0**: GraphQL Gateway - Deploy LIVE in corso! (95% completo)
 🔄 **v0.3.0**: Data Ingestion Service
 🔄 **v0.4.0**: Calorie Service
 🔄 **v1.0.0**: MVP Complete

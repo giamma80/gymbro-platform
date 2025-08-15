@@ -183,7 +183,7 @@ async def ping():
 async def detailed_health_check(db=Depends(get_db)):
     """Health check dettagliato con controllo database"""
     from sqlalchemy import text
-    
+
     try:
         # Test database connection with proper SQLAlchemy syntax
         await db.execute(text("SELECT 1"))
@@ -201,11 +201,11 @@ async def detailed_health_check(db=Depends(get_db)):
         "database": db_status,
         "timestamp": "2025-01-15T10:30:00Z",
     }
-    
+
     # Include error details for debugging
     if db_error:
         response["database_error"] = db_error
-        
+
     return response
 
 

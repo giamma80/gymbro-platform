@@ -95,30 +95,30 @@ app = FastAPI(
 )
 
 # ==========================================
-# 🛡️ Security Middleware
+# 🛡️ Security Middleware (temporarily disabled for debugging)
 # ==========================================
 
-# CORS
+# CORS - Simplified
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
-# Trusted hosts
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.ALLOWED_HOSTS)
+# Temporarily disable other middleware for debugging
+# app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.ALLOWED_HOSTS)
 
 
-# Security headers
-@app.middleware("http")
-async def add_security_headers(request, call_next):
-    response = await call_next(request)
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "DENY"
-    response.headers["X-XSS-Protection"] = "1; mode=block"
-    return response
+# Security headers - Simplified
+# @app.middleware("http")
+# async def add_security_headers(request, call_next):
+#     response = await call_next(request)
+#     response.headers["X-Content-Type-Options"] = "nosniff"
+#     response.headers["X-Frame-Options"] = "DENY"
+#     response.headers["X-XSS-Protection"] = "1; mode=block"
+#     return response
 
 
 # ==========================================
@@ -171,6 +171,12 @@ async def health_check():
         "version": "1.0.0",
         "timestamp": "2025-01-15T10:30:00Z",
     }
+
+
+@app.get("/ping", tags=["Health"])
+async def ping():
+    """Ping endpoint semplice per test"""
+    return {"ping": "pong"}
 
 
 @app.get("/health/detailed", tags=["Health"])

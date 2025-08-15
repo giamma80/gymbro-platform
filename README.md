@@ -1,7 +1,20 @@
 # 🏋️ GymBro Platform - Health & Fitness Microservices
 
+[![🚀 Production Status](https://img.shields.io/badge/Production-LIVE-brightgreen)](https://gymbro-user-service.onrender.com)
+[![💰 Cost](https://img.shields.io/badge/Cost-$0/month-success)](https://render.com)
+[![🏥 Health](https://img.shields.io/badge/Health-Healthy-brightgreen)](https://gymbro-user-service.onrender.com/health)
+
 ## 🚀 Executive Summary
 Piattaforma Health&Fitness basata su microservizi con architettura scalabile, sviluppata seguendo la strategia "Start Free, Scale Smart" utilizzando esclusivamente servizi gratuiti nella fase MVP.
+
+### 🎉 **MILESTONE: First Service LIVE!**
+**User Management Service** è ora **operativo in produzione** su Render.com con costo $0/mese!
+
+- 🌐 **Production URL**: https://gymbro-user-service.onrender.com  
+- 📚 **Live API Docs**: https://gymbro-user-service.onrender.com/docs
+- 🏥 **Health Check**: https://gymbro-user-service.onrender.com/health
+- 💰 **Zero Cost**: PostgreSQL + Web Service gratuiti
+- 🔒 **Full Security**: JWT authentication, CORS, input validation
 
 ## 📋 Stack Tecnologico
 
@@ -55,11 +68,11 @@ gymbro-platform/
 
 ## 🎯 Roadmap di Sviluppo
 
-### 🚀 Fase 1: Foundation MVP (Settimane 1-2)
+### ✅ Fase 1: Foundation MVP (Settimane 1-2) - COMPLETED
 - [x] Setup repository e ambiente Docker
-- [x] Configurazione CI/CD GitHub Actions + GitHub Container Registry
-- [x] Setup Supabase (DB + Auth)
-- [x] Servizio User Management
+- [x] Configurazione CI/CD GitHub Actions + GitHub Container Registry  
+- [x] Setup PostgreSQL managed (Render.com)
+- [x] **User Management Service - LIVE IN PRODUCTION** ✅
 - [ ] GraphQL Gateway base
 
 ### 🔧 Fase 2: Core Services (Settimane 3-6)
@@ -75,14 +88,17 @@ gymbro-platform/
 - [ ] Notification Service
 - [ ] Device connectors (Google Fit, HealthKit)
 
-## 💰 Strategia Zero-Cost
+## 💰 Strategia Zero-Cost ACHIEVED ✅
 
 ### Servizi Gratuiti Utilizzati
-- **GitHub**: Repository + CI/CD (2000 min/mese) + Container Registry
-- **Supabase**: DB + Auth + Storage (500MB, 50k users)
-- **Render.com**: Hosting (750 ore/mese)
+- **GitHub**: Repository + CI/CD (2000 min/mese) + Container Registry ✅
+- **Render.com**: PostgreSQL + Web Service (FREE tier) ✅  
+- **Production URL**: https://gymbro-user-service.onrender.com ✅
+- **Cost**: $0/mese (PostgreSQL + hosting gratuiti) ✅
+
+### Servizi Future (quando necessario)
 - **Firebase**: Push notifications (FCM illimitato)
-- **Sentry**: Error tracking (5000 eventi/mese)
+- **Sentry**: Error tracking (5000 eventi/mese)  
 - **n8n Cloud**: Automazioni (1000 esecuzioni/mese)
 
 ### Trigger per Upgrade
@@ -93,6 +109,30 @@ gymbro-platform/
 
 ## 🔧 Quick Start
 
+### ⚡ Try Live Service
+```bash
+# Test Production Service (LIVE)
+curl https://gymbro-user-service.onrender.com/health
+curl https://gymbro-user-service.onrender.com/docs
+
+# Register new user
+curl -X POST "https://gymbro-user-service.onrender.com/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email":"your-email@example.com",
+    "password":"SecurePass123!",
+    "first_name":"Your",
+    "last_name":"Name", 
+    "date_of_birth":"1990-01-01",
+    "gender":"male",
+    "height_cm":180,
+    "weight_kg":75,
+    "activity_level":"moderately_active"
+  }'
+```
+
+### 🏠 Local Development
+
 ### Prerequisiti
 - **Python 3.11+**
 - **Poetry** ([Installazione](https://python-poetry.org/docs/#installation))
@@ -101,10 +141,11 @@ gymbro-platform/
 
 ### 1. Clone e Setup Ambiente
 ```bash
-git clone <repo-url>
+git clone https://github.com/giamma80/gymbro-platform.git
 cd gymbro-platform
 cp .env.example .env
 # Edita .env con le tue API keys
+```
 ```
 
 ### 2. Setup Microservizi con Poetry

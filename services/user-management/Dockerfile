@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
     curl \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 # 👤 Create app user
@@ -24,8 +25,8 @@ RUN useradd --create-home --shell /bin/bash app
 # 📁 Set work directory
 WORKDIR /app
 
-# Install Poetry
-RUN pip install poetry
+# Install Poetry with specific version for stability
+RUN pip install poetry==1.8.3
 
 # Copy Poetry files
 COPY pyproject.toml poetry.lock ./
@@ -33,8 +34,8 @@ COPY pyproject.toml poetry.lock ./
 # Configure Poetry to not create virtual environments (we're already in a container)
 RUN poetry config virtualenvs.create false
 
-# Install dependencies
-RUN poetry install --only=main
+# Install dependencies with verbose output for debugging
+RUN poetry install --only=main --no-dev -v
 
 # 📄 Copy application code
 COPY . .

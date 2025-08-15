@@ -186,17 +186,25 @@ async def detailed_health_check(db=Depends(get_db)):
         # Test database connection
         await db.execute("SELECT 1")
         db_status = "healthy"
+        db_error = None
     except Exception as e:
         logger.error(f"Database health check failed: {e}")
         db_status = "unhealthy"
+        db_error = str(e)
 
-    return {
+    response = {
         "status": "healthy" if db_status == "healthy" else "degraded",
         "service": "user-management",
         "version": "1.0.0",
         "database": db_status,
         "timestamp": "2025-01-15T10:30:00Z",
     }
+    
+    # Include error details for debugging
+    if db_error:
+        response["database_error"] = db_error
+        
+    return response
 
 
 # ==========================================

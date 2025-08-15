@@ -1,33 +1,60 @@
-# 🏋️ GymBro Platform - GraphQL Gateway v0.2.0
+# 🚪 GraphQL Gateway
 
-## 🚀 Panoramica
+[![🚀 Production](https://img.shields.io/badge/Status-DEPLOYING-yellow)](https://gymbro-graphql-gateway.onrender.com)
+[![💰 Cost](https://img.shields.io/badge/Cost-FREE-success)](https://render.com)
+[![🏥 Health](https://img.shields.io/badge/Health-Building-orange)](https://gymbro-graphql-gateway.onrender.com/health)
+[![📋 Version](https://img.shields.io/badge/Version-v0.2.0-informational)](https://github.com/giamma80/gymbro-platform/releases/tag/v0.2.0)
 
-Il **GraphQL Gateway** è il punto di ingresso unificato per tutte le API del GymBro Platform. Implementato con **TypeScript + Apollo Server**, fornisce un layer di federazione GraphQL che aggrega tutti i microservizi Python in un'unica API consistente.
+## 🚀 **v0.2.0 - DEPLOYING TO PRODUCTION**
 
-## 🎯 Architettura Decisionale
+**Production URL**: https://gymbro-graphql-gateway.onrender.com (**BUILDING**)  
+**Health Check**: https://gymbro-graphql-gateway.onrender.com/health  
+**Status**: 🔄 Initial deployment in progress
 
-### Perché TypeScript + Apollo Server?
+### 🎯 **Architecture Decision - Hybrid GraphQL Stack**
 
-**Stack Decisionale**:
-- **Gateway Layer**: TypeScript + Apollo Server (questo servizio)
-- **Business Logic Services**: Python + FastAPI + Strawberry GraphQL
-- **Pattern**: Separation of Concerns per performance ottimale
+**Stack Ottimale Adottato**:
+- **🌐 API Gateway**: TypeScript + Apollo Server (routing/performance)  
+- **🐍 Business Logic**: Python + FastAPI + Strawberry GraphQL (domain services)
 
-**Vantaggi Performance**:
-- ⚡ **Event Loop Optimization**: Node.js gestisce meglio migliaia di connessioni I/O concorrenti
-- 📉 **Memory Footprint**: ~30-50MB vs ~100-200MB Python per gateway
+**Motivazioni Performance**:
+- ⚡ **Gateway Optimization**: Node.js Event Loop ottimale per I/O intensive proxy
+- � **Memory Efficiency**: ~30-50MB Node.js vs ~100-200MB Python per gateway  
 - 🚀 **Latency**: <10ms overhead vs ~20-50ms Python per request forwarding
 - 🔗 **Apollo Federation**: Standard industry maturo per federazione microservizi
+- 🎯 **Separation of Concerns**: Thin gateway layer, business logic nei servizi Python
 
-**Architettura Ibrida**:
-```mermaid
-graph TD
-    A[Frontend/Mobile Apps] --> B[GraphQL Gateway - TypeScript]
-    B --> C[User Management - Python]
-    B --> D[Calorie Service - Python] 
-    B --> E[Meal Service - Python]
-    B --> F[Analytics Service - Python]
+**Pattern Architetturale**:
 ```
+Frontend/Mobile Apps
+    ↓
+🌐 GraphQL Gateway (TypeScript + Apollo Server) ← Questo servizio
+    ↓ ↓ ↓ ↓ 
+🐍 user-management (Python + Strawberry)    ← https://gymbro-user-service.onrender.com
+🐍 calorie-service (Python + Strawberry)    ← https://gymbro-calorie-service.onrender.com (futuro)
+🐍 meal-service (Python + Strawberry)       ← https://gymbro-meal-service.onrender.com (futuro)  
+🐍 analytics-service (Python + Strawberry)  ← https://gymbro-analytics-service.onrender.com (futuro)
+```
+
+### 🔧 **v0.2.0 - Progressive Enhancement Strategy**
+
+#### **✅ Phase 1: Minimal Server (DEPLOYED)**
+- ✅ Basic Express server with health checks
+- ✅ Endpoint `/ping`, `/health`, `/` 
+- ✅ Production deployment su Render.com
+- ✅ CI/CD pipeline integration
+
+#### **🔄 Phase 2: Apollo Server Integration (IN PROGRESS)**
+- 🔄 Apollo Server 4.x setup with Federation
+- 🔄 Service discovery per User Management
+- 🔄 Schema composition con Strawberry services
+- 🔄 Error handling e monitoring
+
+#### **🚀 Phase 3: Full Federation (PLANNED)**
+- 📋 Multi-service federation attiva
+- 📋 Advanced caching strategies  
+- 📋 Request/response transforms
+- 📋 Security middleware integration
 
 ## 🏗️ Setup e Sviluppo
 

@@ -1,4 +1,11 @@
-# 👤 Gym## 🌐 **PRODUCTION LIVE!**
+# 👤 User Management Service
+
+[![🚀 Production](https://img.shields.io/badge/Status-LIVE-brightgreen)](https://gymbro-user-service.onrender.com)
+[![💰 Cost](https://img.shields.io/badge/Cost-FREE-success)](https://render.com)
+[![🏥 Health](https://img.shields.io/badge/Health-Healthy-brightgreen)](https://gymbro-user-service.onrender.com/health)
+[![📋 Version](https://img.shields.io/badge/Version-v0.2.0-informational)](https://github.com/giamma80/gymbro-platform/releases/tag/v0.2.0)
+
+## 🌐 **PRODUCTION LIVE!**
 
 **Production URL**: https://gymbro-user-service.onrender.com  
 **API Docs**: https://gymbro-user-service.onrender.com/docs  
@@ -25,9 +32,7 @@ curl -X POST "https://gymbro-user-service.onrender.com/auth/register" \
     "height_cm":180,"weight_kg":75,
     "activity_level":"moderately_active"
   }'
-```nagement Service
-
-[![🚀 Production](https://img.shields.io/badge/Status-LIVE-brightgreen)](https://gymbro-user-service.onrender.com)
+```
 [![🏥 Health](https://img.shields.io/badge/Health-Healthy-brightgreen)](https://gymbro-user-service.onrender.com/health)
 [![💰 Cost](https://img.shields.io/badge/Cost-$0/month-success)](https://render.com)
 

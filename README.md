@@ -20,12 +20,37 @@ Piattaforma Health&Fitness basata su microservizi con architettura scalabile, sv
 
 ### Backend Services
 - **Framework**: FastAPI (performance elevate, async nativo)
-- **GraphQL**: Strawberry GraphQL 
-- **Database**: PostgreSQL (Supabase)
+- **GraphQL**: Strawberry GraphQL per business logic + Apollo Server per gateway
+- **Database**: PostgreSQL (Render.com managed)
 - **WebSocket**: FastAPI WebSocket + Socket.IO
-- **Auth**: Supabase Auth + JWT
-- **Storage**: Supabase Storage
+- **Auth**: JWT authentication
+- **Storage**: Local/Cloud storage
 - **Dependencies**: Poetry (gestione dipendenze moderna)
+
+### 🎯 **Architettura Ibrida GraphQL - Decisione Strategica**
+
+**Stack Decisionale Adottato**:
+- **🌐 API Gateway**: TypeScript + Apollo Server (routing/performance)
+- **🐍 Business Logic**: Python + FastAPI + Strawberry GraphQL (domain logic)
+
+**Motivazioni Tecniche**:
+- ⚡ **Performance Gateway**: Node.js Event Loop ottimale per I/O intensive proxy
+- 🔗 **Apollo Federation**: Standard industry maturo per federazione microservizi  
+- 📊 **Memory Efficiency**: ~30-50MB Node.js vs ~100-200MB Python per gateway
+- 🚀 **Latency Optimization**: <10ms overhead vs ~20-50ms Python per request forwarding
+- 🎯 **Separation of Concerns**: Gateway thin layer, business logic in Python
+
+**Pattern Architetturale**:
+```
+Frontend/Mobile Apps
+    ↓
+🌐 GraphQL Gateway (TypeScript + Apollo Server)
+    ↓ ↓ ↓ ↓
+🐍 user-management (Python + Strawberry)
+🐍 calorie-service (Python + Strawberry)  
+🐍 meal-service (Python + Strawberry)
+🐍 analytics-service (Python + Strawberry)
+```
 
 ### Automation & AI
 - **Workflow**: n8n (automazioni low-code)
@@ -73,7 +98,8 @@ gymbro-platform/
 - [x] Configurazione CI/CD GitHub Actions + GitHub Container Registry  
 - [x] Setup PostgreSQL managed (Render.com)
 - [x] **User Management Service - LIVE IN PRODUCTION** ✅
-- [ ] GraphQL Gateway base
+- [x] **GraphQL Gateway Architecture Decision** ✅ TypeScript + Apollo Server
+- [ ] GraphQL Gateway Implementation (v0.2.0 - IN PROGRESS)
 
 ### 🔧 Fase 2: Core Services (Settimane 3-6)
 - [ ] Data Ingestion Service

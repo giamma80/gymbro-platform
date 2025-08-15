@@ -1,0 +1,28 @@
+# 🚀 GraphQL Gateway v0.2.0 - Minimal Server Dockerfile
+# Following User Management Service deployment lessons
+
+FROM node:20-alpine
+
+# Create app directory
+WORKDIR /usr/src/app
+
+# Create minimal package.json for Express
+RUN echo '{"name":"graphql-gateway-minimal","version":"0.2.0","main":"minimal-server.js","scripts":{"start":"node minimal-server.js"},"dependencies":{"express":"^4.18.2"}}' > package.json
+
+# Install dependencies
+RUN npm install
+
+# Copy minimal server
+COPY minimal-server.js .
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S gateway -u 1001
+USER gateway
+
+# ✅ CRITICAL: Dynamic PORT binding for Render.com
+# Using ${PORT:-4000} to support Render's dynamic port assignment
+EXPOSE $PORT
+
+# ✅ LESSON LEARNED: Use PORT env var for Render.com compatibility
+CMD node minimal-server.js

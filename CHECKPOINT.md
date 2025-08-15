@@ -206,7 +206,24 @@ curl https://gymbro-user-service.onrender.com/health/detailed
 - **Cost**: $0/mese (100% gratuito!)
 
 ### 🔄 **Ready for Next Service**:
-Il **GraphQL Gateway** può ora essere deployato usando questo playbook testato!
+Il **GraphQL Gateway v0.2.0** è ora in sviluppo attivo usando il playbook testato!
+
+**📊 GraphQL Gateway v0.2.0 Progress**:
+- ✅ **Architecture Decision**: TypeScript + Apollo Server vs Python + Strawberry  
+- ✅ **Project Structure**: package.json, tsconfig.json, Dockerfile completi
+- ✅ **Source Code**: Apollo Server + Express + Health checks implementati
+- ✅ **TypeScript Build**: Compilazione TypeScript riuscita
+- ✅ **Deployment Strategy**: Seguendo playbook User Management Service
+- ✅ **Testing**: Health checks ✅ VALIDATI - Server minimo funzionante
+- ✅ **Root Cause**: Apollo Federation complexity - risolto con deploy incrementale
+- 🔄 **Next Step**: Refactor per server base + Apollo graduale
+- 🔄 **CI/CD Integration**: Da attivare dopo refactor completato
+
+**Key Technical Decisions**:
+- **Stack Ibrido**: TypeScript Gateway + Python Business Logic Services
+- **Apollo Federation**: Standard per federazione microservizi GraphQL
+- **Performance Focus**: Event Loop Node.js per I/O intensivo gateway
+- **Deployment Parity**: Stesso playbook Render.com testato
 
 ---
 
@@ -296,7 +313,7 @@ make test-e2e
 ### 🎯 Roadmap Progress
 ✅ **v0.1.3**: Production Deployment su Render.com (completato)
 ✅ **v0.1.2**: Redis Removal & Zero-Cost MVP (completato) 
-🔄 **v0.2.0**: GraphQL Gateway (prossimo - con playbook testato!)
+🔄 **v0.2.0**: GraphQL Gateway - TypeScript + Apollo Server (80% completo - testing in corso)
 🔄 **v0.3.0**: Data Ingestion Service
 🔄 **v0.4.0**: Calorie Service
 🔄 **v1.0.0**: MVP Complete
@@ -777,10 +794,17 @@ Aggiorna questo CHECKPOINT.md spostando il servizio da "🔄 TODO" a "✅ Attivo
 ### 📊 **Stato Servizi**
 
 #### ✅ **Servizi Attivi**
-- **user-management**: Completo con 14 test, Docker, CI/CD
+- **user-management**: Completo con 14 test, Docker, CI/CD, LIVE su Render.com
+
+#### 🔄 **Servizi in Sviluppo**
+- **graphql-gateway**: TypeScript + Apollo Server (v0.2.0 - 80% completo)
+  - ✅ Architecture decision: Hybrid approach per performance
+  - ✅ Project setup completo (package.json, TypeScript, Docker)
+  - ✅ Apollo Server implementation con health checks
+  - 🔄 Testing e validation in corso
+  - 🔄 Ready per deploy Render.com
 
 #### 🔄 **Servizi Pronti per Attivazione**
-- **graphql-gateway**: Gateway GraphQL per API unificata
 - **data-ingestion**: Ingestion dati da wearables e app
 - **calorie-service**: Calcolo calorie e macro
 - **meal-service**: Gestione pasti e ricette

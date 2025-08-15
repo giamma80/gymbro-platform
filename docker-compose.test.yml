@@ -30,24 +30,24 @@ services:
     networks:
       - test-network
 
+  # ==========================================  
+  # 🔄 Test Redis - REMOVED for MVP (free deployment)
   # ==========================================
-  # 🔄 Test Redis
-  # ==========================================
-  test-redis:
-    image: redis:7-alpine
-    container_name: gymbro-test-redis
-    command: redis-server --appendonly yes
-    ports:
-      - "6380:6379"  # Different port to avoid conflicts
-    volumes:
-      - test_redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-    networks:
-      - test-network
+  # test-redis:
+  #   image: redis:7-alpine
+  #   container_name: gymbro-test-redis
+  #   command: redis-server --appendonly yes
+  #   ports:
+  #     - "6380:6379"  # Different port to avoid conflicts
+  #   volumes:
+  #     - test_redis_data:/data
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 5
+  #   networks:
+  #     - test-network
 
   # ==========================================
   # 🧪 Test User Management Service
@@ -59,7 +59,7 @@ services:
     container_name: gymbro-test-user-management
     environment:
       - DATABASE_URL=postgresql://postgres:postgres123@test-postgres:5432/gymbro_test_db
-      - REDIS_URL=redis://test-redis:6379
+      # REDIS_URL removed - using in-memory cache for tests
       - JWT_SECRET=test-secret-key-for-integration-tests
       - JWT_ALGORITHM=HS256
       - JWT_EXPIRE_MINUTES=60
@@ -71,8 +71,7 @@ services:
     depends_on:
       test-postgres:
         condition: service_healthy
-      test-redis:
-        condition: service_healthy
+      # test-redis: removed dependency
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -88,8 +87,7 @@ services:
 volumes:
   test_postgres_data:
     driver: local
-  test_redis_data:
-    driver: local
+  # test_redis_data: removed - no longer needed
 
 networks:
   test-network:

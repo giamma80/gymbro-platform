@@ -219,6 +219,20 @@ make stats
 
 ## 🚀 Deploy
 
+### 🌐 Render.com (FREE - Raccomandato per MVP)
+
+**DEPLOY AUTOMATICO con `render.yaml`:**
+
+```bash
+# 1. File render.yaml già configurato ✅ 
+# 2. Vai su https://render.com
+# 3. Connetti GitHub repository
+# 4. Render rileva automaticamente render.yaml
+# 5. Click "Deploy" - ZERO configurazione!
+```
+
+**Costi: $0/mese** (PostgreSQL + Web Service free tier)
+
 ### Staging (Automatico)
 
 ```bash

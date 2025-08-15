@@ -49,8 +49,8 @@ start: ## Avvia tutti i servizi con Docker Compose
 
 start-dev: ## Avvia solo servizi core per sviluppo
 	@echo "🔧 Starting core services for development..."
-	@docker-compose up -d postgres redis
-	@echo "✅ Core services started!"
+	@docker-compose up -d postgres
+	@echo "✅ Core services started! (Redis removed for MVP)"
 
 stop: ## Ferma tutti i servizi
 	@echo "🛑 Stopping GymBro Platform..."

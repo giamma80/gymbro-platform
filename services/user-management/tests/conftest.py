@@ -11,7 +11,7 @@ import pytest
 os.environ.update(
     {
         "DATABASE_URL": "sqlite:///./test.db",
-        "REDIS_URL": "redis://localhost:6379",
+        # "REDIS_URL": removed - using in-memory cache for tests
         "JWT_SECRET": "test-secret-key-for-ci",
         "ENVIRONMENT": "test",
         "DEBUG": "true",

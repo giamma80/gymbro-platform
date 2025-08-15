@@ -59,10 +59,10 @@ class Settings(BaseSettings):
     )
 
     # ==========================================
-    # 🔄 Redis Settings
+    # 🧠 Cache Settings (In-Memory for MVP)
     # ==========================================
-    REDIS_URL: str = Field(default="redis://localhost:6379", description="Redis URL")
     CACHE_TTL: int = Field(default=3600, description="Cache TTL")  # 1 hour
+    # Redis removed for MVP - using PostgreSQL sessions + in-memory cache
 
     # ==========================================
     # 🌐 CORS & Security
@@ -94,14 +94,11 @@ class Settings(BaseSettings):
     RATE_LIMIT_BURST: int = Field(default=10, description="Rate limit burst")
 
     # ==========================================
-    # 🔄 Background Tasks
+    # 🔄 Background Tasks (PostgreSQL-based for MVP)
     # ==========================================
-    CELERY_BROKER_URL: str = Field(
-        default="redis://localhost:6379/0", description="Celery Broker URL"
-    )
-    CELERY_RESULT_BACKEND: str = Field(
-        default="redis://localhost:6379/0", description="Celery Result Backend"
-    )
+    # Celery Redis URLs removed - using database-based task queue for MVP
+    # CELERY_BROKER_URL: Database-based tasks
+    # CELERY_RESULT_BACKEND: Database-based results
 
     # ==========================================
     # 📧 Email Settings (SendGrid FREE)

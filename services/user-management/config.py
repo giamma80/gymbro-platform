@@ -67,14 +67,14 @@ class Settings(BaseSettings):
     # ==========================================
     # 🌐 CORS & Security
     # ==========================================
-    
+
     # Accept CORS_ORIGINS as string and convert later
     CORS_ORIGINS_RAW: str = Field(
         default="http://localhost:3000,http://localhost:5173,http://localhost:8080",
         description="CORS Origins (comma-separated or single URL)",
-        alias="CORS_ORIGINS"
+        alias="CORS_ORIGINS",
     )
-    
+
     @property
     def CORS_ORIGINS(self) -> List[str]:
         """Parse CORS_ORIGINS from string to list"""
@@ -82,19 +82,19 @@ class Settings(BaseSettings):
             return [
                 "http://localhost:3000",
                 "http://localhost:5173",
-                "http://localhost:8080"
+                "http://localhost:8080",
             ]
-        
+
         # Single URL
         if "," not in self.CORS_ORIGINS_RAW:
             return [self.CORS_ORIGINS_RAW.strip()]
-        
+
         # Multiple URLs separated by comma
         return [origin.strip() for origin in self.CORS_ORIGINS_RAW.split(",")]
-    
+
     ALLOWED_HOSTS: List[str] = Field(
         default=["localhost", "127.0.0.1"], description="Allowed Hosts"
-    )    # ==========================================
+    )  # ==========================================
     # 📊 Monitoring Settings
     # ==========================================
     SENTRY_DSN: str = Field(default="", description="Sentry DSN")

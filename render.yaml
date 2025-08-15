@@ -29,7 +29,7 @@ services:
       - key: ENVIRONMENT
         value: production
       - key: CORS_ORIGINS
-        value: https://gymbro-user-service.onrender.com
+        value: https://gymbro-user-service.onrender.com,http://localhost:3000,https://*.onrender.com
       - key: LOG_LEVEL
         value: INFO
       - key: CACHE_TTL

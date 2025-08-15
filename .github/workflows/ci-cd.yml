@@ -467,6 +467,36 @@ jobs:
           mypy . --ignore-missing-imports || true
 
   # ==========================================
+  # 🚀 Deploy to Render.com
+  # ==========================================
+  deploy-render:
+    name: 🌐 Deploy to Render.com
+    runs-on: ubuntu-latest
+    needs: [test-user-management, security-scan]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🚀 Trigger Render Deploy
+        run: |
+          echo "🌐 Render auto-deploy triggered by git push to main"
+          echo "📊 Monitor deploy: https://dashboard.render.com"
+          echo "✅ Blueprint: gymbro will auto-update services"
+        
+      - name: ⏱️ Wait for Deploy
+        run: |
+          echo "⏱️ Render deploy takes ~5-7 minutes"
+          echo "🔍 Check status at: https://dashboard.render.com"
+          
+      - name: 🏥 Health Check (after deploy)
+        run: |
+          echo "🏥 Manual health check after deploy:"
+          echo "curl https://gymbro-user-service.onrender.com/health"
+          echo "📖 API Docs: https://gymbro-user-service.onrender.com/docs"
+
+  # ==========================================
   # 🧹 Cleanup
   # ==========================================
   cleanup:

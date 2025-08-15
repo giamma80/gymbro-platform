@@ -42,3 +42,20 @@ services:
         value: "1"
       - key: PYTHONUNBUFFERED
         value: "1"
+  
+  # 🚪 GraphQL Gateway (quando pronto)
+  # - type: web
+  #   name: gymbro-graphql-gateway
+  #   runtime: docker
+  #   dockerfilePath: ./services/graphql-gateway/Dockerfile
+  #   dockerContext: ./services/graphql-gateway
+  #   plan: free
+  #   branch: main
+  #   healthCheckPath: /health
+  #   envVars:
+  #     - key: USER_SERVICE_URL
+  #       value: https://gymbro-user-service.onrender.com
+  #     - key: DATABASE_URL
+  #       fromDatabase:
+  #         name: gymbro-db
+  #         property: connectionString

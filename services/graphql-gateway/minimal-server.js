@@ -10,12 +10,19 @@ const express = require('express');
 
 async function startMinimalServer() {
     try {
-        // ✅ LESSON LEARNED: Dynamic PORT binding critical for Render.com
-        const PORT = parseInt(process.env.PORT || '4000', 10);
+        // ✅ ROBUST PORT PARSING for Render.com
+        let PORT = parseInt(process.env.PORT, 10);
+        
+        // Fallback if PORT is NaN, undefined, or invalid
+        if (!PORT || isNaN(PORT) || PORT <= 0 || PORT >= 65536) {
+            PORT = 4000;
+            console.log('⚠️  PORT env var invalid or missing, using fallback:', PORT);
+        }
 
         console.log('🚀 Starting MINIMAL GraphQL Gateway v0.2.0');
         console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-        console.log(`🚪 Port: ${PORT}`);
+        console.log(`🚪 Port: ${PORT} (type: ${typeof PORT})`);
+        console.log(`🔧 Original PORT env: "${process.env.PORT}" (type: ${typeof process.env.PORT})`);
 
         const app = express();
 

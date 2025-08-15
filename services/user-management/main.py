@@ -182,9 +182,11 @@ async def ping():
 @app.get("/health/detailed", tags=["Health"])
 async def detailed_health_check(db=Depends(get_db)):
     """Health check dettagliato con controllo database"""
+    from sqlalchemy import text
+    
     try:
-        # Test database connection
-        await db.execute("SELECT 1")
+        # Test database connection with proper SQLAlchemy syntax
+        await db.execute(text("SELECT 1"))
         db_status = "healthy"
         db_error = None
     except Exception as e:

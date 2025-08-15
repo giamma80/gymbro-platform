@@ -18,7 +18,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: PORT
-        generateValue: true  # Render auto-assigns port
+        generateValue: true # Render auto-assigns port
     # ✅ LESSON LEARNED: Build commands for Docker
     buildCommand: echo "Using Docker build"
     # Docker images don't need start command

@@ -1,0 +1,37 @@
+{
+  "name": "gymbro-platform-postman",
+  "version": "1.0.0",
+  "description": "Postman collection and testing suite for GymBro Platform User Management Service",
+  "main": "run-tests.sh",
+  "scripts": {
+    "test": "./run-tests.sh both",
+    "test:prod": "./run-tests.sh prod",
+    "test:dev": "./run-tests.sh dev",
+    "test:health": "newman run GymBro-Platform.postman_collection.json -e environments/GymBro-Production.postman_environment.json --folder '🏥 Health & Status'",
+    "install-newman": "npm install -g newman",
+    "lint-collection": "newman run --help"
+  },
+  "keywords": [
+    "postman",
+    "api-testing",
+    "gymbro",
+    "user-management",
+    "jwt",
+    "fastapi",
+    "testing",
+    "automation"
+  ],
+  "author": "GymBro Platform Team",
+  "license": "MIT",
+  "devDependencies": {
+    "newman": "^6.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/giamma80/gymbro-platform"
+  },
+  "bugs": {
+    "url": "https://github.com/giamma80/gymbro-platform/issues"
+  },
+  "homepage": "https://gymbro-user-service.onrender.com"
+}

@@ -1,0 +1,624 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"name": "🏋️ GymBro Platform - User Management",
+		"description": "Complete API collection for GymBro Platform User Management Service\n\n🌐 **Production Service**: https://gymbro-user-service.onrender.com\n📚 **Documentation**: https://gymbro-user-service.onrender.com/docs\n🔒 **Authentication**: JWT Bearer Token\n\n## 🚀 Quick Start\n1. Set environment (Development/Production)\n2. Run \"Health Check\" to verify service\n3. Register a new user\n4. Login to get JWT token\n5. Use authenticated endpoints\n\n## 🔑 Authentication Flow\n1. POST /auth/register - Create account\n2. POST /auth/login - Get JWT tokens\n3. Use access_token in Authorization header\n4. Refresh token when expired\n\n## 📊 Available Endpoints\n- Health & Status checks\n- User registration & authentication\n- Profile management\n- User preferences\n- Statistics & metrics\n- Admin operations",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "12345678"
+	},
+	"item": [
+		{
+			"name": "🏥 Health & Status",
+			"item": [
+				{
+					"name": "Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Service is healthy\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.status).to.eql(\"healthy\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Basic health check endpoint to verify service availability"
+					},
+					"response": []
+				},
+				{
+					"name": "Ping",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Ping successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.message).to.include(\"pong\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/ping",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ping"
+							]
+						},
+						"description": "Simple ping endpoint for connectivity testing"
+					},
+					"response": []
+				},
+				{
+					"name": "Detailed Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Detailed health check\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property(\"status\");",
+									"    pm.expect(response).to.have.property(\"database\");",
+									"    pm.expect(response).to.have.property(\"timestamp\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health/detailed",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"health",
+								"detailed"
+							]
+						},
+						"description": "Comprehensive health check including database connectivity"
+					},
+					"response": []
+				}
+			],
+			"description": "Health monitoring and status endpoints"
+		},
+		{
+			"name": "🔐 Authentication",
+			"item": [
+				{
+					"name": "Register User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"User registration successful\", function () {",
+									"    pm.response.to.have.status(201);",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property(\"user_id\");",
+									"    pm.expect(response).to.have.property(\"message\");",
+									"    ",
+									"    // Store user_id for later use",
+									"    pm.environment.set(\"user_id\", response.user_id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"full_name\": \"{{test_full_name}}\",\n  \"age\": {{test_age}},\n  \"gender\": \"{{test_gender}}\",\n  \"height\": {{test_height}},\n  \"weight\": {{test_weight}},\n  \"activity_level\": \"{{test_activity_level}}\",\n  \"goal\": \"{{test_goal}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						},
+						"description": "Register a new user with complete profile information"
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Login successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property(\"access_token\");",
+									"    pm.expect(response).to.have.property(\"refresh_token\");",
+									"    pm.expect(response.token_type).to.eql(\"bearer\");",
+									"    ",
+									"    // Store tokens for authenticated requests",
+									"    pm.environment.set(\"access_token\", response.access_token);",
+									"    pm.environment.set(\"refresh_token\", response.refresh_token);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "username",
+									"value": "{{test_email}}",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "{{test_password}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Authenticate user and receive JWT tokens"
+					},
+					"response": []
+				},
+				{
+					"name": "Change Password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Password changed successfully\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.message).to.include(\"successfully\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"current_password\": \"{{test_password}}\",\n  \"new_password\": \"NewSecurePassword123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/change-password",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"change-password"
+							]
+						},
+						"description": "Change user password (requires authentication)"
+					},
+					"response": []
+				}
+			],
+			"description": "User authentication and password management"
+		},
+		{
+			"name": "👤 Profile Management",
+			"item": [
+				{
+					"name": "Get Profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Profile retrieved successfully\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property(\"user_id\");",
+									"    pm.expect(response).to.have.property(\"email\");",
+									"    pm.expect(response).to.have.property(\"full_name\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/profile",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"profile"
+							]
+						},
+						"description": "Get current user profile information"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Profile updated successfully\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.message).to.include(\"successfully\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"full_name\": \"Updated Full Name\",\n  \"age\": 30,\n  \"height\": 175,\n  \"weight\": 70,\n  \"activity_level\": \"moderately_active\",\n  \"goal\": \"muscle_gain\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/profile",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"profile"
+							]
+						},
+						"description": "Update user profile information"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Profile Stats",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Profile stats retrieved\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property(\"bmi\");",
+									"    pm.expect(response).to.have.property(\"bmi_category\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/profile/stats",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"profile",
+								"stats"
+							]
+						},
+						"description": "Get user statistics including BMI and activity metrics"
+					},
+					"response": []
+				}
+			],
+			"description": "User profile and statistics management"
+		},
+		{
+			"name": "⚙️ Preferences",
+			"item": [
+				{
+					"name": "Get Preferences",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Preferences retrieved successfully\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property(\"notifications\");",
+									"    pm.expect(response).to.have.property(\"privacy\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/preferences",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"preferences"
+							]
+						},
+						"description": "Get user preferences and settings"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Preferences",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Preferences updated successfully\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.message).to.include(\"successfully\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"notifications\": {\n    \"email_notifications\": true,\n    \"push_notifications\": false,\n    \"workout_reminders\": true,\n    \"meal_reminders\": true\n  },\n  \"privacy\": {\n    \"profile_visibility\": \"private\",\n    \"share_workout_data\": false,\n    \"share_nutrition_data\": false\n  },\n  \"units\": {\n    \"weight_unit\": \"kg\",\n    \"height_unit\": \"cm\",\n    \"distance_unit\": \"km\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/preferences",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"preferences"
+							]
+						},
+						"description": "Update user preferences and settings"
+					},
+					"response": []
+				}
+			],
+			"description": "User preferences and settings management"
+		},
+		{
+			"name": "👑 Admin Operations",
+			"item": [
+				{
+					"name": "List All Users",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Users list retrieved\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.be.an(\"array\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/users?skip=0&limit=10",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"users"
+							],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						},
+						"description": "List all users (admin only) with pagination"
+					},
+					"response": []
+				}
+			],
+			"description": "Administrative operations (requires admin role)"
+		},
+		{
+			"name": "🗑️ Account Management",
+			"item": [
+				{
+					"name": "Delete Account",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Account deleted successfully\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.message).to.include(\"deleted\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/account",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"account"
+							]
+						},
+						"description": "Delete user account (GDPR compliance - Right to be Forgotten)"
+					},
+					"response": []
+				}
+			],
+			"description": "Account deletion and GDPR compliance"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-generate test data if not set",
+					"if (!pm.environment.get(\"test_email\")) {",
+					"    const timestamp = Date.now();",
+					"    pm.environment.set(\"test_email\", `testuser${timestamp}@gymbro.test`);",
+					"}",
+					"",
+					"if (!pm.environment.get(\"test_password\")) {",
+					"    pm.environment.set(\"test_password\", \"SecurePassword123!\");",
+					"}",
+					"",
+					"if (!pm.environment.get(\"test_full_name\")) {",
+					"    pm.environment.set(\"test_full_name\", \"Test GymBro User\");",
+					"}"
+				]
+			}
+		}
+	]
+}

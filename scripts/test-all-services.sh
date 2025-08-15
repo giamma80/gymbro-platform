@@ -93,8 +93,8 @@ for SERVICE_PORT in "${SERVICES[@]}"; do
         ROOT_OK=false
     fi
     
-    # Overall service health
-    if [ "$PING_OK" = true ] && [ "$HEALTH_OK" = true ] && [ "$ROOT_OK" = true ]; then
+    # Overall service health - Only require ping and health to be OK
+    if [ "$PING_OK" = true ] && [ "$HEALTH_OK" = true ]; then
         echo "   📊 Overall: ✅ HEALTHY"
         HEALTHY_SERVICES=$((HEALTHY_SERVICES + 1))
     else

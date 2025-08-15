@@ -7,10 +7,9 @@ Utilizza pydantic-settings per gestione environment variables.
 """
 
 import os
-from typing import List, Union
-import json
+from typing import List
 
-from pydantic import Field, field_validator
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -68,38 +67,34 @@ class Settings(BaseSettings):
     # ==========================================
     # 🌐 CORS & Security
     # ==========================================
-    CORS_ORIGINS: List[str] = Field(
-        default=[
-            "http://localhost:3000",
-            "http://localhost:5173",
-            "http://localhost:8080",
-        ],
-        description="CORS Origins",
+    
+    # Accept CORS_ORIGINS as string and convert later
+    CORS_ORIGINS_RAW: str = Field(
+        default="http://localhost:3000,http://localhost:5173,http://localhost:8080",
+        description="CORS Origins (comma-separated or single URL)",
+        alias="CORS_ORIGINS"
     )
     
-    @field_validator('CORS_ORIGINS', mode='before')
-    @classmethod
-    def parse_cors_origins(cls, v):
-        """Parse CORS_ORIGINS from string or JSON"""
-        if isinstance(v, str):
-            # Se è una stringa singola, dividila per virgole
-            if ',' in v:
-                return [origin.strip() for origin in v.split(',')]
-            # Se è una stringa JSON, parsala
-            elif v.startswith('['):
-                try:
-                    return json.loads(v)
-                except json.JSONDecodeError:
-                    return [v]  # Fallback a stringa singola
-            else:
-                return [v]  # Singola origine
-        return v  # Già una lista
+    @property
+    def CORS_ORIGINS(self) -> List[str]:
+        """Parse CORS_ORIGINS from string to list"""
+        if not self.CORS_ORIGINS_RAW:
+            return [
+                "http://localhost:3000",
+                "http://localhost:5173",
+                "http://localhost:8080"
+            ]
+        
+        # Single URL
+        if "," not in self.CORS_ORIGINS_RAW:
+            return [self.CORS_ORIGINS_RAW.strip()]
+        
+        # Multiple URLs separated by comma
+        return [origin.strip() for origin in self.CORS_ORIGINS_RAW.split(",")]
     
     ALLOWED_HOSTS: List[str] = Field(
         default=["localhost", "127.0.0.1"], description="Allowed Hosts"
-    )
-
-    # ==========================================
+    )    # ==========================================
     # 📊 Monitoring Settings
     # ==========================================
     SENTRY_DSN: str = Field(default="", description="Sentry DSN")

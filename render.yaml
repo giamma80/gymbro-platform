@@ -42,7 +42,7 @@ services:
         value: "1"
       - key: PYTHONUNBUFFERED
         value: "1"
-  
+
   # 🚪 GraphQL Gateway (quando pronto)
   # - type: web
   #   name: gymbro-graphql-gateway

@@ -28,14 +28,16 @@ WORKDIR /app
 # Install Poetry with specific version for stability
 RUN pip install poetry==1.8.3
 
-# Copy Poetry files
+# Configure Poetry BEFORE copying files
+RUN poetry config virtualenvs.create false && \
+    poetry config cache-dir /opt/poetry-cache
+
+# Copy Poetry files FIRST for better caching
 COPY pyproject.toml poetry.lock ./
 
-# Configure Poetry to not create virtual environments (we're already in a container)
-RUN poetry config virtualenvs.create false
-
-# Install dependencies with verbose output for debugging
-RUN poetry install --only=main --no-dev -v
+# Install dependencies with timeout and retry
+RUN --mount=type=cache,target=/opt/poetry-cache \
+    poetry install --only=main --no-dev -v --timeout=600
 
 # 📄 Copy application code
 COPY . .

@@ -487,14 +487,15 @@ jobs:
         
       - name: ⏱️ Wait for Deploy
         run: |
-          echo "⏱️ Render deploy takes ~5-7 minutes"
+          echo "⏱️ Render deploy takes ~10-15 minutes (first time)"
           echo "🔍 Check status at: https://dashboard.render.com"
           
       - name: 🏥 Health Check (after deploy)
         run: |
-          echo "🏥 Manual health check after deploy:"
+          echo "🏥 Health check will run after manual verification:"
           echo "curl https://gymbro-user-service.onrender.com/health"
           echo "📖 API Docs: https://gymbro-user-service.onrender.com/docs"
+          echo "⚠️  Note: First deploy may take 10-15 minutes"
 
   # ==========================================
   # 🧹 Cleanup

@@ -42,7 +42,6 @@ COPY . .
 
 # 👤 Change ownership to app user
 RUN chown -R app:app /app
-USER app
 
 # 🏃‍♂️ Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
@@ -51,5 +50,8 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # 🌐 Expose port
 EXPOSE 8000
 
+# Switch to app user ONLY for running the app
+USER app
+
 # 🚀 Run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

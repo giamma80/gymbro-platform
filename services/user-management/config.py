@@ -7,9 +7,10 @@ Utilizza pydantic-settings per gestione environment variables.
 """
 
 import os
-from typing import List
+from typing import List, Union
+import json
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -75,6 +76,25 @@ class Settings(BaseSettings):
         ],
         description="CORS Origins",
     )
+    
+    @field_validator('CORS_ORIGINS', mode='before')
+    @classmethod
+    def parse_cors_origins(cls, v):
+        """Parse CORS_ORIGINS from string or JSON"""
+        if isinstance(v, str):
+            # Se è una stringa singola, dividila per virgole
+            if ',' in v:
+                return [origin.strip() for origin in v.split(',')]
+            # Se è una stringa JSON, parsala
+            elif v.startswith('['):
+                try:
+                    return json.loads(v)
+                except json.JSONDecodeError:
+                    return [v]  # Fallback a stringa singola
+            else:
+                return [v]  # Singola origine
+        return v  # Già una lista
+    
     ALLOWED_HOSTS: List[str] = Field(
         default=["localhost", "127.0.0.1"], description="Allowed Hosts"
     )

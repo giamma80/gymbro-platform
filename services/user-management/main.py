@@ -165,20 +165,18 @@ async def get_current_active_user(
 @app.get("/health", tags=["Health"])
 async def health_check():
     """Health check endpoint per monitoring"""
-    from fastapi import Response
     import json
-    
+
+    from fastapi import Response
+
     content = {
         "status": "healthy",
         "service": "user-management",
         "version": "1.0.0",
-        "timestamp": "2025-01-15T10:30:00Z"
+        "timestamp": "2025-01-15T10:30:00Z",
     }
-    
-    response = Response(
-        content=json.dumps(content),
-        media_type="application/json"
-    )
+
+    response = Response(content=json.dumps(content), media_type="application/json")
     response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Access-Control-Allow-Methods"] = "GET"
     response.headers["Access-Control-Allow-Headers"] = "*"

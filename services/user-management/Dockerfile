@@ -1,22 +1,44 @@
 # ==========================================
-# 🏋️ User Management Service - Dockerfile
+# 🏋️ User Management Service - Optimized Dockerfile
 # ==========================================
 
-FROM python:3.11-slim
+# Build stage
+FROM python:3.11-slim as builder
 
-# 📦 Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app \
-    PIP_NO_CACHE_DIR=1 \
+# 📦 Set build environment variables
+ENV PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# 🔧 Install system dependencies
+# 🔧 Install build dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
-    curl \
     build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Poetry
+RUN pip install poetry==1.8.3
+
+# Set work directory
+WORKDIR /app
+
+# Copy Poetry files and install dependencies
+COPY pyproject.toml poetry.lock ./
+RUN poetry config virtualenvs.create false && \
+    poetry install --only=main --no-dev
+
+# Runtime stage
+FROM python:3.11-slim
+
+# 📦 Runtime environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
+
+# 🔧 Install only runtime dependencies
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # 👤 Create app user
@@ -25,17 +47,9 @@ RUN useradd --create-home --shell /bin/bash app
 # 📁 Set work directory
 WORKDIR /app
 
-# Install Poetry with specific version for stability
-RUN pip install poetry==1.8.3
-
-# Copy Poetry files FIRST for better caching
-COPY pyproject.toml poetry.lock ./
-
-# Configure Poetry to not create virtual environments (we're already in a container)
-RUN poetry config virtualenvs.create false
-
-# Install dependencies with verbose output for debugging
-RUN poetry install --only=main --no-dev -v
+# Copy Python packages from builder
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
 # 📄 Copy application code
 COPY . .

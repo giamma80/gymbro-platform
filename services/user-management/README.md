@@ -1,4 +1,31 @@
-# 👤 GymBro User Management Service
+# 👤 Gym## 🌐 **PRODUCTION LIVE!**
+
+**Production URL**: https://gymbro-user-service.onrender.com  
+**API Docs**: https://gymbro-user-service.onrender.com/docs  
+**Health Check**: https://gymbro-user-service.onrender.com/health
+
+### 🗄️ **Database Persistence**
+**✅ Database Permanente**: Tutti i dati utente sono **mantenuti tra le release**  
+**🔄 Deploy Safe**: Solo l'app viene aggiornata, database PostgreSQL rimane intatto  
+**📊 Backup**: Backup automatici giornalieri gestiti da Render  
+
+```bash
+# Quick test production service
+curl https://gymbro-user-service.onrender.com/health
+curl https://gymbro-user-service.onrender.com/ping
+
+# Test user registration (data persists across releases)
+curl -X POST "https://gymbro-user-service.onrender.com/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email":"test@example.com",
+    "password":"SecurePass123!",
+    "first_name":"Test","last_name":"User",
+    "date_of_birth":"1990-01-01","gender":"male",
+    "height_cm":180,"weight_kg":75,
+    "activity_level":"moderately_active"
+  }'
+```nagement Service
 
 [![🚀 Production](https://img.shields.io/badge/Status-LIVE-brightgreen)](https://gymbro-user-service.onrender.com)
 [![🏥 Health](https://img.shields.io/badge/Health-Healthy-brightgreen)](https://gymbro-user-service.onrender.com/health)

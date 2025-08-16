@@ -1,6 +1,7 @@
 /**
  * 🏋️ GymBro Platform - GraphQL Gateway Configuration
  * Following deployment best practices from User Management Service
+ * v1.2.0 - Apollo Federation Step 3 Testing
  */
 
 export const config = {

@@ -1,21 +1,36 @@
 # 🏋️ GymBro Platform - Checkpoint Sviluppo
 
 ## 📅 Data: 16 Agosto 2025
-## 📍 Stato: APOLLO FEDERATION STEP 2 ✅ COMPLETED & OPERATIONAL
+## 📍 Stato: APOLLO FEDERATION STEP 2 ✅ COMPLETED & IN DEPLOYMENT
 
-**🎯 v1.2.0 MILESTONE: GraphQL Federation Implementation - Step 2 COMPLETED**
+**🎯 v1.2.0 MILESTONE: GraphQL Federation Implementation - Step 2 IN PROGRESS**
 - ✅ User Management: Strawberry GraphQL schema implementato e deployato
-- ✅ GraphQL Gateway: Apollo Server federation DEPLOYED & OPERATIONAL
+- 🔧 GraphQL Gateway: Apollo Server federation FIXING URL CONFIGURATION
 - ✅ Poetry dependency management validato in produzione
 - ✅ Docker single-stage build approach consolidato come standard
 - ✅ Domain-Driven Design pattern con REST + GraphQL dual API
-- ✅ **Platform Health: 100% - ALL SERVICES HEALTHY!**
-- ✅ Federation testing e validazione multi-service READY
+- 🔄 **Platform Health: GraphQL Gateway redeploying with fixed URLs**
+- ⏳ Federation testing e validazione multi-service (next step)
 - ⏳ Apollo Federation queries testing (Step 3)
 
-### 🏆 **DEPLOYMENT SUCCESS - v1.2.0-apollo-step2**
+### 🔧 **CURRENT DEPLOYMENT FIX - URL Configuration**
 
-**✅ APOLLO FEDERATION STEP 2 - PRODUCTION VALIDATION:**
+**🔧 APOLLO FEDERATION STEP 2 - FIXING CONFIGURATION:**
+- **Issue**: Apollo Gateway double /graphql in URL (gymbro-user-service.onrender.com/graphql/graphql)
+- **Fix Applied**: USER_MANAGEMENT_URL now includes /graphql base path
+- **Status**: Redeploying with corrected configuration
+- **Expected Result**: Apollo Gateway should connect to User Management GraphQL
+- **Next Step**: Wait for deployment completion and verify Step 3 testing
+
+**✅ TECHNICAL PROGRESS:**
+- ✅ Docker build successful with full Apollo Server (not minimal)
+- ✅ Build logs show "🚀 Starting GymBro GraphQL Gateway v0.2.0"
+- ✅ TypeScript compilation working perfectly
+- ✅ All dependencies resolved and cached
+- 🔧 Runtime URL configuration fixed
+- ⏳ Apollo Gateway introspection pending fix deployment
+
+### 🏆 **PREVIOUS SUCCESS - v1.2.0-apollo-step2**
 - **Release Tag**: `v1.2.0-apollo-step2` (commit da4e47a)
 - **GraphQL Gateway**: https://gymbro-graphql-gateway.onrender.com ✅ LIVE & HEALTHY
 - **User Management**: https://gymbro-user-service.onrender.com ✅ LIVE & HEALTHY  

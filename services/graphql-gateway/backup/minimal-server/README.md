@@ -5,6 +5,7 @@
 
 ## File inclusi:
 - `minimal-server.js` - Server Express minimale per debug
+- `minimal-server.ts` - File sorgente TypeScript del server minimale
 - `Dockerfile.minimal` - Dockerfile per il server minimale
 
 ## Utilizzo:

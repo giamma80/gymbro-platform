@@ -1,6 +1,7 @@
 /**
  * 🏋️ GymBro Platform - GraphQL Gateway Configuration
  * Following deployment best practices from User Management Service
+ * Updated: 2025-08-17 - Force redeploy after _service field fix
  */
 
 export const config = {

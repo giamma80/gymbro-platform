@@ -1,6 +1,16 @@
-# 🏗️ Standard Template per Microservizi GymBro
+# 🏗️ Standard Template per Microservizi GymBro - DUAL API ARCHITECTURE
 
-Questo è il template standardizzato per tutti i microservizi della piattaforma GymBro usando Poetry.
+Questo è il template standardizzato per tutti i microservizi della piattaforma GymBro che implementa **DUAL API ARCHITECTURE** (REST + GraphQL) usando Domain-Driven Design con Poetry.
+
+> ✅ **BEST PRACTICE CONSOLIDATE**: Ogni nuovo microservizio DEVE implementare sia REST che GraphQL endpoints fin dall'inizio
+
+## 🎯 DOMAIN-DRIVEN DESIGN APPROACH
+
+**DUAL API ARCHITECTURE OBBLIGATORIA:**
+- ✅ REST API endpoints per operazioni CRUD e business logic
+- ✅ GraphQL schema per query federate e integrazione Apollo
+- ✅ Apollo Federation ready fin dall'inizio  
+- ✅ Unified data models condivisi tra REST e GraphQL
 
 ## 📁 Struttura Directory Standard
 
@@ -8,14 +18,14 @@ Questo è il template standardizzato per tutti i microservizi della piattaforma 
 services/{service-name}/
 ├── app/                    # 📦 Codice applicazione
 │   ├── __init__.py
-│   ├── main.py            # 🚀 Entry point FastAPI
+│   ├── main.py            # 🚀 Entry point FastAPI con DUAL API integration
 │   ├── config.py          # ⚙️ Configurazione
-│   ├── models.py          # 📋 Pydantic schemas
+│   ├── models.py          # 📋 Pydantic schemas (condivisi REST/GraphQL)
 │   ├── database.py        # 🗄️ SQLAlchemy models
 │   ├── auth.py            # 🔐 Autenticazione
 │   ├── services.py        # 💼 Business logic
-│   ├── graphql_schema.py  # 🔗 Strawberry GraphQL schema
-│   └── api/               # 🌐 API endpoints
+│   ├── graphql_schema.py  # 🔗 Strawberry GraphQL schema - APOLLO FEDERATION
+│   └── api/               # 🌐 REST API endpoints
 │       ├── __init__.py
 │       └── v1/
 │           ├── __init__.py
@@ -26,46 +36,55 @@ services/{service-name}/
 │   ├── test_models.py     # Model tests
 │   ├── test_auth.py       # Auth tests
 │   ├── test_config.py     # Config tests
-│   ├── test_graphql.py    # GraphQL schema tests
+│   ├── test_graphql.py    # GraphQL schema tests - APOLLO FEDERATION
+│   ├── test_endpoints.py  # REST endpoints tests
 │   └── test_services.py   # Service tests
 ├── alembic/               # 📊 Database migrations
 ├── scripts/               # 🔧 Utility scripts
-├── pyproject.toml         # 📦 Poetry configuration
-├── poetry.lock            # 🔒 Lock file
+├── pyproject.toml         # 📦 Poetry configuration - DEPENDENCIES CONSOLIDATE
+├── poetry.lock            # 🔒 Lock file - DEVE essere committato
 ├── README.md              # 📚 Documentation
 ├── .env.example           # 🔐 Environment template
 ├── .env.test              # 🧪 Test environment
-└── Dockerfile             # 🐳 Container definition
+├── .dockerignore          # 🐳 Docker ignore file - BUILD OPTIMIZATION
+└── Dockerfile             # 🐳 Container definition - SINGLE-STAGE BUILD
 ```
 
-## 📦 pyproject.toml Template
+## 📦 pyproject.toml Template - CONSOLIDATO
 
 ```toml
 [tool.poetry]
 name = "gymbro-{service-name}"
 version = "1.0.0"
-description = "GymBro Platform - {Service Name} Service"
+description = "GymBro Platform - {Service Name} Service - Dual API (REST + GraphQL)"
 authors = ["GymBro Team <team@gymbro-platform.com>"]
 readme = "README.md"
 packages = [{include = "app"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-fastapi = "^0.116.0"
-uvicorn = {extras = ["standard"], version = "^0.35.0"}
-pydantic = {extras = ["email"], version = "^2.11.0"}
-sqlalchemy = {extras = ["asyncio"], version = "^2.0.43"}
-asyncpg = "^0.30.0"
-redis = "^6.4.0"
-python-jose = {extras = ["cryptography"], version = "^3.5.0"}
+# FastAPI + ASGI server
+fastapi = "^0.104.1"
+uvicorn = {extras = ["standard"], version = "^0.24.0"}
+# Validation + Settings
+pydantic = {extras = ["email"], version = "^2.5.0"}
+pydantic-settings = "^2.0.3"
+# Database + async
+sqlalchemy = {extras = ["asyncio"], version = "^2.0.23"}
+asyncpg = "^0.29.0"
+# GraphQL - APOLLO FEDERATION READY
+strawberry-graphql = {extras = ["fastapi"], version = "^0.215.3"}
+# Auth + Security
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
-python-multipart = "^0.0.20"
-strawberry-graphql = {extras = ["fastapi"], version = "^0.215.1"}
-sentry-sdk = {extras = ["fastapi"], version = "^2.34.0"}
-structlog = "^24.4.0"
-email-validator = "^2.2.0"
-pydantic-settings = "^2.10.1"
-httpx = "^0.28.0"
+python-multipart = "^0.0.6"
+# Monitoring + Logging
+sentry-sdk = {extras = ["fastapi"], version = "^1.38.0"}
+structlog = "^23.2.0"
+# Utilities
+httpx = "^0.25.2"
+email-validator = "^2.1.0"
+redis = "^5.0.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.0"
@@ -169,19 +188,301 @@ app.include_router(graphql_router)
 - [ ] `docker-compose restart {service}` per testing
 - [ ] Verifica endpoint funzionanti
 
-## 🔗 GraphQL Schema Template Standard
+## � Dockerfile Template - SINGLE-STAGE BUILD (CONSOLIDATO)
+
+> ✅ **PROVATO**: Single-Stage Build > Multi-Stage per compatibility con Poetry
+
+```dockerfile
+# STANDARD DOCKERFILE per microservizi GymBro
+FROM python:3.11-slim
+
+# Environment variables STANDARD
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# System dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    libpq-dev \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Poetry
+RUN pip install poetry==1.8.3
+
+# Configure Poetry
+ENV POETRY_NO_INTERACTION=1 \
+    POETRY_VENV_IN_PROJECT=1 \
+    POETRY_CACHE_DIR=/opt/poetry_cache \
+    POETRY_HOME=/opt/poetry \
+    POETRY_VENV_PATH=/opt/poetry_venv
+
+# Copy dependency files
+WORKDIR /app
+COPY pyproject.toml poetry.lock ./
+
+# Install dependencies
+RUN poetry config virtualenvs.create false \
+    && poetry install --no-dev --no-root \
+    && rm -rf /opt/poetry_cache
+
+# Copy application code
+COPY . .
+
+# Create non-root user
+RUN useradd --create-home --shell /bin/bash app \
+    && chown -R app:app /app
+USER app
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Expose port
+EXPOSE 8000
+
+# Command
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+## 🔍 .dockerignore Template - BUILD OPTIMIZATION
+
+```dockerignore
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.pytest_cache/
+htmlcov/
+
+# Poetry
+poetry.lock.orig
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+docs/
+*.md
+
+# Tests
+tests/
+test_*
+*_test.py
+
+# Environment files
+.env
+.env.*
+
+# Logs
+*.log
+logs/
+```
+
+## 🔗 GraphQL Schema Template - APOLLO FEDERATION READY
 
 ### graphql_schema.py
 ```python
 """
 GraphQL Schema per {Service Name} Service
-Apollo Federation Ready
+Apollo Federation Ready - Dual API Architecture
 """
 
 from typing import List, Optional
+from enum import Enum
 import strawberry
 from strawberry.fastapi import GraphQLRouter
 from strawberry.types import Info
+
+# ✅ ENUM PATTERN CONSOLIDATO - @strawberry.enum class Pattern
+@strawberry.enum
+class StatusType(Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    PENDING = "pending"
+
+@strawberry.enum
+class PriorityType(Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+# ✅ STRAWBERRY TYPE per modelli GraphQL
+@strawberry.type
+class HealthStatus:
+    service: str
+    status: str
+    timestamp: str
+
+@strawberry.type
+class ServiceInfo:
+    name: str
+    version: str
+    environment: str
+    
+# ✅ QUERY CLASS con test endpoints
+@strawberry.type
+class Query:
+    @strawberry.field
+    def health_check(self) -> str:
+        """GraphQL health check endpoint"""
+        return "GraphQL endpoint operational for {Service Name}"
+    
+    @strawberry.field
+    def service_info(self) -> ServiceInfo:
+        """Service information for Apollo Federation"""
+        return ServiceInfo(
+            name="{service-name}",
+            version="1.0.0",
+            environment="development"
+        )
+    
+    @strawberry.field
+    def health_status(self) -> HealthStatus:
+        """Detailed health status"""
+        from datetime import datetime
+        return HealthStatus(
+            service="{service-name}",
+            status="healthy",
+            timestamp=datetime.now().isoformat()
+        )
+
+# ✅ MUTATION CLASS (esempio)
+@strawberry.type
+class Mutation:
+    @strawberry.field
+    def ping(self) -> str:
+        """Test mutation endpoint"""
+        return "pong from {Service Name} GraphQL"
+
+# ✅ SCHEMA SETUP per Apollo Federation
+schema = strawberry.Schema(
+    query=Query,
+    mutation=Mutation,
+    # Apollo Federation extensions saranno aggiunte qui
+)
+
+# ✅ ROUTER SETUP per FastAPI integration
+graphql_router = GraphQLRouter(
+    schema,
+    graphiql=True,  # GraphiQL interface abilitata
+    path="/graphql"
+)
+```
+
+## ⚡ main.py Template - DUAL API INTEGRATION
+
+```python
+"""
+{Service Name} Service - Dual API Architecture
+FastAPI + GraphQL (Strawberry) con Apollo Federation Ready
+"""
+
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+import logging
+from datetime import datetime
+
+# GraphQL integration
+from graphql_schema import graphql_router
+
+# Logging setup
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# FastAPI app setup
+app = FastAPI(
+    title="{Service Name} Service",
+    description="GymBro Platform - {Service Name} Service - Dual API (REST + GraphQL)",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Configure per production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ✅ REST API ENDPOINTS - Core functionality
+@app.get("/")
+async def root():
+    """Root endpoint"""
+    return {
+        "service": "{service-name}",
+        "version": "1.0.0",
+        "status": "operational",
+        "apis": ["REST", "GraphQL"],
+        "endpoints": {
+            "rest": "/docs",
+            "graphql": "/graphql"
+        }
+    }
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint per monitoring"""
+    return {
+        "status": "healthy",
+        "service": "{service-name}",
+        "timestamp": datetime.now().isoformat(),
+        "apis": {
+            "rest": "operational",
+            "graphql": "operational"
+        }
+    }
+
+@app.get("/ping")
+async def ping():
+    """Ping endpoint per connectivity testing"""
+    return {"message": "pong", "service": "{service-name}"}
+
+# ✅ GRAPHQL INTEGRATION - Apollo Federation ready
+app.include_router(graphql_router, prefix="", tags=["GraphQL"])
+
+# Error handlers
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    logger.error(f"Global exception: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"}
+    )
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+```
 
 from models import {ModelName} as {ModelName}Model
 from services import {ServiceName}Service
@@ -246,37 +547,122 @@ class Mutation:
     
     @strawberry.field
     async def update_{entity_name}(self, info: Info, id: strawberry.ID, input: {EntityName}Input) -> Optional[{EntityName}]:
-        """Update existing {entity_name}"""
-        async with get_db() as db:
-            service = {ServiceName}Service(db)
-            model = await service.update(int(id), input.__dict__)
-            return {EntityName}.from_model(model) if model else None
+## 🚀 DEPLOYMENT WORKFLOW - CONSOLIDATO
 
-# Schema definition per Apollo Federation
-schema = strawberry.Schema(
-    query=Query,
-    mutation=Mutation,
-    extensions=[
-        # Add federation extensions if needed
-    ]
-)
+### Step 1: Poetry Setup
+```bash
+# 1. Inizializza progetto
+poetry init --no-interaction --name "gymbro-{service-name}"
 
-# FastAPI GraphQL router
-graphql_router = GraphQLRouter(
-    schema,
-    path="/graphql",
-    graphiql=True  # Enable GraphiQL interface in development
-)
+# 2. Aggiungi dipendenze core
+poetry add fastapi uvicorn strawberry-graphql[fastapi] sqlalchemy[asyncio] asyncpg pydantic-settings
+
+# 3. Aggiungi dev dependencies  
+poetry add --group dev pytest pytest-asyncio black isort mypy
+
+# 4. Genera lock file
+poetry install
 ```
 
-### main.py Integration
-```python
-from fastapi import FastAPI
-from graphql_schema import graphql_router
+### Step 2: File Setup da Template
+```bash
+# Copy template files con pattern consolidati
+cp /path/to/template/Dockerfile ./
+cp /path/to/template/.dockerignore ./
+cp /path/to/template/main.py ./
+cp /path/to/template/graphql_schema.py ./
 
-app = FastAPI(title="{Service Name} API")
+# Personalizza placeholders
+sed -i 's/{service-name}/your-service-name/g' *.py
+sed -i 's/{Service Name}/Your Service Name/g' *.py
+```
 
-# Include GraphQL router
+### Step 3: Docker Build & Test
+```bash
+# Build con single-stage approach
+docker-compose build --no-cache your-service-name
+
+# Start service
+docker-compose up your-service-name
+
+# Test endpoints
+curl http://localhost:8000/health      # REST endpoint
+curl http://localhost:8000/graphql     # GraphQL endpoint (GET)
+```
+
+### Step 4: Apollo Federation Integration
+```bash
+# Test GraphQL schema
+curl -X POST http://localhost:8000/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query": "{ healthCheck }"}'
+
+# Validate enum patterns
+curl -X POST http://localhost:8000/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query": "{ serviceInfo { name version } }"}'
+
+# 🚨 SEMPRE eseguire test completi dopo deployment
+./scripts/test-all-services.sh
+```
+
+### Step 5: Post-Deployment Validation
+```bash
+# Test pipeline OBBLIGATORIA dopo ogni push GitHub
+./scripts/test-all-services.sh      # Test tutti i servizi
+./scripts/health-check.sh           # Check infrastruttura
+
+# Se deployment su produzione (Render/AWS)
+./scripts/test-all-services.sh prod # Test ambiente produzione
+```
+
+## ✅ VALIDATION CHECKLIST
+
+**Poetry & Dependencies:**
+- [ ] `poetry install` esegue senza errori
+- [ ] `poetry show` mostra strawberry-graphql[fastapi] installato
+- [ ] poetry.lock committato nel repository
+
+**Docker & Build:**
+- [ ] Dockerfile usa single-stage build pattern
+- [ ] `.dockerignore` ottimizza build context
+- [ ] Build completa senza ModuleNotFoundError
+- [ ] Health check funziona: `curl localhost:8000/health`
+
+**REST API:**
+- [ ] GET `/` ritorna service info
+- [ ] GET `/health` ritorna status healthy  
+- [ ] GET `/ping` ritorna pong message
+- [ ] GET `/docs` mostra Swagger documentation
+
+**GraphQL API:**
+- [ ] GET `/graphql` mostra GraphiQL interface
+- [ ] POST `/graphql` accetta queries
+- [ ] Enum types funzionano (@strawberry.enum pattern)
+- [ ] Schema validation passa
+
+**Apollo Federation Ready:**
+- [ ] GraphQL schema strutturato per federation
+- [ ] Service info query disponibile
+- [ ] Enum consistency tra servizi
+- [ ] Health check GraphQL disponibile
+
+**Best Practices:**
+- [ ] Dual API architecture implementata (REST + GraphQL)
+- [ ] Domain-Driven Design pattern seguito
+- [ ] Error handling configurato
+- [ ] CORS middleware configurato
+- [ ] Logging strutturato attivo
+
+## 🎯 NEXT STEPS dopo Template
+
+1. **Customize Business Logic**: Implementa domain models specifici
+2. **Database Integration**: Configura SQLAlchemy models e migrations
+3. **Authentication**: Integra JWT auth pattern del platform
+4. **Testing**: Espandi test suite con business logic tests
+5. **Apollo Gateway**: Registra service nel gateway per federation
+
+> ✅ **RISULTATO**: Microservizio con Dual API Architecture pronto per Apollo Federation Step 2
 app.include_router(graphql_router)
 logger.info("✅ GraphQL endpoint added at /graphql")
 ```

@@ -14,10 +14,10 @@ export const config = {
     CORS_ORIGINS: process.env['CORS_ORIGINS'] || '*',
 
     // Service URLs - centralized configuration
-    USER_MANAGEMENT_URL: process.env['USER_MANAGEMENT_URL'] || 'http://localhost:8000',
+    USER_MANAGEMENT_URL: process.env['USER_MANAGEMENT_URL'] || 'http://localhost:8001',
 
     // Future service URLs (will be added as services are implemented)
-    CALORIE_SERVICE_URL: process.env['CALORIE_SERVICE_URL'] || 'http://localhost:8001',
+    CALORIE_SERVICE_URL: process.env['CALORIE_SERVICE_URL'] || 'http://localhost:8002',
     MEAL_SERVICE_URL: process.env['MEAL_SERVICE_URL'] || 'http://localhost:8002',
     ANALYTICS_SERVICE_URL: process.env['ANALYTICS_SERVICE_URL'] || 'http://localhost:8003',
 

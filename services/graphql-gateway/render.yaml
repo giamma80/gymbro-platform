@@ -19,6 +19,10 @@ services:
         value: production
       - key: PORT
         generateValue: true # Render auto-assigns port
+      - key: USER_MANAGEMENT_URL
+        value: https://gymbro-user-service.onrender.com
+      - key: CORS_ORIGINS
+        value: "*" # Permissive for MVP debug
     # ✅ LESSON LEARNED: Build commands for Docker
     buildCommand: echo "Using Docker build"
     # Docker images don't need start command

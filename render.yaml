@@ -43,11 +43,11 @@ services:
       - key: PYTHONUNBUFFERED
         value: "1"
 
-  # � GraphQL Gateway v0.2.0 - MINIMAL SERVER ACTIVE
+  # ✅ GraphQL Gateway v0.2.0 - FULL APOLLO SERVER 
   - type: web
     name: gymbro-graphql-gateway
     runtime: docker
-    dockerfilePath: ./services/graphql-gateway/Dockerfile.minimal
+    dockerfilePath: ./services/graphql-gateway/Dockerfile
     dockerContext: ./services/graphql-gateway
     plan: free
     branch: main

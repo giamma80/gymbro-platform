@@ -58,7 +58,7 @@ for SERVICE_PORT in "${SERVICES[@]}"; do
     
     # Test /ping endpoint
     echo -n "   /ping: "
-    if curl -f -s "$SERVICE_URL/ping" > /dev/null 2>&1; then
+    if curl -f -s -m 30 "$SERVICE_URL/ping" > /dev/null 2>&1; then
         echo "✅ OK"
         PING_OK=true
     else
@@ -68,7 +68,7 @@ for SERVICE_PORT in "${SERVICES[@]}"; do
     
     # Test /health endpoint
     echo -n "   /health: "
-    HEALTH_RESPONSE=$(curl -f -s "$SERVICE_URL/health" 2>/dev/null || echo "FAILED")
+    HEALTH_RESPONSE=$(curl -f -s -m 30 "$SERVICE_URL/health" 2>/dev/null || echo "FAILED")
     if [ "$HEALTH_RESPONSE" != "FAILED" ]; then
         STATUS=$(echo "$HEALTH_RESPONSE" | jq -r '.status' 2>/dev/null || echo "unknown")
         if [ "$STATUS" = "healthy" ]; then
@@ -85,7 +85,7 @@ for SERVICE_PORT in "${SERVICES[@]}"; do
     
     # Test / (root) endpoint
     echo -n "   /: "
-    if curl -f -s "$SERVICE_URL/" > /dev/null 2>&1; then
+    if curl -f -s -m 30 "$SERVICE_URL/" > /dev/null 2>&1; then
         echo "✅ OK"
         ROOT_OK=true
     else

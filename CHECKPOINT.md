@@ -1,34 +1,34 @@
 # 🏋️ GymBro Platform - Checkpoint Sviluppo
 
-## 📅 Data: 16 Agosto 2025
-## 📍 Stato: APOLLO FEDERATION STEP 2 ✅ COMPLETED & IN DEPLOYMENT
+## 📅 Data: 17 Agosto 2025
+## 📍 Stato: APOLLO FEDERATION - FIXING CI/CD REGRESSION
 
-**🎯 v1.2.0 MILESTONE: GraphQL Federation Implementation - Step 2 IN PROGRESS**
+**🎯 v1.2.0 MILESTONE: GraphQL Federation Implementation - FIXING CI/CD ISSUES**
 - ✅ User Management: Strawberry GraphQL schema implementato e deployato
-- 🔧 GraphQL Gateway: Apollo Server federation FIXING URL CONFIGURATION
-- ✅ Poetry dependency management validato in produzione
-- ✅ Docker single-stage build approach consolidato come standard
-- ✅ Domain-Driven Design pattern con REST + GraphQL dual API
-- 🔄 **Platform Health: GraphQL Gateway redeploying with fixed URLs**
-- ⏳ Federation testing e validazione multi-service (next step)
-- ⏳ Apollo Federation queries testing (Step 3)
+- 🔧 Apollo Federation: Fixing import issues in CI/CD pipeline
+- ⚠️ **CI/CD REGRESSION**: GitHub Actions failing on application import test
+- 🔧 **Root Cause**: strawberry.federation import error in test environment
+- 🔧 **Fix Applied**: Added fallback to regular GraphQL schema if federation not available
+- ⏳ **Status**: Testing fix deployment
 
-### 🔧 **CURRENT DEPLOYMENT FIX - URL Configuration**
+### � **CURRENT ISSUE - CI/CD Pipeline Regression**
 
-**🔧 APOLLO FEDERATION STEP 2 - FIXING CONFIGURATION:**
-- **Issue**: Apollo Gateway double /graphql in URL (gymbro-user-service.onrender.com/graphql/graphql)
-- **Fix Applied**: USER_MANAGEMENT_URL now includes /graphql base path
-- **Status**: Redeploying with corrected configuration
-- **Expected Result**: Apollo Gateway should connect to User Management GraphQL
-- **Next Step**: Wait for deployment completion and verify Step 3 testing
+**❌ PROBLEM IDENTIFIED:**
+- **Error**: "Application import test failed!" in GitHub Actions
+- **Root Cause**: `from strawberry.federation import build_schema` failing in CI environment
+- **Impact**: Deployment pipeline blocked, preventing Step 3 testing
 
-**✅ TECHNICAL PROGRESS:**
-- ✅ Docker build successful with full Apollo Server (not minimal)
-- ✅ Build logs show "🚀 Starting GymBro GraphQL Gateway v0.2.0"
-- ✅ TypeScript compilation working perfectly
-- ✅ All dependencies resolved and cached
-- 🔧 Runtime URL configuration fixed
-- ⏳ Apollo Gateway introspection pending fix deployment
+**🔧 SOLUTIONS APPLIED:**
+- ✅ Added graceful fallback for when federation not available
+- ✅ Removed `enable_federation_2=True` for compatibility
+- ✅ Added error handling and logging for debugging
+- ⏳ Testing fix deployment in CI/CD pipeline
+
+**📊 TECHNICAL STATUS:**
+- ✅ Local development: GraphQL schema working
+- ✅ Docker builds: Successful on both services  
+- ❌ CI/CD tests: Failing on application import
+- ⏳ Federation testing: Blocked by CI/CD issues
 
 ### 🏆 **PREVIOUS SUCCESS - v1.2.0-apollo-step2**
 - **Release Tag**: `v1.2.0-apollo-step2` (commit da4e47a)

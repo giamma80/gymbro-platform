@@ -29,12 +29,9 @@ interface Context {
 
 async function startServer(): Promise<void> {
     try {
-        // ✅ LESSON LEARNED: Dynamic PORT binding critical for Render.com
-        const PORT = parseInt(process.env['PORT'] || '4000', 10);
-
         logger.info('🚀 Starting GymBro GraphQL Gateway v0.2.0');
         logger.info(`📍 Environment: ${config.NODE_ENV}`);
-        logger.info(`🚪 Port: ${PORT}`);
+        logger.info(`🚪 Port: ${config.PORT}`);
 
         // Create Express app
         const app = express();
@@ -86,7 +83,7 @@ async function startServer(): Promise<void> {
                     version: '0.2.0',
                     timestamp: new Date().toISOString(),
                     environment: config.NODE_ENV,
-                    port: PORT,
+                    port: config.PORT,
                     uptime: process.uptime(),
                     memory: process.memoryUsage(),
                     subgraphs: {} as Record<string, any>
@@ -186,11 +183,11 @@ async function startServer(): Promise<void> {
         const httpServer = createServer(app);
 
         // ✅ LESSON LEARNED: Listen on all interfaces for containers
-        httpServer.listen(PORT, '0.0.0.0', () => {
-            logger.info(`🚀 GraphQL Gateway running on http://0.0.0.0:${PORT}`);
-            logger.info(`📊 GraphQL endpoint: http://0.0.0.0:${PORT}/graphql`);
-            logger.info(`🏥 Health check: http://0.0.0.0:${PORT}/health`);
-            logger.info(`🏓 Ping endpoint: http://0.0.0.0:${PORT}/ping`);
+        httpServer.listen(config.PORT, '0.0.0.0', () => {
+            logger.info(`🚀 GraphQL Gateway running on http://0.0.0.0:${config.PORT}`);
+            logger.info(`📊 GraphQL endpoint: http://0.0.0.0:${config.PORT}/graphql`);
+            logger.info(`🏥 Health check: http://0.0.0.0:${config.PORT}/health`);
+            logger.info(`🏓 Ping endpoint: http://0.0.0.0:${config.PORT}/ping`);
         });
 
         // Graceful shutdown

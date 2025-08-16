@@ -10,8 +10,18 @@ export const config = {
 
     // ✅ LESSON LEARNED: Dynamic PORT for Render.com with robust parsing
     PORT: (() => {
-        const port = parseInt(process.env['PORT'] || '4000', 10);
-        return isNaN(port) ? 4000 : port;
+        const portEnv = process.env['PORT'];
+        if (!portEnv || portEnv.trim() === '') {
+            console.log('⚠️ PORT environment variable is empty, using default 4000');
+            return 4000;
+        }
+        const port = parseInt(portEnv.trim(), 10);
+        if (isNaN(port) || port <= 0 || port >= 65536) {
+            console.log(`⚠️ Invalid PORT value: "${portEnv}", using default 4000`);
+            return 4000;
+        }
+        console.log(`✅ Using PORT: ${port}`);
+        return port;
     })(),
 
     // ✅ LESSON LEARNED: CORS permissive for MVP/debug

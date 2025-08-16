@@ -7,8 +7,11 @@ export const config = {
     // ✅ LESSON LEARNED: Environment detection
     NODE_ENV: process.env['NODE_ENV'] || 'development',
 
-    // ✅ LESSON LEARNED: Dynamic PORT for Render.com
-    PORT: parseInt(process.env['PORT'] || '4000', 10),
+    // ✅ LESSON LEARNED: Dynamic PORT for Render.com with robust parsing
+    PORT: (() => {
+        const port = parseInt(process.env['PORT'] || '4000', 10);
+        return isNaN(port) ? 4000 : port;
+    })(),
 
     // ✅ LESSON LEARNED: CORS permissive for MVP/debug
     CORS_ORIGINS: process.env['CORS_ORIGINS'] || '*',

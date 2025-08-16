@@ -43,7 +43,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: "1"
 
-  # ✅ GraphQL Gateway v0.2.0 - FULL APOLLO SERVER 
+  # ✅ GraphQL Gateway v0.2.0 - FULL APOLLO SERVER
   - type: web
     name: gymbro-graphql-gateway
     runtime: docker
@@ -55,7 +55,9 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: USER_SERVICE_URL
-        value: https://gymbro-user-service.onrender.com
+      - key: USER_MANAGEMENT_URL
+        value: https://gymbro-user-service.onrender.com/graphql
+      - key: CORS_ORIGINS
+        value: "*"
       - key: PORT
         generateValue: true

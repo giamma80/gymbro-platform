@@ -21,6 +21,7 @@ structlog = "^24.4.0"
 email-validator = "^2.2.0"
 pydantic-settings = "^2.10.1"
 strawberry-graphql = {extras = ["fastapi"], version = "^0.215.1"}
+# Note: Federation support is built-in, no extra package needed
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.0"

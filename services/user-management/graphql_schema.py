@@ -8,7 +8,15 @@ from typing import List, Optional
 
 import strawberry
 from strawberry.fastapi import GraphQLRouter
-from strawberry.federation import build_schema
+
+# Try to import federation support, fall back to regular schema if not available
+try:
+    from strawberry.federation import build_schema
+    FEDERATION_AVAILABLE = True
+except ImportError:
+    from strawberry import Schema as build_schema
+    FEDERATION_AVAILABLE = False
+    print("⚠️ Strawberry Federation not available, using regular schema")
 
 # GraphQL Enums - Correct approach
 # =====================================
@@ -85,7 +93,13 @@ class Mutation:
         )
 
 
-# ✅ CRITICAL: Apollo Federation Schema
-# Use build_schema for Apollo Federation support
-schema = build_schema(query=Query, mutation=Mutation, enable_federation_2=True)
+# ✅ CRITICAL: Apollo Federation Schema (with fallback)
+# Use build_schema for Apollo Federation support if available
+if FEDERATION_AVAILABLE:
+    schema = build_schema(query=Query, mutation=Mutation)
+    print("✅ Apollo Federation schema enabled")
+else:
+    schema = build_schema(query=Query, mutation=Mutation)
+    print("⚠️ Using regular GraphQL schema (no federation)")
+
 graphql_router = GraphQLRouter(schema, graphiql=True, path="/graphql")

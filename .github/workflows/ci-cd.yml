@@ -193,31 +193,32 @@ jobs:
           if [ -f "package.json" ]; then
             npm ci
           else
-            echo "Using minimal server setup - no npm dependencies needed"
+            echo "Using full Apollo Server - installing dependencies"
           fi
 
       - name: 🔍 TypeScript Type Check (if available)
         working-directory: ./services/graphql-gateway
         run: |
           if [ -f "package.json" ] && [ -f "tsconfig.json" ]; then
-            npm run type-check || echo "TypeScript check skipped for minimal server"
+            npm run type-check || echo "TypeScript check failed but continuing"
           else
-            echo "TypeScript config not found - minimal server mode"
+            echo "TypeScript config not found - skipping type check"
           fi
 
-      - name: 🧪 Test Minimal Server
+      - name: 🧪 Test Apollo Server
         working-directory: ./services/graphql-gateway
         run: |
-          # Test the minimal server directly
-          node minimal-server.js &
+          # Build and test the full Apollo Server
+          npm run build
+          node dist/index.js &
           SERVER_PID=$!
-          sleep 3
+          sleep 5
           
           # Test health endpoint
           curl -f http://localhost:4000/health || { echo "Health check failed"; kill $SERVER_PID; exit 1; }
           curl -f http://localhost:4000/ping || { echo "Ping check failed"; kill $SERVER_PID; exit 1; }
           
-          echo "✅ GraphQL Gateway minimal server tests passed"
+          echo "✅ GraphQL Gateway Apollo server tests passed"
           kill $SERVER_PID
 
   # ==========================================
@@ -237,7 +238,7 @@ jobs:
       matrix:
         service: [
           user-management,
-          graphql-gateway       # ✅ ACTIVATED: v0.2.0 - Minimal server deployed
+          graphql-gateway       # ✅ ACTIVATED: v0.2.0 - Full Apollo Server
           # data-ingestion,       # 🔄 TODO: Implement service  
           # calorie-service,      # 🔄 TODO: Implement service
           # meal-service,         # 🔄 TODO: Implement service
@@ -277,7 +278,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./services/${{ matrix.service }}
-          file: ./services/${{ matrix.service }}/${{ matrix.service == 'graphql-gateway' && 'Dockerfile.minimal' || 'Dockerfile' }}
+          file: ./services/${{ matrix.service }}/Dockerfile
           push: false  # Only build for now, push when secrets are configured
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

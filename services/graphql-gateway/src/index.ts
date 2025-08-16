@@ -53,6 +53,10 @@ async function startServer(): Promise<void> {
         app.use(compression());
         app.use(morgan(config.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
+        // ✅ CRITICAL: JSON body parsing middleware for Apollo Server
+        app.use(express.json());
+        app.use(express.urlencoded({ extended: true }));
+
         // ✅ LESSON LEARNED: Essential health check endpoints
         // /ping - minimal connectivity test
         app.get('/ping', (req, res) => {

@@ -51,6 +51,12 @@ RUN npm ci --only=production --silent && \
 # Copy built application from builder stage
 COPY --from=builder --chown=graphql:nodejs /app/dist ./dist
 
+# Validate that the main file exists
+RUN ls -la dist/index.js || (echo "❌ ERROR: dist/index.js not found!" && exit 1)
+
+# ✅ VALIDATION: Ensure Apollo Server files exist
+RUN ls -la dist/ && test -f dist/index.js || { echo "❌ Apollo Server build failed!"; exit 1; }
+
 # Switch to non-root user
 USER graphql
 
@@ -61,6 +67,7 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 4000) + '/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
-# ✅ CRITICAL: Dynamic PORT binding for Render.com compatibility
-# Lesson learned from User Management deployment
-CMD ["sh", "-c", "node dist/index.js --port=${PORT:-4000}"]
+# ✅ CRITICAL: Full Apollo Server with Federation 
+# Upgraded from minimal server to complete GraphQL Gateway v0.2.1
+# Force rebuild: 2025-08-16
+CMD ["node", "dist/index.js"]

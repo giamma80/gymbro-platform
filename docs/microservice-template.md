@@ -14,6 +14,7 @@ services/{service-name}/
 │   ├── database.py        # 🗄️ SQLAlchemy models
 │   ├── auth.py            # 🔐 Autenticazione
 │   ├── services.py        # 💼 Business logic
+│   ├── graphql_schema.py  # 🔗 Strawberry GraphQL schema
 │   └── api/               # 🌐 API endpoints
 │       ├── __init__.py
 │       └── v1/
@@ -25,6 +26,7 @@ services/{service-name}/
 │   ├── test_models.py     # Model tests
 │   ├── test_auth.py       # Auth tests
 │   ├── test_config.py     # Config tests
+│   ├── test_graphql.py    # GraphQL schema tests
 │   └── test_services.py   # Service tests
 ├── alembic/               # 📊 Database migrations
 ├── scripts/               # 🔧 Utility scripts
@@ -58,6 +60,7 @@ redis = "^6.4.0"
 python-jose = {extras = ["cryptography"], version = "^3.5.0"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 python-multipart = "^0.0.20"
+strawberry-graphql = {extras = ["fastapi"], version = "^0.215.1"}
 sentry-sdk = {extras = ["fastapi"], version = "^2.34.0"}
 structlog = "^24.4.0"
 email-validator = "^2.2.0"
@@ -98,6 +101,185 @@ multi_line_output = 3
 python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
+```
+
+## 🔧 **POETRY DEPENDENCY MANAGEMENT WORKFLOW**
+
+**⚠️ PROCESSO OBBLIGATORIO per gestione dipendenze Python:**
+
+### 📦 Installazione Dipendenze
+```bash
+# Installazione iniziale progetto
+poetry install
+
+# Aggiungere nuova dipendenza runtime
+poetry add {package-name}
+
+# Aggiungere dipendenza dev/testing
+poetry add --group dev {package-name}
+poetry add --group test {package-name}
+
+# Esempio GraphQL support
+poetry add "strawberry-graphql[fastapi]"
+poetry add python-multipart
+```
+
+### 🔄 Rigenerazione Lock File (CRITICO!)
+```bash
+# SEMPRE dopo modifiche dipendenze:
+# 1. Cancella lock file esistente
+rm poetry.lock
+
+# 2. Rigenera lock file pulito
+poetry install
+
+# 3. Verifica installazione
+poetry show | grep {package-name}
+```
+
+### 🐳 Docker Build Process
+```bash
+# SEMPRE rebuild no-cache dopo poetry changes
+docker-compose build --no-cache {service-name}
+
+# Restart service per testing
+docker-compose restart {service-name}
+
+# Verifica logs
+docker-compose logs {service-name}
+```
+
+### 🔌 Integration Steps (es. GraphQL)
+```python
+# 1. Crea schema/router file
+# services/{service}/graphql_schema.py
+
+# 2. Import in main.py
+from graphql_schema import graphql_router
+
+# 3. Include router in FastAPI app
+app.include_router(graphql_router)
+```
+
+**📋 Poetry Workflow Checklist:**
+- [ ] `poetry add {package}` per nuove dipendenze
+- [ ] `rm poetry.lock && poetry install` per lock rebuild
+- [ ] Update main.py imports/setup
+- [ ] `docker-compose build --no-cache {service}`
+- [ ] `docker-compose restart {service}` per testing
+- [ ] Verifica endpoint funzionanti
+
+## 🔗 GraphQL Schema Template Standard
+
+### graphql_schema.py
+```python
+"""
+GraphQL Schema per {Service Name} Service
+Apollo Federation Ready
+"""
+
+from typing import List, Optional
+import strawberry
+from strawberry.fastapi import GraphQLRouter
+from strawberry.types import Info
+
+from models import {ModelName} as {ModelName}Model
+from services import {ServiceName}Service
+from database import get_db
+
+@strawberry.type
+class {EntityName}:
+    """GraphQL Type per {EntityName}"""
+    id: strawberry.ID
+    name: str
+    email: Optional[str] = None
+    created_at: str
+    updated_at: str
+    
+    @classmethod
+    def from_model(cls, model: {ModelName}Model) -> "{EntityName}":
+        return cls(
+            id=strawberry.ID(str(model.id)),
+            name=model.name,
+            email=model.email,
+            created_at=model.created_at.isoformat(),
+            updated_at=model.updated_at.isoformat()
+        )
+
+@strawberry.input
+class {EntityName}Input:
+    """Input type per create/update {EntityName}"""
+    name: str
+    email: Optional[str] = None
+
+@strawberry.type
+class Query:
+    """Query root per {Service Name}"""
+    
+    @strawberry.field
+    async def {entity_name}s(self, info: Info) -> List[{EntityName}]:
+        """Fetch all {entity_name}s"""
+        async with get_db() as db:
+            service = {ServiceName}Service(db)
+            models = await service.get_all()
+            return [{EntityName}.from_model(model) for model in models]
+    
+    @strawberry.field
+    async def {entity_name}(self, info: Info, id: strawberry.ID) -> Optional[{EntityName}]:
+        """Fetch {entity_name} by ID"""
+        async with get_db() as db:
+            service = {ServiceName}Service(db)
+            model = await service.get_by_id(int(id))
+            return {EntityName}.from_model(model) if model else None
+
+@strawberry.type
+class Mutation:
+    """Mutation root per {Service Name}"""
+    
+    @strawberry.field
+    async def create_{entity_name}(self, info: Info, input: {EntityName}Input) -> {EntityName}:
+        """Create new {entity_name}"""
+        async with get_db() as db:
+            service = {ServiceName}Service(db)
+            model = await service.create(input.__dict__)
+            return {EntityName}.from_model(model)
+    
+    @strawberry.field
+    async def update_{entity_name}(self, info: Info, id: strawberry.ID, input: {EntityName}Input) -> Optional[{EntityName}]:
+        """Update existing {entity_name}"""
+        async with get_db() as db:
+            service = {ServiceName}Service(db)
+            model = await service.update(int(id), input.__dict__)
+            return {EntityName}.from_model(model) if model else None
+
+# Schema definition per Apollo Federation
+schema = strawberry.Schema(
+    query=Query,
+    mutation=Mutation,
+    extensions=[
+        # Add federation extensions if needed
+    ]
+)
+
+# FastAPI GraphQL router
+graphql_router = GraphQLRouter(
+    schema,
+    path="/graphql",
+    graphiql=True  # Enable GraphiQL interface in development
+)
+```
+
+### main.py Integration
+```python
+from fastapi import FastAPI
+from graphql_schema import graphql_router
+
+app = FastAPI(title="{Service Name} API")
+
+# Include GraphQL router
+app.include_router(graphql_router)
+logger.info("✅ GraphQL endpoint added at /graphql")
+```
 disallow_untyped_defs = true
 
 [tool.pytest.ini_options]

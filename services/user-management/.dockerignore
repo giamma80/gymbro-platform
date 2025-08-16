@@ -1,0 +1,44 @@
+# Poetry
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Virtual environments
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+tests/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+docs/
+
+# Local development
+.env
+.env.local
+
+# MacOS
+.DS_Store
+
+# Poetry lock file is needed for Docker build
+# pyproject.toml is needed for Docker build
+# Dockerfile* files are needed

@@ -12,7 +12,7 @@ async function startMinimalServer() {
     try {
         // ✅ ROBUST PORT PARSING for Render.com
         let PORT = parseInt(process.env.PORT, 10);
-        
+
         // Fallback if PORT is NaN, undefined, or invalid
         if (!PORT || isNaN(PORT) || PORT <= 0 || PORT >= 65536) {
             PORT = 4000;

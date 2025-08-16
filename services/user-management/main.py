@@ -29,6 +29,7 @@ from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from auth import create_access_token, get_current_user, verify_token
 from config import settings
 from database import Base, engine, get_db
+from graphql_schema import graphql_router
 
 # Import local modules
 from models import (
@@ -110,6 +111,13 @@ app.add_middleware(
 # Temporarily disable other middleware for debugging
 # app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.ALLOWED_HOSTS)
 
+# ==========================================
+# 🔌 GraphQL Router Setup
+# ==========================================
+
+# Include GraphQL router for Apollo Federation
+app.include_router(graphql_router)
+logger.info("✅ GraphQL endpoint added at /graphql")
 
 # Security headers - Simplified
 # @app.middleware("http")

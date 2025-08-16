@@ -5,8 +5,8 @@ services:
   - type: web
     name: gymbro-graphql-gateway
     runtime: docker
-    dockerfilePath: ./services/graphql-gateway/Dockerfile.minimal
-    # ✅ LESSON LEARNED: Health check path is critical
+    dockerfilePath: ./services/graphql-gateway/Dockerfile
+    # ✅ Apollo Gateway with Federation
     healthCheckPath: /health
     # ✅ LESSON LEARNED: Auto-deploy from main branch
     autoDeploy: true

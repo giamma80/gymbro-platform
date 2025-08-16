@@ -94,15 +94,15 @@ async function startServer(): Promise<void> {
 
                 // Test subgraph connectivity
                 try {
-                    const response = await fetch(`${config.USER_MANAGEMENT_URL}/health`);
+                    const response = await fetch(`${config.USER_MANAGEMENT_URL.replace('/graphql', '')}/health`);
                     healthStatus.subgraphs['user-management'] = {
-                        url: config.USER_MANAGEMENT_URL,
+                        url: config.USER_MANAGEMENT_URL.replace('/graphql', ''),
                         status: response.ok ? 'healthy' : 'unhealthy',
                         responseTime: Date.now()
                     };
                 } catch (error) {
                     healthStatus.subgraphs['user-management'] = {
-                        url: config.USER_MANAGEMENT_URL,
+                        url: config.USER_MANAGEMENT_URL.replace('/graphql', ''),
                         status: 'unhealthy',
                         error: error instanceof Error ? error.message : 'Unknown error'
                     };
@@ -126,7 +126,7 @@ async function startServer(): Promise<void> {
                 subgraphs: [
                     {
                         name: 'user-management',
-                        url: `${config.USER_MANAGEMENT_URL}/graphql`
+                        url: config.USER_MANAGEMENT_URL
                     }
                     // Future subgraphs will be added here following the same pattern
                 ]

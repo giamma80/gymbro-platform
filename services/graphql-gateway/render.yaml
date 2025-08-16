@@ -20,7 +20,7 @@ services:
       - key: PORT
         generateValue: true # Render auto-assigns port
       - key: USER_MANAGEMENT_URL
-        value: https://gymbro-user-service.onrender.com
+        value: https://gymbro-user-service.onrender.com/graphql
       - key: CORS_ORIGINS
         value: "*" # Permissive for MVP debug
       - key: FORCE_FULL_SERVER

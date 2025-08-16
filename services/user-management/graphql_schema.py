@@ -49,6 +49,15 @@ class ActivityLevelType(Enum):
 # =====================================
 
 
+# GraphQL Types for Federation
+# =====================================
+
+@strawberry.type
+class ServiceDefinition:
+    """Apollo Federation service definition"""
+    sdl: str
+
+
 @strawberry.type
 class Query:
     """GraphQL Query root - Apollo Federation compatible"""
@@ -58,7 +67,7 @@ class Query:
         """Test query - Strawberry GraphQL is working!"""
         return (
             "🎉 Hello from User Management GraphQL with Strawberry! "
-            "Federation support enabled!"
+            "Apollo Federation _service field enabled!"
         )
 
     @strawberry.field
@@ -78,6 +87,19 @@ class Query:
             return 42
         except Exception:
             return 0
+
+    @strawberry.field
+    def _service(self) -> ServiceDefinition:
+        """Apollo Federation service definition - Required by Gateway"""
+        # Minimal SDL for User Management service
+        sdl = """
+            extend type Query {
+                hello: String
+                test_enums: String
+                user_count: Int
+            }
+        """
+        return ServiceDefinition(sdl=sdl)
 
 
 @strawberry.type

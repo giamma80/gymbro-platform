@@ -69,5 +69,6 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 # ✅ CRITICAL: Full Apollo Server with Federation 
 # Upgraded from minimal server to complete GraphQL Gateway v0.2.1
-# Force rebuild: 2025-08-16
+# Force clean rebuild: 2025-08-16 post-cleanup
+# MUST NOT USE MINIMAL SERVER FILES
 CMD ["node", "dist/index.js"]

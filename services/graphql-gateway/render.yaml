@@ -23,6 +23,10 @@ services:
         value: https://gymbro-user-service.onrender.com
       - key: CORS_ORIGINS
         value: "*" # Permissive for MVP debug
+      - key: FORCE_FULL_SERVER
+        value: "true" # Force full Apollo Server (not minimal)
+      - key: CACHE_BUST
+        value: "2025-08-16-cleanup" # Force rebuild after cleanup
     # ✅ LESSON LEARNED: Build commands for Docker
     buildCommand: echo "Using Docker build"
     # Docker images don't need start command

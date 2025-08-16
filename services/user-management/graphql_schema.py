@@ -88,8 +88,8 @@ class Query:
         except Exception:
             return 0
 
-    @strawberry.field
-    def _service(self) -> ServiceDefinition:
+    @strawberry.field(name="_service")
+    def service_field(self) -> ServiceDefinition:
         """Apollo Federation service definition - Required by Gateway"""
         # Minimal SDL for User Management service
         sdl = """

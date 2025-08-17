@@ -1,5 +1,5 @@
 /**
- * 🏋️ GymBro Platform - GraphQL Gateway
+ * 🏋️ GymBro Platform - GraphQL Gateway v0.2.1
  * Main server entry point with Render.com deployment optimizations
  * 
  * Applies all lessons learned from User Management v0.1.3 deployment:
@@ -8,6 +8,7 @@
  * ✅ CORS permissive for MVP debugging
  * ✅ Minimal middleware initially
  * ✅ Proper error handling
+ * ✅ Apollo Federation with schema refresh
  */
 
 import { ApolloGateway, IntrospectAndCompose } from '@apollo/gateway';

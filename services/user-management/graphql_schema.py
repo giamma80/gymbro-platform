@@ -3,10 +3,9 @@ GraphQL schema with Strawberry and Apollo Federation support
 for User Management Service - Apollo Federation Compatible
 """
 
-
+import datetime
 from enum import Enum
 from typing import List, Optional
-import datetime
 
 import strawberry
 from strawberry.fastapi import GraphQLRouter
@@ -14,9 +13,11 @@ from strawberry.fastapi import GraphQLRouter
 # Try to import federation support, fall back to regular schema if not available
 try:
     from strawberry.federation import build_schema
+
     FEDERATION_AVAILABLE = True
 except ImportError:
     from strawberry import Schema as build_schema
+
     FEDERATION_AVAILABLE = False
     print("⚠️ Strawberry Federation not available, using regular schema")
 
@@ -28,11 +29,13 @@ class UserRoleType(Enum):
     PREMIUM = "premium"
     ADMIN = "admin"
 
+
 @strawberry.enum
 class GenderType(Enum):
     MALE = "male"
     FEMALE = "female"
     OTHER = "other"
+
 
 @strawberry.enum
 class ActivityLevelType(Enum):
@@ -41,6 +44,7 @@ class ActivityLevelType(Enum):
     MODERATELY_ACTIVE = "moderately_active"
     VERY_ACTIVE = "very_active"
     EXTREMELY_ACTIVE = "extremely_active"
+
 
 # Types
 @strawberry.type
@@ -59,6 +63,7 @@ class UserProfile:
     created_at: datetime.datetime
     updated_at: datetime.datetime
 
+
 @strawberry.type
 class UserStats:
     total_calories_burned: float
@@ -67,6 +72,7 @@ class UserStats:
     current_streak: int
     weight_change_kg: float
     bmi: float
+
 
 @strawberry.type
 class UserPreferences:
@@ -81,6 +87,7 @@ class UserPreferences:
     weight_unit: str
     distance_unit: str
 
+
 @strawberry.type
 class UserListResponse:
     users: List[UserProfile]
@@ -89,6 +96,7 @@ class UserListResponse:
     limit: int
     total_pages: int
 
+
 @strawberry.type
 class TokenResponse:
     access_token: str
@@ -96,6 +104,7 @@ class TokenResponse:
     token_type: str
     expires_in: int
     user: UserProfile
+
 
 # Input Types
 @strawberry.input
@@ -110,10 +119,12 @@ class UserRegistrationInput:
     weight_kg: float
     activity_level: ActivityLevelType
 
+
 @strawberry.input
 class UserLoginInput:
     email: str
     password: str
+
 
 @strawberry.input
 class UserProfileUpdateInput:
@@ -123,10 +134,12 @@ class UserProfileUpdateInput:
     weight_kg: Optional[float] = None
     activity_level: Optional[ActivityLevelType] = None
 
+
 @strawberry.input
 class PasswordChangeInput:
     current_password: str
     new_password: str
+
 
 @strawberry.input
 class UserPreferencesInput:
@@ -149,11 +162,12 @@ class UserPreferencesInput:
 # GraphQL Types for Federation
 # =====================================
 
+
 @strawberry.type
 class ServiceDefinition:
     """Apollo Federation service definition"""
-    sdl: str
 
+    sdl: str
 
 
 @strawberry.type
@@ -376,7 +390,6 @@ class Query:
         return ServiceDefinition(sdl=sdl)
 
 
-
 @strawberry.type
 class Mutation:
     """GraphQL Mutation root - Apollo Federation compatible"""
@@ -402,17 +415,19 @@ class Mutation:
     @strawberry.field
     def login_user(self, input: UserLoginInput) -> TokenResponse:
         # TODO: Implementa logica reale
-        return self.register_user(UserRegistrationInput(
-            email=input.email,
-            password=input.password,
-            first_name="Demo",
-            last_name="User",
-            date_of_birth=datetime.datetime(1990,1,1),
-            gender=GenderType.MALE,
-            height_cm=180.0,
-            weight_kg=75.0,
-            activity_level=ActivityLevelType.MODERATELY_ACTIVE,
-        ))
+        return self.register_user(
+            UserRegistrationInput(
+                email=input.email,
+                password=input.password,
+                first_name="Demo",
+                last_name="User",
+                date_of_birth=datetime.datetime(1990, 1, 1),
+                gender=GenderType.MALE,
+                height_cm=180.0,
+                weight_kg=75.0,
+                activity_level=ActivityLevelType.MODERATELY_ACTIVE,
+            )
+        )
 
     @strawberry.field
     def update_user_profile(self, input: UserProfileUpdateInput) -> UserProfile:

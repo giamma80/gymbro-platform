@@ -255,6 +255,7 @@ class Query:
                 userStats(userId: String!): UserStats
                 userPreferences(userId: String!): UserPreferences
             }
+
             type UserProfile {
                 id: String!
                 email: String!
@@ -270,6 +271,7 @@ class Query:
                 createdAt: DateTime!
                 updatedAt: DateTime!
             }
+
             type UserStats {
                 totalCaloriesBurned: Float!
                 totalCaloriesConsumed: Float!
@@ -278,6 +280,7 @@ class Query:
                 weightChangeKg: Float!
                 bmi: Float!
             }
+
             type UserPreferences {
                 timezone: String!
                 language: String!
@@ -290,6 +293,7 @@ class Query:
                 weightUnit: String!
                 distanceUnit: String!
             }
+
             type UserListResponse {
                 users: [UserProfile!]!
                 total: Int!
@@ -297,12 +301,76 @@ class Query:
                 limit: Int!
                 totalPages: Int!
             }
+
             type TokenResponse {
                 accessToken: String!
                 refreshToken: String!
                 tokenType: String!
                 expiresIn: Int!
                 user: UserProfile!
+            }
+
+            input UserRegistrationInput {
+                email: String!
+                password: String!
+                firstName: String!
+                lastName: String!
+                dateOfBirth: DateTime!
+                gender: GenderType!
+                heightCm: Float!
+                weightKg: Float!
+                activityLevel: ActivityLevelType!
+            }
+
+            input UserLoginInput {
+                email: String!
+                password: String!
+            }
+
+            input UserProfileUpdateInput {
+                firstName: String
+                lastName: String
+                heightCm: Float
+                weightKg: Float
+                activityLevel: ActivityLevelType
+            }
+
+            input PasswordChangeInput {
+                currentPassword: String!
+                newPassword: String!
+            }
+
+            input UserPreferencesInput {
+                timezone: String
+                language: String
+                pushNotifications: Boolean
+                emailNotifications: Boolean
+                mealReminders: Boolean
+                workoutReminders: Boolean
+                profilePublic: Boolean
+                shareAchievements: Boolean
+                weightUnit: String
+                distanceUnit: String
+            }
+
+            enum GenderType {
+                MALE
+                FEMALE
+                OTHER
+            }
+
+            enum UserRoleType {
+                USER
+                PREMIUM
+                ADMIN
+            }
+
+            enum ActivityLevelType {
+                SEDENTARY
+                LIGHTLY_ACTIVE
+                MODERATELY_ACTIVE
+                VERY_ACTIVE
+                EXTREMELY_ACTIVE
             }
         """
         return ServiceDefinition(sdl=sdl)

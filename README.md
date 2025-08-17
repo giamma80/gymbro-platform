@@ -26,6 +26,27 @@ Piattaforma Health&Fitness basata su microservizi con **Apollo Federation comple
 - 🏥 **Health Monitoring**: 100% platform health, automated checks
 - 💰 **Zero Cost**: PostgreSQL + 2x Web Services completamente gratuiti
 
+### 🧑‍💻 **GraphQL Sandbox (Apollo) - Testa la Federation in 1 click!**
+
+- **Accedi subito alla UI interattiva:**
+  👉 [Apri Apollo Sandbox](https://gymbro-graphql-gateway.onrender.com/)
+- **Come funziona:**
+  - Visita la root del Gateway: https://gymbro-graphql-gateway.onrender.com
+  - Verrai reindirizzato automaticamente alla Apollo Sandbox con l'endpoint già precompilato
+  - Puoi esplorare lo schema federato, fare query, mutation e vedere la documentazione live
+- **Sicuro anche in produzione:**
+  - Solo introspection e query consentite dallo schema
+  - Nessun dato sensibile esposto
+
+Esempio di query federata da provare subito:
+```graphql
+{
+  hello
+  testEnums
+  userCount
+}
+```
+
 ## 🌐 **APOLLO FEDERATION ARCHITECTURE**
 
 ```

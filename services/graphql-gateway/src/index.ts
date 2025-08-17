@@ -158,12 +158,12 @@ async function startServer(): Promise<void> {
             })
         }));
 
-        // GraphQL Playground redirect for development
-        if (config.NODE_ENV !== 'production') {
-            app.get('/', (req, res) => {
-                res.redirect('/graphql');
-            });
-        }
+        // Apollo Sandbox always enabled (prod & dev)
+        app.get('/', (req, res) => {
+            // Redirect to Apollo Sandbox with prefilled endpoint
+            const endpoint = `https://${req.headers.host}/graphql`;
+            res.redirect(`https://studio.apollographql.com/sandbox/explorer?endpoint=${encodeURIComponent(endpoint)}`);
+        });
 
         // 404 handler
         app.use('*', (req, res) => {

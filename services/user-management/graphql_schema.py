@@ -91,12 +91,12 @@ class Query:
     @strawberry.field(name="_service")
     def service_field(self) -> ServiceDefinition:
         """Apollo Federation service definition - Required by Gateway"""
-        # Minimal SDL for User Management service
+        # SDL matching Strawberry's camelCase field names
         sdl = """
             extend type Query {
                 hello: String
-                test_enums: String
-                user_count: Int
+                testEnums: String
+                userCount: Int
             }
         """
         return ServiceDefinition(sdl=sdl)

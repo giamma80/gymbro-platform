@@ -5,6 +5,52 @@ Tutte le modifiche significative al progetto sono documentate in questo file.
 Il formato è basato su [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 e questo progetto aderisce al [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.2.1] - 2025-08-17 - 🎉 APOLLO FEDERATION PRODUCTION READY
+
+### 🚀 **MILESTONE ACHIEVED: Complete Apollo Federation Implementation**
+
+Apollo Federation completamente operativo in produzione con GraphQL Gateway che federa correttamente i microservizi.
+
+#### 🎯 Production Deployment Success
+- **✅ GraphQL Gateway**: https://gymbro-graphql-gateway.onrender.com - LIVE & FEDERATING
+- **✅ User Management Service**: https://gymbro-user-service.onrender.com - LIVE & FEDERATED  
+- **✅ Platform Health**: 100% - All services operational
+- **✅ Federation Query**: `{ hello, testEnums, userCount }` working through unified API
+
+#### 🔧 Critical Issues Resolved
+1. **PORT NaN Error**: Centralized configuration with robust validation prevents startup failures
+2. **_service Field Missing**: Manual Apollo Federation SDL implementation with ServiceDefinition type
+3. **JSON Middleware Missing**: Added express.json() to GraphQL Gateway for request parsing
+4. **Schema Mismatch**: Fixed SDL camelCase naming to match Strawberry field conversion
+5. **Schema Cache**: Gateway redeploy pattern for schema introspection refresh
+
+#### Added - 🌐 Apollo Federation Infrastructure
+- **🔗 Apollo Gateway**: TypeScript-based federation gateway with IntrospectAndCompose
+- **🍓 Strawberry Federation**: Python GraphQL service with federation support
+- **⚙️ Centralized Configuration**: Robust PORT parsing and environment management
+- **🧪 Federation Testing**: Complete test suite for federated GraphQL queries
+- **📊 Service Discovery**: _service field providing SDL schema for gateway introspection
+- **🔄 Schema Refresh**: Automated deployment pattern for schema updates
+
+#### Enhanced - 🛠️ Development Experience  
+- **📚 Microservice Template**: Updated with Apollo Federation best practices and critical lessons
+- **🧪 Test Scripts**: Improved with 30-second timeouts for Render.com cold starts
+- **📖 Documentation**: Comprehensive CHECKPOINT with all resolved issues and patterns
+- **🔧 Configuration Patterns**: Centralized config approach for all future services
+
+#### Technical Architecture
+```
+┌─────────────────┐    Apollo Federation    ┌──────────────────────┐
+│   GraphQL       │◄─────────────────────────│  User Management    │
+│   Gateway       │        _service SDL      │  Service             │
+│   (Node.js)     │                          │  (Python/Strawberry)│
+└─────────────────┘                          └──────────────────────┘
+       │                                               │
+       ▼                                               ▼
+ Unified GraphQL API                            Domain-specific
+ All services federated                         Business logic
+```
+
 ## [v0.2.0] - 2025-08-15 - 🤖 MICROSERVICES AUTOMATION FRAMEWORK
 
 ### 🚀 **MEGA MILESTONE: Complete Development Automation Framework!**

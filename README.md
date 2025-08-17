@@ -1,28 +1,53 @@
 # 🏋️ GymBro Platform - Health & Fitness Microservices
 
-[![🚀 Production Status](https://img.shields.io/badge/Production-2_Services_LIVE-brightgreen)](https://gymbro-user-service.onrender.com)
+[![🎉 Federation Live](https://img.shields.io/badge/Apollo_Federation-LIVE-brightgreen)](https://gymbro-graphql-gateway.onrender.com/graphql)
+[![🚀 Production](https://img.shields.io/badge/Services-2_LIVE-success)](https://gymbro-user-service.onrender.com)
 [![🤖 Automation](https://img.shields.io/badge/Automation-Complete-blue)](https://github.com/giamma80/gymbro-platform)
 [![💰 Cost](https://img.shields.io/badge/Cost-$0/month-success)](https://render.com)
-[![🏥 Health](https://img.shields.io/badge/Health-Healthy-brightgreen)](https://gymbro-user-service.onrender.com/health)
-[![📋 Version](https://img.shields.io/badge/Version-v0.2.0-informational)](https://github.com/giamma80/gymbro-platform/releases/tag/v0.2.0)
+[![🏥 Health](https://img.shields.io/badge/Health-100%25-brightgreen)](https://gymbro-user-service.onrender.com/health)
+[![📋 Version](https://img.shields.io/badge/Version-v1.2.1-informational)](https://github.com/giamma80/gymbro-platform/releases/tag/v1.2.1)
 
 ## 🚀 Executive Summary
-Piattaforma Health&Fitness basata su microservizi con architettura scalabile e **framework di automazione completo** per sviluppo accelerato. Strategia "Start Free, Scale Smart" utilizzando servizi gratuiti nella fase MVP.
+Piattaforma Health&Fitness basata su microservizi con **Apollo Federation completo** e architettura scalabile. Framework di automazione per sviluppo accelerato con strategia "Start Free, Scale Smart".
 
-### 🎉 **v0.2.0 MEGA MILESTONE: Automation Framework Complete!**
+### 🎉 **v1.2.1 MAJOR MILESTONE: Apollo Federation Production Ready!**
 
-🤖 **FRAMEWORK DI AUTOMAZIONE COMPLETO** che accelera lo sviluppo di nuovi microservizi del **99%**:
-- ⚡ **Setup Time**: da 2 ore → 2 minuti
-- 🚀 **MVP Timeline**: da 3-4 mesi → 6-8 settimane  
-- 📋 **Zero Errors**: Template standardizzati eliminano errori configurazione
-- 🎯 **Focus**: 80% business logic vs 20% boilerplate
+🌐 **APOLLO FEDERATION OPERATIVO** - GraphQL unificato su tutti i microservizi:
+- ✅ **Unified GraphQL API**: Single endpoint per tutti i servizi
+- � **Schema Federation**: Automatic service discovery e composition
+- 🍓 **Strawberry Integration**: Python services con federation support
+- ⚡ **Zero-Cost Production**: Completamente operativo su tier gratuiti
 
 ### 🌐 **Production Services Status**
-- ✅ **User Management**: https://gymbro-user-service.onrender.com (**LIVE**)
-- 🚀 **GraphQL Gateway**: https://gymbro-graphql-gateway.onrender.com (**DEPLOYING**)
-- 📚 **Live API Docs**: https://gymbro-user-service.onrender.com/docs
-- 🏥 **Health Monitoring**: Automated health checks ogni 30sec
-- 💰 **Zero Cost**: PostgreSQL + Web Services gratuiti
+- ✅ **GraphQL Gateway**: https://gymbro-graphql-gateway.onrender.com/graphql (**FEDERATING**)
+- ✅ **User Management**: https://gymbro-user-service.onrender.com (**FEDERATED**)
+- 🧪 **Federation Test**: `{ hello, testEnums, userCount }` ✅ ALL WORKING
+- � **GraphQL Playground**: Live introspection e testing interface  
+- 🏥 **Health Monitoring**: 100% platform health, automated checks
+- 💰 **Zero Cost**: PostgreSQL + 2x Web Services completamente gratuiti
+
+## 🌐 **APOLLO FEDERATION ARCHITECTURE**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    GraphQL Gateway                          │
+│            https://gymbro-graphql-gateway.onrender.com     │
+│                   Apollo Federation                         │
+└──────────────────┬──────────────────┬──────────────────────┘
+                   │                  │
+       ┌───────────▼──────────┐      ┌▼──────────────────┐
+       │  User Management     │      │   Future Services │  
+       │   (Strawberry)       │      │  (Auto-federated) │
+       │  🍓 Federation Ready │      │   🔗 Plug & Play  │
+       └──────────────────────┘      └───────────────────┘
+```
+
+### 🚀 **Unified GraphQL API Features**
+- **� Single Query Endpoint**: Tutti i servizi accessibili via `/graphql`
+- **🧩 Schema Composition**: Automatic merging di tutti gli schemi service
+- **🔗 Service Discovery**: `_service` field per introspection automatica
+- **⚡ Smart Routing**: Query automatically routed to correct service
+- **🎯 Developer Experience**: GraphQL Playground per testing e documentation
 
 ## 🤖 **MICROSERVICES AUTOMATION FRAMEWORK**
 
@@ -30,19 +55,19 @@ Piattaforma Health&Fitness basata su microservizi con architettura scalabile e *
 
 #### **🚀 Genera Nuovo Microservizio (2 minuti)**
 ```bash
-# Genera automaticamente struttura completa
+# Genera automaticamente struttura completa con Apollo Federation
 ./scripts/generate-microservice.sh <service-name> <runtime>
 
-# Esempi per tutti i runtime:
-./scripts/generate-microservice.sh data-ingestion python  # FastAPI + Pydantic
-./scripts/generate-microservice.sh analytics-service node # Express + TypeScript  
-./scripts/generate-microservice.sh metrics-service go    # Gin + standard lib
+# Esempi con Federation Ready:
+./scripts/generate-microservice.sh calorie-service python  # FastAPI + Strawberry Federation
+./scripts/generate-microservice.sh analytics-service node # Express + Apollo Federation  
+./scripts/generate-microservice.sh metrics-service go    # Gin + GraphQL Federation
 
 # Genera automaticamente:
-# ✅ Struttura directory completa + health checks standard
-# ✅ Dockerfile.minimal ottimizzato per Render.com
-# ✅ Test framework base (pytest/jest/go test)
-# ✅ render.yaml configuration + README deployment
+# ✅ Struttura completa + Apollo Federation schema
+# ✅ _service field implementation per service discovery
+# ✅ Health checks standard + GraphQL endpoints
+# ✅ Dockerfile.minimal + render.yaml + CI/CD integration
 ```
 
 #### **⚡ Attiva CI/CD Pipeline (1 minuto)**  

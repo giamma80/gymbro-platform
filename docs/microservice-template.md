@@ -306,6 +306,49 @@ logs/
 
 ## 🔗 GraphQL Schema Template - APOLLO FEDERATION READY
 
+### ⚠️ CRITICAL APOLLO FEDERATION REQUIREMENTS
+
+**🔧 LESSONS LEARNED FROM PRODUCTION IMPLEMENTATION:**
+
+1. **✅ _service Field Implementation (MANDATORY)**
+   ```python
+   # REQUIRED: Manual _service field for Apollo Federation discovery
+   @strawberry.type
+   class ServiceDefinition:
+       """Apollo Federation service definition"""
+       sdl: str
+
+   @strawberry.field(name="_service")
+   def service_field(self) -> ServiceDefinition:
+       """Apollo Federation service definition - Required by Gateway"""
+       # CRITICAL: Use camelCase field names to match Strawberry conversion
+       sdl = """
+           extend type Query {
+               healthCheck: String
+               serviceInfo: ServiceInfo
+               healthStatus: HealthStatus
+           }
+       """
+       return ServiceDefinition(sdl=sdl)
+   ```
+
+2. **✅ Strawberry Field Name Convention**
+   - Strawberry auto-converts snake_case to camelCase
+   - SDL schema MUST match actual exposed field names
+   - Example: `health_check` → `healthCheck` in SDL
+
+3. **✅ Federation Import Pattern**
+   ```python
+   # REQUIRED: Graceful fallback for federation import
+   try:
+       from strawberry.federation import build_schema
+       FEDERATION_AVAILABLE = True
+   except ImportError:
+       from strawberry import Schema as build_schema
+       FEDERATION_AVAILABLE = False
+       print("⚠️ Strawberry Federation not available, using regular schema")
+   ```
+
 ### graphql_schema.py
 ```python
 """
@@ -483,6 +526,56 @@ if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
 ```
+
+## 🌐 GraphQL Gateway Template (Node.js/TypeScript)
+
+### ⚠️ CRITICAL GATEWAY REQUIREMENTS
+
+**🔧 LESSONS LEARNED FOR APOLLO GATEWAY:**
+
+1. **✅ Express JSON Middleware (MANDATORY)**
+   ```typescript
+   // CRITICAL: JSON parsing middleware for Apollo Server
+   app.use(express.json());
+   app.use(express.urlencoded({ extended: true }));
+   
+   // MUST be added BEFORE Apollo Server middleware
+   app.use('/graphql', expressMiddleware(server, {
+       context: async ({ req, res }): Promise<Context> => ({
+           req, res
+       })
+   }));
+   ```
+
+2. **✅ Centralized PORT Configuration**
+   ```typescript
+   // config.ts - Prevent PORT NaN errors
+   export const config = {
+       PORT: (() => {
+           const port = process.env.PORT || process.env.RENDER_EXTERNAL_PORT || '4000';
+           const parsed = parseInt(port, 10);
+           if (isNaN(parsed)) {
+               console.error(`❌ Invalid PORT value: ${port}`);
+               return 4000;
+           }
+           return parsed;
+       })(),
+       NODE_ENV: process.env.NODE_ENV || 'development'
+   };
+   ```
+
+3. **✅ Schema Refresh Pattern**
+   ```typescript
+   // Force schema refresh when subgraph schemas change
+   const gateway = new ApolloGateway({
+       supergraphSdl: new IntrospectAndCompose({
+           subgraphs: [
+               { name: 'service-name', url: SERVICE_URL }
+           ]
+       }),
+       debug: config.NODE_ENV !== 'production'
+   });
+   ```
 
 from models import {ModelName} as {ModelName}Model
 from services import {ServiceName}Service

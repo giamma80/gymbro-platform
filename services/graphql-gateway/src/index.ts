@@ -142,7 +142,7 @@ async function startServer(): Promise<void> {
             plugins: [
                 // Add performance and security plugins as needed
             ],
-            introspection: config.NODE_ENV !== 'production',
+            introspection: true, // Always enable introspection for Apollo Sandbox
             includeStacktraceInErrorResponses: config.NODE_ENV !== 'production'
         });
 

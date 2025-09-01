@@ -1,11 +1,24 @@
-# 🏋️ GymBro Platform - Health & Fitness Microservices
+# 🏋️ GymBro### 🎉 **v1.2.4 MAJOR MILESTONE: Apollo Federation 100% Operational!**
+
+🌐 **APOLLO FEDERATION COMPLETAMENTE OPERATIVO** - GraphQL unificato su tutti i microservizi:
+- ✅ **Complete Schema Federation**: UserProfile, UserStats, UserPreferences tutte federate
+- ✅ **DateTime Fields Working**: createdAt, updatedAt, dateOfBirth tutti funzionanti  
+- ✅ **Advanced Queries**: `{ me { id email firstName lastName age gender createdAt } }` ✅
+- ✅ **Schema Composition**: Risolti tutti gli errori di composizione Apollo Federation
+- ✅ **Production Verified**: Gateway v0.2.4 operativo al 100% su Render.com
+
+### 🌐 **Production Services Status**
+- ✅ **GraphQL Gateway**: https://gymbro-graphql-gateway.onrender.com/graphql (**v0.2.4 LIVE**)
+- ✅ **User Management**: https://gymbro-user-service.onrender.com (**COMPLETE SCHEMA FEDERATED**)
+- 🎯 **Complete Federation**: UserProfile, UserStats, UserPreferences, All Enums, DateTime scalars
+- 🔥 **Advanced Test**: `{ userStats(userId:"1") { totalCaloriesBurned bmi } }` ✅ ALL WORKINGealth & Fitness Microservices
 
 [![🎉 Federation Live](https://img.shields.io/badge/Apollo_Federation-LIVE-brightgreen)](https://gymbro-graphql-gateway.onrender.com/graphql)
 [![🚀 Production](https://img.shields.io/badge/Services-2_LIVE-success)](https://gymbro-user-service.onrender.com)
 [![🤖 Automation](https://img.shields.io/badge/Automation-Complete-blue)](https://github.com/giamma80/gymbro-platform)
 [![💰 Cost](https://img.shields.io/badge/Cost-$0/month-success)](https://render.com)
 [![🏥 Health](https://img.shields.io/badge/Health-100%25-brightgreen)](https://gymbro-user-service.onrender.com/health)
-[![📋 Version](https://img.shields.io/badge/Version-v1.2.1-informational)](https://github.com/giamma80/gymbro-platform/releases/tag/v1.2.1)
+[![📋 Version](https://img.shields.io/badge/Version-v1.2.4-informational)](https://github.com/giamma80/gymbro-platform/releases/tag/v1.2.4)
 
 ## 🚀 Executive Summary
 Piattaforma Health&Fitness basata su microservizi con **Apollo Federation completo** e architettura scalabile. Framework di automazione per sviluppo accelerato con strategia "Start Free, Scale Smart".

@@ -5,6 +5,37 @@ Tutte le modifiche significative al progetto sono documentate in questo file.
 Il formato è basato su [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 e questo progetto aderisce al [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.2.4] - 2025-09-01 - 🎉 APOLLO FEDERATION FULLY OPERATIONAL
+
+### 🏆 **MILESTONE ACHIEVED: Complete Apollo Federation with DateTime Scalar Fix**
+
+Risoluzione finale del problema di composizione schema Apollo Federation. Gateway v0.2.4 ora completamente operativo con tutti i tipi DateTime funzionanti.
+
+#### 🚀 Critical DateTime Scalar Resolution
+- **✅ Root Cause Identified**: Errore `Unknown type DateTime` bloccava composizione schema Apollo Federation
+- **✅ SDL Fix Applied**: Aggiunta definizione `scalar DateTime` nel campo `_service` User Management
+- **✅ Gateway Operational**: v0.2.4 completamente funzionante con schema completo federato
+- **✅ DateTime Fields Working**: `createdAt`, `updatedAt`, `dateOfBirth` tutti funzionanti
+- **✅ Production Verified**: Gateway e User Management 100% operativi su Render.com
+
+#### 🔧 Technical Resolution Details
+1. **Apollo Federation Composition Error**: 
+   - **Error**: `Unknown type DateTime` causava fallimento al startup Gateway
+   - **Root Cause**: SDL mancava definizione scalar per campi DateTime (createdAt, updatedAt)
+   - **Fix**: Aggiunta `scalar DateTime` in SDL del servizio User Management
+   - **Impact**: Schema completo ora componibile senza errori
+
+2. **Gateway Cache Resolution Pattern**:
+   - **Method**: Multiple version bumps (v0.2.0 → v0.2.4) per refresh forzato
+   - **Deployment**: `git commit && git push` → Render.com redeploy automatico
+   - **Verification**: `curl Gateway/graphql` per test schema completo
+
+#### 📊 Verified Functionality
+- **Complete Schema**: UserProfile, UserStats, UserPreferences tutti disponibili
+- **DateTime Fields**: Tutti i timestamp fields funzionanti (`createdAt: "2025-09-01T09:22:30.017359"`)
+- **Complex Queries**: `{ me { id email firstName lastName age gender createdAt } }` ✅
+- **Apollo Sandbox**: Schema completo visibile con tutti tipi, query, mutation, enum
+
 ## [v1.2.3] - 2025-09-01 - 🔄 COMPLETE USER SCHEMA FEDERATION
 
 ### 🚀 **MILESTONE ACHIEVED: Full User Management Schema Federation**

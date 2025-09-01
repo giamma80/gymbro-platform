@@ -308,9 +308,44 @@ logs/
 
 ### ⚠️ CRITICAL APOLLO FEDERATION REQUIREMENTS
 
-**🔧 LESSONS LEARNED FROM PRODUCTION IMPLEMENTATION:**
+**🔧 LESSONS LEARNED FROM PRODUCTION IMPLEMENTATION (v1.2.4):**
 
-1. **✅ _service Field Implementation (MANDATORY)**
+1. **🚨 CRITICAL: DateTime Scalar Definition (MANDATORY)**
+   ```python
+   @strawberry.field(name="_service") 
+   def service_field(self) -> ServiceDefinition:
+       """Apollo Federation service definition - Required by Gateway"""
+       sdl = """
+           # 🚨 CRITICAL: ALWAYS define ALL scalars used in your schema
+           scalar DateTime
+           scalar JSON
+           scalar Upload
+           
+           extend type Query {
+               healthCheck: String
+               serviceInfo: ServiceInfo
+               # Example with DateTime fields
+               currentUser: User
+           }
+           
+           type User {
+               id: String!
+               email: String!
+               # These DateTime fields REQUIRE scalar DateTime definition above
+               createdAt: DateTime!
+               updatedAt: DateTime!
+           }
+       """
+       return ServiceDefinition(sdl=sdl)
+   ```
+   
+   **⚠️ CRITICAL ERROR TO AVOID:**
+   - **Problem**: `Unknown type DateTime` causa fallimento composizione Gateway
+   - **Root Cause**: SDL manca definizione scalar per campi DateTime
+   - **Solution**: SEMPRE includere `scalar DateTime` se usi campi timestamp
+   - **Verification**: Test SDL con `{ _service { sdl } }` prima del deploy
+
+2. **✅ _service Field Implementation (MANDATORY)**
    ```python
    # REQUIRED: Manual _service field for Apollo Federation discovery
    @strawberry.type

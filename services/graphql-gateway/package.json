@@ -1,6 +1,6 @@
 {
     "name": "gymbro-graphql-gateway",
-    "version": "0.2.2",
+    "version": "0.2.3",
     "description": "GraphQL Gateway for GymBro Platform - Unified API Layer",
     "main": "dist/index.js",
     "scripts": {

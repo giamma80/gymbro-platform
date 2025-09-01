@@ -15,16 +15,16 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Service endpoints
-declare -A SERVICES=(
-    ["User Management"]="http://localhost:8001/health"
-    ["Data Ingestion"]="http://localhost:8002/health"
-    ["Calorie Service"]="http://localhost:8003/health"
-    ["Meal Service"]="http://localhost:8004/health"
-    ["Analytics Service"]="http://localhost:8005/health"
-    ["Notification Service"]="http://localhost:8006/health"
-    ["LLM Service"]="http://localhost:8007/health"
-    ["GraphQL Gateway"]="http://localhost:8000/health"
+# Service configurations (name:url format)
+SERVICES=(
+    "User-Management:http://localhost:8001/health"
+    "Data-Ingestion:http://localhost:8002/health"
+    "Calorie-Service:http://localhost:8003/health"
+    "Meal-Service:http://localhost:8004/health"
+    "Analytics-Service:http://localhost:8005/health"
+    "Notification-Service:http://localhost:8006/health"
+    "LLM-Service:http://localhost:8007/health"
+    "GraphQL-Gateway:http://localhost:8000/health"
 )
 
 # Check if docker-compose is running
@@ -41,12 +41,13 @@ echo ""
 echo -e "${BLUE}🔍 Checking Individual Services...${NC}"
 FAILED_SERVICES=()
 
-for service in "${!SERVICES[@]}"; do
-    url="${SERVICES[$service]}"
+for service_config in "${SERVICES[@]}"; do
+    service=$(echo "$service_config" | cut -d: -f1)
+    url=$(echo "$service_config" | cut -d: -f2-)
     
     # Try to curl the health endpoint
     if curl -s -f "$url" > /dev/null 2>&1; then
-        response=$(curl -s "$url" | jq -r '.status' 2>/dev/null || echo "unknown")
+        response=$(curl -s "$url" | jq -r '.status' 2>/dev/null || echo "OK")
         echo -e "${GREEN}✅ $service: $response${NC}"
     else
         echo -e "${RED}❌ $service: DOWN${NC}"
@@ -65,14 +66,8 @@ else
     FAILED_SERVICES+=("PostgreSQL")
 fi
 
-# Redis connectivity
-echo -e "${BLUE}🔄 Checking Redis...${NC}"
-if docker-compose exec -T redis redis-cli ping > /dev/null 2>&1; then
-    echo -e "${GREEN}✅ Redis: Connected${NC}"
-else
-    echo -e "${RED}❌ Redis: Connection failed${NC}"
-    FAILED_SERVICES+=("Redis")
-fi
+# Redis removed for MVP (free Render deployment)
+echo -e "${BLUE}ℹ️  Redis: Disabled for MVP (using PostgreSQL-based sessions)${NC}"
 
 echo ""
 

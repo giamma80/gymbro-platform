@@ -91,10 +91,9 @@ scoring per ogni metrica.
 **Domain Model Constraint-Aware**
 
 **Value Objects per Data Quality Management**
+```typescript
 
-typescript
-
-*// Data Source Attribution con confidence reale*
+// Data Source Attribution con confidence reale
 
 class DataSourceAttribution {
 
@@ -102,12 +101,12 @@ constructor(
 
 public readonly source: DataSource,
 
-public readonly confidence: number, *// 0.0-1.0 basato su analisi API
+public readonly confidence: number, // 0.0-1.0 basato su analisi API
 reale*
 
 public readonly lastUpdated: Date,
 
-public readonly syncLatency?: number *// HealthKit: 15-30min delay*
+public readonly syncLatency?: number // HealthKit: 15-30min delay*
 
 ) {}
 
@@ -115,13 +114,13 @@ static fromHealthKit(metric: HealthKitMetric): DataSourceAttribution {
 
 const confidenceMap = {
 
-\'steps\': 0.9, *// 85-95% accuracy da analisi*
+'steps': 0.9, // 85-95% accuracy da analisi
 
-\'activeCalories\': 0.75, *// ±10-15% margin*
+'activeCalories': 0.75, // ±10-15% margin
 
-\'weight\': 0.95, *// Alta precisione se da bilancia smart*
+'weight': 0.95, // Alta precisione se da bilancia smart*
 
-\'heartRate\': 0.92 *// Apple Watch medical grade*
+'heartRate': 0.92 // Apple Watch medical grade
 
 }
 
@@ -133,7 +132,7 @@ confidenceMap\[metric\] \|\| 0.7,
 
 new Date(),
 
-30 *// minuti di delay tipico HealthKit*
+30 // minuti di delay tipico HealthKit*
 
 )
 
@@ -142,9 +141,9 @@ new Date(),
 static fromOpenFoodFacts(product: OpenFoodFactsProduct):
 DataSourceAttribution {
 
-*// Analisi reale: micronutrienti disponibili solo per 10-30% prodotti*
+// Analisi reale: micronutrienti disponibili solo per 10-30% prodotti
 
-let confidence = 0.8 *// Base per macronutrienti*
+let confidence = 0.8 // Base per macronutrienti
 
 if (!product.nutriments.proteins_100g) confidence -= 0.2
 
@@ -171,7 +170,7 @@ new Date()
 
 }
 
-*// Precision Management per accuratezza ±20g*
+// Precision Management per accuratezza ±20g*
 
 class FoodQuantity {
 
@@ -207,25 +206,25 @@ max: this.value + this.precision
 
 }
 
-*// Gestione conflitti multi-source*
+// Gestione conflitti multi-source*
 
 class NutritionDataConflictResolver {
 
 static resolve(sources: NutritionDataWithSource\[\]): NutritionData {
 
-*// Weighted average basato su confidence + source priority*
+// Weighted average basato su confidence + source priority
 
 const sourcePriority = {
 
-\[DataSource.MANUAL\]: 1.0, *// Utente ha precedenza*
+\[DataSource.MANUAL\]: 1.0, // Utente ha precedenza
 
-\[DataSource.OPENFOODFACTS\]: 0.8, *// Dati strutturati*
+\[DataSource.OPENFOODFACTS\]: 0.8, // Dati strutturati
 
-\[DataSource.CREA\]: 0.9, *// Database scientifico italiano*
+\[DataSource.CREA\]: 0.9, // Database scientifico italiano
 
-\[DataSource.GPT4V\]: 0.6, *// AI estimation*
+\[DataSource.GPT4V\]: 0.6, // AI estimation
 
-\[DataSource.ESTIMATED\]: 0.3 *// Fallback*
+\[DataSource.ESTIMATED\]: 0.3 // Fallback
 
 }
 
@@ -233,7 +232,7 @@ const weightedSources = sources.map(s =\> ({
 
 \...s,
 
-weight: s.attribution.confidence \*
+weight: s.attribution.confidence \
 sourcePriority\[s.attribution.source\]
 
 }))
@@ -243,13 +242,11 @@ const totalWeight = weightedSources.reduce((sum, s) =\> sum + s.weight,
 
 return {
 
-calories: weightedSources.reduce((sum, s) =\> sum + (s.data.calories \*
-s.weight), 0) / totalWeight,
+calories: weightedSources.reduce((sum, s) =\> sum + (s.data.calories \s.weight), 0) / totalWeight,
 
-proteins: weightedSources.reduce((sum, s) =\> sum + (s.data.proteins \*
-s.weight), 0) / totalWeight,
+proteins: weightedSources.reduce((sum, s) =\> sum + (s.data.proteins \s.weight), 0) / totalWeight,
 
-*// \... altri nutrienti con weighted average*
+// ... altri nutrienti con weighted average*
 
 finalConfidence: totalWeight / sources.length,
 
@@ -328,7 +325,7 @@ return result
 }
 
 }
-
+```
 **Aggregates con Constraint Integration**
 
 typescript

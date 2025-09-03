@@ -2,14 +2,14 @@
 
 ## 📋 Project Overview
 
-**NutriFit** è una piattaforma fitness-nutrizionale enterprise basata su microservizi Python, con focus sul bilanciamento calorico intelligente e tracking nutrizionale per il mercato italiano.
+**NutriFit Platform v2.0** è una piattaforma fitness-nutrizionale enterprise basata su microservizi Python, progettata con architettura constraint-aware e Domain-Driven Design per il mercato italiano.
 
 ### 🎯 Core Mission
-- Bilanciamento calorico precision-aware (±20g accuracy)
-- Integrazione HealthKit/Health Connect per dati fitness
-- AI-powered food recognition con GPT-4V
-- Coaching nutrizionale personalizzato via RAG system
-- Cross-platform mobile app (Flutter POC)
+- **Precision Calorie Management**: Bilanciamento calorico ±20g accuracy con confidence scoring
+- **Multi-Source Data Integration**: HealthKit/Health Connect, OpenFoodFacts, AI analysis
+- **Conversational AI Coach**: RAG system + OpenAI per coaching nutrizionale personalizzato
+- **Cross-Platform POC**: Flutter app per validazione simultanea iOS/Android
+- **Enterprise-Grade Quality**: Constraint management e data quality scoring Cronometer-style
 
 ## 🏗️ Architecture Overview
 
@@ -22,10 +22,12 @@
 
 ### Tech Stack
 - **Backend**: Python 3.11 + FastAPI + PostgreSQL
-- **Mobile**: Flutter (cross-platform POC)
-- **AI**: OpenAI GPT-4V + RAG system
-- **Infrastructure**: Docker + Render deployment
-- **Database**: PostgreSQL + Supabase integration
+- **Mobile**: Flutter cross-platform (POC per rapid validation)
+- **AI**: OpenAI GPT-4V + MCP (Model Context Protocol) + RAG system
+- **Infrastructure**: Self-hosted n8n + Docker + Render deployment
+- **Database**: PostgreSQL + Supabase integration + pgvector per RAG
+- **Data Sources**: HealthKit, OpenFoodFacts, GPT-4V vision analysis
+- **Architecture**: Domain-Driven Design + Clean Architecture + Constraint-aware patterns
 
 ## 💻 Development Guidelines
 
@@ -365,17 +367,24 @@ Questo template garantisce:
 - 🚀 **Production Ready** con Docker e deployment
 
 ### Domain-Driven Design Patterns
-- **Value Objects**: Immutable per precisione (FoodQuantity, CalorieAmount)
-- **Entities**: Business objects con identity
-- **Aggregates**: Consistency boundaries
-- **Repositories**: Data access abstractions
-- **Domain Services**: Business logic complex
+- **Value Objects**: Immutable per precisione (FoodQuantity, CalorieAmount, DataSourceAttribution)
+- **Entities**: Business objects con identity (User, Meal, HealthMetrics)
+- **Aggregates**: Consistency boundaries (DailyNutritionData, UserProfile)
+- **Repositories**: Data access abstractions con fallback strategies
+- **Domain Services**: Business logic complex (CalorieBalanceService, DataQualityService)
 
-### Data Quality & Precision
-- **Precision Management**: ±20g accuracy per food quantities
-- **Data Source Attribution**: Confidence scoring per data source
-- **Fallback Strategies**: Multi-source data resolution
-- **Quality Scoring**: Cronometer-style confidence indicators
+### Data Quality & Precision Management
+- **Precision Management**: ±20g accuracy per food quantities con mathematical error propagation
+- **Data Source Attribution**: Confidence scoring multi-source (HealthKit: 0.95, OpenFoodFacts: 0.80, AI: 0.60)
+- **Fallback Strategies**: Multi-source data resolution con weighted averages
+- **Quality Scoring**: Cronometer-style confidence indicators per nutrient completeness
+- **Constraint-Aware Design**: API limitations embedded nel domain model
+
+### Flutter POC Strategy
+- **Cross-Platform Validation**: Rapid prototyping per iOS + Android simultaneo
+- **Complete Architecture Testing**: Full microservices integration via single codebase
+- **Performance Benchmarking**: Real-world testing su entrambe le piattaforme
+- **UX Validation**: Material 3 + Cupertino per native look automatico
 
 ## 🔧 Development Workflow
 
@@ -409,10 +418,14 @@ Scopes: calorie-balance, meal-tracking, health-monitor, notifications, ai-coach
 - **Performance Tests**: Latency <200ms per endpoint
 
 ### Critical Test Areas
-- **Calorie Calculations**: Precision mathematical formulas
-- **Data Quality**: Confidence scoring algorithms
-- **API Integration**: OpenFoodFacts, HealthKit fallbacks
-- **AI Responses**: Prompt engineering validation
+- **Calorie Calculations**: Precision mathematical formulas con error propagation
+- **Data Quality**: Confidence scoring algorithms multi-source
+- **API Integration**: OpenFoodFacts, HealthKit fallbacks e constraint handling
+- **AI Responses**: Prompt engineering validation e RAG system accuracy
+- **Constraint Management**: API rate limits, precision boundaries, fallback scenarios
+- **Cross-Platform**: Flutter performance su iOS/Android
+- **MCP Integration**: Model Context Protocol server functionality
+- **RAG System**: Vector similarity search e knowledge retrieval accuracy
 
 ## 🔐 Security Guidelines
 
@@ -429,12 +442,55 @@ Scopes: calorie-balance, meal-tracking, health-monitor, notifications, ai-coach
 - **Migrations**: Alembic per schema evolution
 - **Indexing**: Ottimizzazione query frequenti
 - **Backup**: Automated daily backups
+- **Vector Storage**: pgvector per RAG system e similarity search
+
+### Constraint-Aware Architecture Patterns
+
+#### API Constraint Management
+```python
+# Pattern per gestione constraints API esterne
+@dataclass(frozen=True)
+class DataSourceConstraint:
+    source: DataSource
+    rate_limit_per_minute: int
+    precision_margin: Decimal
+    confidence_base: float
+    fallback_strategy: FallbackType
+    
+class ConstraintAwareRepository:
+    async def fetch_with_constraints(
+        self, 
+        request: DataRequest,
+        constraints: DataSourceConstraint
+    ) -> ConstraintedResult:
+        # Rate limiting check
+        # Precision validation
+        # Fallback implementation
+        pass
+```
+
+#### Multi-Source Data Fusion
+```python
+# Pattern per combinare dati da fonti multiple
+class DataFusionService:
+    def fuse_nutrition_data(
+        self,
+        healthkit_data: Optional[HealthKitData],
+        openfoodfacts_data: Optional[OFFData], 
+        ai_estimated_data: Optional[AIData]
+    ) -> FusedNutritionData:
+        # Weighted average basato su confidence
+        # Precision error propagation
+        # Data quality scoring
+        pass
+```
 
 ### External APIs
-- **OpenFoodFacts**: Fallback strategies per missing data
-- **HealthKit**: Real-time sync con confidence scoring
-- **OpenAI**: Token usage monitoring
-- **Supabase**: Auth e real-time subscriptions
+- **OpenFoodFacts**: Fallback strategies per missing data, rate limiting, quality assessment
+- **HealthKit**: Real-time sync con confidence scoring, precision management
+- **OpenAI**: Token usage monitoring, prompt optimization, RAG system integration
+- **Supabase**: Auth e real-time subscriptions, vector storage per RAG
+- **n8n Orchestrator**: Workflow automation per data processing e integrations
 
 ## 🚀 Deployment
 
@@ -540,7 +596,109 @@ CREATE USER nutrifit_user WITH ENCRYPTED PASSWORD 'strong_password';
 GRANT ALL PRIVILEGES ON DATABASE nutrifit_* TO nutrifit_user;
 ```
 
-#### Deployment Pipeline
+#### 🚀 Flutter POC Development
+
+#### Flutter-Specific Guidelines
+```yaml
+# Flutter project structure per POC validation
+lib/
+├── core/                    # Cross-cutting concerns
+│   ├── network/
+│   │   ├── graphql_client.dart    # Apollo-style GraphQL
+│   │   ├── rest_client.dart       # Retrofit per REST APIs
+│   │   └── interceptors/          # Auth, error, logging
+├── data/                    # Data layer
+│   ├── repositories/        # Repository implementations
+│   ├── datasources/         # Remote + Local data sources
+├── domain/                  # Business logic layer
+│   ├── entities/           # Domain objects
+│   ├── usecases/           # Business logic
+├── presentation/            # Presentation layer
+│   ├── providers/          # Riverpod state management
+│   ├── pages/              # App screens
+│   └── widgets/            # Reusable components
+```
+
+#### Key Flutter Dependencies
+```yaml
+# Critical packages per microservices integration
+dependencies:
+  flutter_riverpod: ^2.4.0      # Reactive state management
+  graphql_flutter: ^5.1.2       # GraphQL client con cache
+  health: ^10.2.0               # HealthKit + Health Connect unified
+  camera: ^0.10.5               # Food scanning workflow
+  dio: ^5.3.2                   # HTTP client con interceptors
+  drift: ^2.13.0                # Local SQLite database
+  freezed: ^2.4.6               # Immutable data classes
+```
+
+#### Flutter Testing Strategy
+- **Widget Tests**: UI components isolation
+- **Integration Tests**: Full microservices communication
+- **Golden Tests**: Visual regression prevention
+- **Performance Tests**: Memory usage e frame drops
+
+### 🤖 AI & RAG System Guidelines
+
+#### MCP (Model Context Protocol) Integration
+```python
+# MCP Server implementation pattern
+class NutriFitMCPServer:
+    """MCP server per AI coaching functionality"""
+    
+    def __init__(self, vector_store: VectorStore, llm_client: OpenAIClient):
+        self.vector_store = vector_store
+        self.llm_client = llm_client
+    
+    async def handle_nutrition_query(
+        self, 
+        query: str, 
+        user_context: UserContext
+    ) -> MCPResponse:
+        # Vector similarity search
+        relevant_docs = await self.vector_store.search(query, k=5)
+        
+        # Context-aware prompt building
+        prompt = self._build_contextual_prompt(query, user_context, relevant_docs)
+        
+        # LLM call con context injection
+        response = await self.llm_client.chat_completion(prompt)
+        
+        return MCPResponse(content=response, sources=relevant_docs)
+```
+
+#### RAG System Implementation
+```python
+# RAG pipeline per knowledge-based responses
+class RAGPipeline:
+    async def query_nutrition_knowledge(
+        self,
+        question: str,
+        user_profile: UserProfile
+    ) -> RAGResult:
+        # 1. Query embedding
+        query_vector = await self.embed_query(question)
+        
+        # 2. Vector similarity search (pgvector)
+        similar_docs = await self.vector_search(query_vector, threshold=0.8)
+        
+        # 3. Context filtering based on user profile
+        filtered_context = self.filter_by_user_profile(similar_docs, user_profile)
+        
+        # 4. Prompt engineering con retrieved context
+        contextual_prompt = self.build_prompt(question, filtered_context)
+        
+        # 5. LLM generation
+        response = await self.generate_response(contextual_prompt)
+        
+        return RAGResult(
+            answer=response,
+            sources=similar_docs,
+            confidence=self.calculate_confidence(similar_docs)
+        )
+```
+
+### Deployment Pipeline
 1. **GitHub Action** triggera build
 2. **Docker build** e push a registry
 3. **Render webhook** deploy automatico

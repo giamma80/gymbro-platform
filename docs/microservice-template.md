@@ -2,15 +2,30 @@
 
 Questo è il template standardizzato per tutti i microservizi della piattaforma GymBro che implementa **DUAL API ARCHITECTURE** (REST + GraphQL) usando Domain-Driven Design con Poetry.
 
-> ✅ **BEST PRACTICE CONSOLIDATE**: Ogni nuovo microservizio DEVE implementare sia REST che GraphQL endpoints fin dall'inizio
+> ⚠️ **COMPLIANCE OBBLIGATORIA**: OGNI microservizio DEVE seguire esattamente questa struttura. Nessuna eccezione.
 
-## 🎯 DOMAIN-DRIVEN DESIGN APPROACH
+## 🎯 CRITERI NON NEGOZIABILI
 
 **DUAL API ARCHITECTURE OBBLIGATORIA:**
 - ✅ REST API endpoints per operazioni CRUD e business logic
 - ✅ GraphQL schema per query federate e integrazione Apollo
 - ✅ Apollo Federation ready fin dall'inizio  
 - ✅ Unified data models condivisi tra REST e GraphQL
+
+**DEPENDENCY MANAGEMENT:**
+- ✅ Poetry OBBLIGATORIO (NO pip, NO requirements.txt)
+- ✅ pyproject.toml con configurazione completa
+- ✅ poetry.lock DEVE essere committato
+
+**STRUCTURE COMPLIANCE:**
+- ✅ Struttura directory IDENTICA per tutti i servizi
+- ✅ Naming conventions uniformi
+- ✅ File posizionati esattamente come nel template
+
+**TESTING REQUIREMENTS:**
+- ✅ Test suite completa (unit + integration)
+- ✅ Coverage minimo 80%
+- ✅ GraphQL + REST endpoints testati
 
 ## 📁 Struttura Directory Standard
 

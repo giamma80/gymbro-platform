@@ -47,6 +47,12 @@ start: ## Avvia tutti i servizi con Docker Compose
 	@echo "   - n8n Workflows: http://localhost:5678"
 	@echo "   - Traefik Dashboard: http://localhost:8080"
 
+dashboard: ## Avvia Web Dashboard per testing
+	@echo "🌐 Starting Web Dashboard..."
+	@echo "📊 Dashboard will be available at: http://localhost:3000"
+	@echo "🔧 Make sure services are running (make start)"
+	@cd services/web-dashboard && python3 server-proxy.py
+
 start-dev: ## Avvia solo servizi core per sviluppo
 	@echo "🔧 Starting core services for development..."
 	@docker-compose up -d postgres
@@ -236,6 +242,14 @@ clean: ## Pulisci container, volumi e immagini
 	@docker-compose down -v
 	@docker system prune -f
 	@echo "✅ Cleanup completed"
+
+clean-docker: ## Pulizia intelligente Docker (mantiene immagini essenziali)
+	@echo "🧹 Running smart Docker cleanup..."
+	@./scripts/docker-cleanup/docker-cleanup.sh
+
+clean-nuclear: ## 💣 Pulizia AGGRESSIVA Docker (rimuove tutto l'inutilizzato)
+	@echo "💣 Running aggressive Docker cleanup..."
+	@./scripts/docker-cleanup/docker-nuclear-cleanup.sh
 
 build: ## Build di tutte le immagini Docker
 	@echo "🔨 Building Docker images..."

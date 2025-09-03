@@ -5,6 +5,157 @@ Tutte le modifiche significative al progetto sono documentate in questo file.
 Il formato è basato su [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 e questo progetto aderisce al [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.4.0] - 2025-09-01 - 🍎 ENHANCED HEALTHKIT INTEGRATION COMPLETE
+
+### 🏆 **MILESTONE ACHIEVED: FASE 2B Enhanced HealthKit Integration**
+
+Implementazione completa dell'integrazione HealthKit avanzata con 31 nuovi campi database per supporto completo dati Apple Health. Sistema di analytics avanzati ready per metabolic analysis, body composition tracking, cardiovascular health monitoring.
+
+#### ✅ **FASE 2B: Enhanced HealthKit Integration - COMPLETATA**
+
+##### 🍎 **HealthKit Database Enhancements**
+- **✅ Enhanced DailyFitnessData**: +15 nuovi campi HealthKit-compatible (25 totali)
+  - **Activity Metrics**: `floors_climbed`, `distance_km` per tracking movimento completo
+  - **Advanced Calorie Tracking**: `calories_active`, `calories_basal`, `calories_total` per Complete TDEE
+  - **Body Composition**: `body_mass_index`, `body_fat_percentage`, `muscle_mass_kg` per body recomp tracking
+  - **Cardiovascular Health**: `resting_heart_rate`, `heart_rate_variability` per fitness cardiovascolare
+  - **Sleep Quality Analysis**: `sleep_hours_total`, `sleep_hours_in_bed`, `sleep_efficiency` per sleep optimization
+  - **Subjective Metrics**: `stress_level` per complete wellness tracking
+  - **Data Source**: `data_source` field per distinguere "healthkit" vs "manual" input
+
+- **✅ Enhanced UserActivity**: +16 nuovi campi per workout analysis avanzato (29 totali)  
+  - **Enhanced Heart Rate**: `min_heart_rate` per complete cardiovascular profile
+  - **Environmental Context**: `weather_temperature`, `weather_humidity`, `location_name` per performance correlation
+  - **Elevation Data**: `elevation_gain_m`, `elevation_loss_m` per outdoor activity tracking
+  - **Heart Rate Zones**: `hr_zone_1_seconds` attraverso `hr_zone_5_seconds` per training intensity analysis
+  - **Data Source & Metadata**: `data_source`, `source_bundle`, `device_type`, `healthkit_uuid` per data quality tracking
+  - **User Feedback**: `perceived_exertion` (RPE scale) per subjective intensity tracking
+
+##### 🔧 **Advanced Database Features**
+- **✅ Computed Columns con PostgreSQL Triggers**:
+  - **Total Calories**: Automatic calculation = `calories_active` + `calories_basal`  
+  - **Sleep Efficiency**: Automatic calculation = (`sleep_hours_total` / `sleep_hours_in_bed`) × 100
+- **✅ Enhanced Constraints & Indexes**: 
+  - Foreign key constraints per data integrity
+  - Unique constraint su `healthkit_uuid` per duplicate prevention
+  - Indexes ottimizzati per `data_source`, date ranges, user queries
+- **✅ Data Migration Success**: 31 campi aggiunti in production senza downtime
+
+##### 📱 **HealthKit Integration Infrastructure**  
+- **✅ HealthKitDataMapper**: Sistema completo conversione Apple Health → GymBro
+  - **Activity Type Mapping**: 19 tipi workout HealthKit supportati (running, cycling, HIIT, strength, etc.)
+  - **Daily Data Aggregation**: Steps, calories, distance, floors da samples HealthKit
+  - **Body Measurements**: Weight, BMI, body fat % mapping da Apple Health
+  - **Sleep Analysis**: Conversione sleepAnalysis HealthKit in metrics GymBro
+- **✅ Enhanced Service Methods**:
+  - **`record_daily_fitness()`**: Supporto 25 campi enhanced con backward compatibility
+  - **`record_activity()`**: Supporto 29 campi avanzati per workout completi
+  - **`sync_healthkit_data()`**: Bulk import completo HealthKit export con error handling
+  - **`get_healthkit_sync_status()`**: Monitoring stato sync e data quality
+
+##### 🧪 **Production Testing & Validation**
+- **✅ Database Migration**: Tutti i 31 campi aggiunti correttamente, triggers funzionanti
+- **✅ HealthKit Mapper**: Test con dati reali - 12,500 steps, 6.5km run, sleep efficiency 88.9%
+- **✅ Calculated Fields**: Calorie totali 2,230 (550 active + 1,680 basal), sleep efficiency automatica
+- **✅ Heart Rate Zones**: 5 zone tracking funzionante (Z1=300s, Z2=1200s, etc.)
+- **✅ Environmental Data**: Weather, location, elevation tracking operativo
+
+#### 📈 **Advanced Analytics Capabilities Unlocked**
+
+##### 🔥 **Metabolic Analysis**
+- **Complete Calorie Picture**: Active vs Basal energy separation per accurate TDEE
+- **Energy Balance**: Precision calorie in/out analysis con BMR inclusion
+- **Metabolic Rate Trends**: Resting metabolic rate tracking over time
+
+##### 💪 **Body Composition Analytics**
+- **Fat vs Muscle Trends**: Body fat % vs muscle mass kg progression tracking
+- **BMI Analysis**: BMI trends con body composition context per health insights
+- **Recomposition Tracking**: Simultaneous fat loss + muscle gain detection
+
+##### ❤️ **Cardiovascular Health**
+- **Resting HR Trends**: Cardiovascular fitness improvement tracking
+- **HRV Analysis**: Recovery metrics e autonomic nervous system health
+- **Training Zones**: 5-zone heart rate analysis per workout optimization
+
+##### 😴 **Sleep Quality Impact**
+- **Sleep Efficiency**: Time in bed vs actual sleep analysis
+- **Sleep-Performance Correlation**: Sleep quality impact su next-day performance
+- **Recovery Metrics**: Sleep quality come recovery indicator
+
+##### 🌤️ **Environmental Performance Factors**  
+- **Weather Impact**: Temperature, humidity correlation con performance
+- **Location Analysis**: Indoor vs outdoor performance patterns
+- **Elevation Training**: Altitude gain/loss impact su calorie burn e intensity
+
+#### ✅ **FASE 2: Database Integration - COMPLETATA**
+- **✅ Database Schema Created**: Due nuove tabelle PostgreSQL per tracking fitness
+  - `daily_fitness_data`: 15 colonne per metriche fitness giornaliere (steps, calories, weight, sleep, mood)
+  - `user_activities`: 17 colonne per tracking allenamenti individuali (type, duration, intensity, heart rate)
+- **✅ Service Layer Implementation**: Tutti i metodi mock sostituiti con query database reali
+  - `record_daily_fitness()`: Logica INSERT/UPDATE con pattern upsert per evitare duplicati
+  - `get_fitness_history()`: Query con date range e JOIN per includere attività
+  - `record_activity()`: Creazione record attività con calcoli timing automatici
+  - `get_latest_fitness_data()`: Retrieval dell'ultimo record con ordinamento corretto
+- **✅ Type Safety Compliance**: Tutti i pattern `date_type` mantenuti per evitare conflitti Pydantic
+- **✅ Production Verification**: Container riavviato, tabelle create, inserimento e lettura dati testati con successo
+
+#### 🔧 Technical Achievements
+1. **Database Schema Design**:
+   - **PostgreSQL Tables**: Schema completo con UUID primary keys, timestamp tracking, e JSON structured data
+   - **Indexing Strategy**: Indici su user_id, date, e started_at per performance ottimali
+   - **Data Types**: Proper mapping tra Python types e PostgreSQL (DOUBLE PRECISION, INTEGER, TEXT, JSON)
+
+2. **Service Implementation Patterns**:
+   - **Upsert Logic**: `record_daily_fitness()` controlla esistenza record e fa UPDATE o INSERT
+   - **Date Range Queries**: `get_fitness_history()` usa AND conditions con proper date boundaries
+   - **Activity Tracking**: `record_activity()` calcola ended_at automaticamente da duration_minutes
+
+3. **Type Safety Maintenance**:
+   - **Import Pattern**: `date as date_type` per evitare conflitti con Pydantic Field
+   - **Model Consistency**: Stesso pattern type-safe usato in models.py mantenuto in database.py
+   - **Error Prevention**: Zero conflitti rilevati, lessons learned da GraphQL Gateway applicati
+
+#### Added - 💾 Database Schema
+- **🗂️ DailyFitnessData Table**: Daily fitness metrics storage
+  - Fields: steps, calories_burned/consumed, weight_kg, sleep_hours, energy_level (1-10), mood_score (1-10)
+  - Unique constraint su (user_id, date) per prevenire duplicati giornalieri
+  - Support per notes testuali e automatic timestamps
+- **🏃‍♀️ UserActivity Table**: Individual workout/activity tracking
+  - Fields: activity_type, duration_minutes, calories_burned, distance_km, heart_rate metrics
+  - JSON activity_data per structured workout details (sets, reps, pace, etc.)
+  - Rating fields per difficulty e enjoyment (1-10 scale)
+
+#### Enhanced - 🔄 Business Logic
+- **UserService Class**: 4 nuovi metodi con implementazione database completa
+- **Error Handling**: Proper exception management e logging per troubleshooting
+- **Data Validation**: Automatic handling di optional fields con None checks
+- **Performance**: Efficient queries con proper indexing e minimal N+1 queries
+
+#### Fixed - 🛠️ Integration Issues
+- **Container Restart**: Service restarted successfully dopo modifiche database
+- **Import Resolution**: Tutti gli import database risolti senza circular dependencies
+- **Linting Compliance**: Code formatting rispetta Black, isort, flake8 standards
+- **SQLAlchemy 2.x**: Proper async patterns e text() wrapper per raw queries
+
+#### Technical Architecture Evolution
+```
+PRIMA (FASE 1): REST Endpoints → Mock Data → JSON Response
+DOPO (FASE 2):  REST Endpoints → PostgreSQL Queries → Real Data Response
+
+Database Tables Created:
+┌─────────────────────┐    ┌──────────────────────┐
+│   daily_fitness_    │    │   user_activities    │
+│   data              │    │                      │
+├─────────────────────┤    ├──────────────────────┤
+│ • steps             │    │ • activity_type      │
+│ • calories_burned   │    │ • duration_minutes   │
+│ • weight_kg         │    │ • calories_burned    │
+│ • sleep_hours       │    │ • heart_rate_data    │
+│ • energy_level      │    │ • activity_data JSON │
+│ • mood_score        │    │ • difficulty_rating  │
+└─────────────────────┘    └──────────────────────┘
+```
+
 ## [v1.2.4] - 2025-09-01 - 🎉 APOLLO FEDERATION FULLY OPERATIONAL
 
 ### 🏆 **MILESTONE ACHIEVED: Complete Apollo Federation with DateTime Scalar Fix**

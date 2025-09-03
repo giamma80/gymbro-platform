@@ -110,6 +110,22 @@ async function startServer(): Promise<void> {
                     };
                 }
 
+                // Test Analytics Service connectivity
+                try {
+                    const response = await fetch(`${config.ANALYTICS_SERVICE_URL.replace('/graphql', '')}/health`);
+                    healthStatus.subgraphs['analytics-service'] = {
+                        url: config.ANALYTICS_SERVICE_URL.replace('/graphql', ''),
+                        status: response.ok ? 'healthy' : 'unhealthy',
+                        responseTime: Date.now()
+                    };
+                } catch (error) {
+                    healthStatus.subgraphs['analytics-service'] = {
+                        url: config.ANALYTICS_SERVICE_URL.replace('/graphql', ''),
+                        status: 'unhealthy',
+                        error: error instanceof Error ? error.message : 'Unknown error'
+                    };
+                }
+
                 res.status(200).json(healthStatus);
             } catch (error) {
                 logger.error('Health check failed:', error);
@@ -129,6 +145,10 @@ async function startServer(): Promise<void> {
                     {
                         name: 'user-management',
                         url: config.USER_MANAGEMENT_URL
+                    },
+                    {
+                        name: 'analytics-service',
+                        url: config.ANALYTICS_SERVICE_URL
                     }
                     // Future subgraphs will be added here following the same pattern
                 ]

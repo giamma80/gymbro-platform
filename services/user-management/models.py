@@ -1,4 +1,5 @@
 from datetime import datetime
+from datetime import date as date_type
 from enum import Enum
 from typing import List, Optional
 
@@ -283,3 +284,154 @@ class ErrorResponse(BaseModel):
                 "timestamp": "2025-01-15T10:30:00Z",
             }
         }
+
+
+# =====================================
+# 🏃‍♂️ Fitness Tracking Models  
+# =====================================
+
+
+class ActivityType(str, Enum):
+    """Tipi di attività fisica per tracking dettagliato"""
+    
+    CARDIO = "cardio"
+    STRENGTH = "strength"
+    YOGA = "yoga"
+    PILATES = "pilates"
+    RUNNING = "running"
+    CYCLING = "cycling"
+    SWIMMING = "swimming"
+    WALKING = "walking"
+    HIKING = "hiking"
+    SPORTS = "sports"
+    DANCE = "dance"
+    OTHER = "other"
+
+
+class IntensityLevel(str, Enum):
+    """Livelli di intensità per le attività"""
+    
+    LOW = "low"
+    MODERATE = "moderate"
+    HIGH = "high"
+    VIGOROUS = "vigorous"
+
+
+class UserFitnessData(BaseModel):
+    """Daily fitness tracking data for analytics integration"""
+    
+    user_id: str = Field(..., description="User identifier")
+    date: date_type = Field(..., description="Date of the fitness data")
+    steps: Optional[int] = Field(0, ge=0, description="Daily step count")
+    active_minutes: Optional[int] = Field(0, ge=0, description="Active minutes")
+    calories_burned: Optional[float] = Field(0.0, ge=0, description="Calories burned")
+    calories_consumed: Optional[float] = Field(
+        0.0, ge=0, description="Calories consumed"
+    )
+    weight_kg: Optional[float] = Field(None, gt=0, le=500, description="Weight in kg")
+    sleep_hours: Optional[float] = Field(
+        None, ge=0, le=24, description="Hours of sleep"
+    )
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Creation timestamp"
+    )
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "user_id": "123e4567-e89b-12d3-a456-426614174000",
+                "date": "2025-09-01",
+                "steps": 8542,
+                "active_minutes": 45,
+                "calories_burned": 320.5,
+                "calories_consumed": 1800.0,
+                "weight_kg": 72.5,
+                "sleep_hours": 7.5
+            }
+        }
+
+
+class UserActivity(BaseModel):
+    """Individual activity/workout record"""
+    
+    user_id: str = Field(..., description="User identifier")
+    activity_date: date_type = Field(..., description="Date of activity")
+    activity_type: ActivityType = Field(..., description="Type of physical activity")
+    duration_minutes: int = Field(..., gt=0, description="Duration in minutes")
+    intensity: IntensityLevel = Field(..., description="Activity intensity level")
+    calories_estimate: float = Field(..., ge=0, description="Estimated calories burned")
+    notes: Optional[str] = Field(None, max_length=500, description="Optional activity notes")
+    created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "user_id": "123e4567-e89b-12d3-a456-426614174000", 
+                "date": "2025-09-01",
+                "activity_type": "running",
+                "duration_minutes": 30,
+                "intensity": "moderate",
+                "calories_estimate": 285.0,
+                "notes": "Morning run in the park"
+            }
+        }
+
+
+class UserActivityInput(BaseModel):
+    """Input model for user activity/workout logging"""
+    
+    date: date_type = Field(..., description="Date of activity")
+    activity_type: ActivityType = Field(..., description="Type of activity")
+    duration_minutes: int = Field(..., gt=0, le=480, description="Duration in minutes")
+    intensity: IntensityLevel = Field(..., description="Intensity level")
+    calories_estimate: Optional[float] = Field(
+        None, ge=0, description="Estimated calories burned"
+    )
+    notes: Optional[str] = Field(
+        None, max_length=500, description="Optional activity notes"
+    )
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow, description="Creation timestamp"
+    )
+
+
+class FitnessHistoryResponse(BaseModel):
+    """Response model for fitness history queries"""
+    
+    user_id: str = Field(..., description="User identifier")
+    days_requested: int = Field(..., description="Number of days requested")
+    total_records: int = Field(..., description="Total fitness records found")
+    fitness_data: List[UserFitnessData] = Field(..., description="Daily fitness data")
+    activities: List[UserActivity] = Field(..., description="Activity records")
+    date_range: dict = Field(..., description="Date range of the data")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "user_id": "123e4567-e89b-12d3-a456-426614174000",
+                "days_requested": 7,
+                "total_records": 5,
+                "fitness_data": [],
+                "activities": [],
+                "date_range": {
+                    "start_date": "2025-08-25",
+                    "end_date": "2025-09-01"
+                }
+            }
+        }
+
+
+class UserFitnessDataInput(BaseModel):
+    """Input model for user fitness data submission"""
+    
+    date: date_type = Field(..., description="Date of the fitness data")
+    steps: Optional[int] = Field(None, ge=0, description="Daily step count")
+    active_minutes: Optional[int] = Field(None, ge=0, description="Active minutes")
+    calories_burned: Optional[float] = Field(None, ge=0, description="Calories burned")
+    calories_consumed: Optional[float] = Field(
+        None, ge=0, description="Calories consumed"
+    )
+    weight_kg: Optional[float] = Field(None, gt=0, le=500, description="Weight in kg")
+    sleep_hours: Optional[float] = Field(
+        None, ge=0, le=24, description="Hours of sleep"
+    )

@@ -119,25 +119,30 @@ services:
   #     - ./services/meal-service:/app
   #   restart: unless-stopped
 
-  # Analytics Service - TODO: Implement service (v0.6.0)
-  # analytics-service:
-  #   build:
-  #     context: ./services/analytics-service
-  #     dockerfile: Dockerfile
-  #   container_name: gymbro_analytics_service
-  #   ports:
-  #     - "8005:8000"
-  #   environment:
-  #     - DATABASE_URL=postgresql://postgres:postgres123@postgres:5432/gymbro_db
-  #     - REDIS_URL=redis://redis:6379
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   volumes:
-  #     - ./services/analytics-service:/app
-  #   restart: unless-stopped
+  # Analytics Service - ✅ Implemented (v1.3.0)
+  analytics-service:
+    build:
+      context: ./services/analytics-service
+      dockerfile: Dockerfile
+    container_name: gymbro_analytics_service
+    ports:
+      - "8003:8003"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres123@postgres:5432/gymbro_db
+      # REDIS_URL removed - using in-memory cache for MVP
+      - PORT=8003
+    depends_on:
+      postgres:
+        condition: service_healthy
+      # redis: removed dependency
+    volumes:
+      - ./services/analytics-service:/app
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.analytics.rule=Host(`analytics.localhost`)"
+      - "traefik.http.routers.analytics.service=analytics"
+      - "traefik.http.services.analytics.loadbalancer.server.port=8003"
 
   # Notification Service - TODO: Implement service (v0.7.0)
   # notification-service:
@@ -161,33 +166,35 @@ services:
   #     - ./services/notification-service:/app
   #   restart: unless-stopped
 
-  # GraphQL Gateway - TODO: Implement service (v0.2.0)
-  # graphql-gateway:
-  #   build:
-  #     context: ./services/graphql-gateway
-  #     dockerfile: Dockerfile
-  #   container_name: gymbro_graphql_gateway
-  #   ports:
-  #     - "8000:8000"
-  #   environment:
-  #     - USER_SERVICE_URL=http://user-service:8000
-  #     - DATA_INGESTION_URL=http://data-ingestion:8000
-  #     - CALORIE_SERVICE_URL=http://calorie-service:8000
-  #     - MEAL_SERVICE_URL=http://meal-service:8000
-  #     - ANALYTICS_SERVICE_URL=http://analytics-service:8000
-  #     - NOTIFICATION_SERVICE_URL=http://notification-service:8000
-  #     - LLM_SERVICE_URL=http://llm-query-service:8000
-  #     - REDIS_URL=redis://redis:6379
-  #   depends_on:
-  #     - user-service
-  #     - data-ingestion
-  #     - calorie-service
-  #     - meal-service
-  #     - analytics-service
-  #     - notification-service
-  #   volumes:
-  #     - ./services/graphql-gateway:/app
-  #   restart: unless-stopped
+  # GraphQL Gateway - ✅ Implemented (v0.2.4)
+  graphql-gateway:
+    build:
+      context: ./services/graphql-gateway
+      dockerfile: Dockerfile
+    container_name: gymbro_graphql_gateway
+    ports:
+      - "4000:4000"
+    environment:
+      - USER_SERVICE_URL=http://user-service:8000
+      - ANALYTICS_SERVICE_URL=http://analytics-service:8003
+      # Future services URLs
+      # - DATA_INGESTION_URL=http://data-ingestion:8002
+      # - CALORIE_SERVICE_URL=http://calorie-service:8004
+      # - MEAL_SERVICE_URL=http://meal-service:8005
+      # - NOTIFICATION_SERVICE_URL=http://notification-service:8006
+      # - LLM_SERVICE_URL=http://llm-query-service:8007
+      - PORT=4000
+    depends_on:
+      - user-service
+      - analytics-service
+    volumes:
+      - ./services/graphql-gateway:/app
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.graphql.rule=Host(`api.localhost`)"
+      - "traefik.http.routers.graphql.service=graphql"
+      - "traefik.http.services.graphql.loadbalancer.server.port=4000"
 
   # LLM Query Service - TODO: Implement service (v0.8.0)
   # llm-query-service:

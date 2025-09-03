@@ -9,7 +9,10 @@ Supporta PostgreSQL con Supabase e connessioni asincrone.
 import uuid
 from datetime import datetime
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, Float, Integer, String, Text
+from sqlalchemy import (
+    JSON, Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, String, 
+    Text, UniqueConstraint
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -297,6 +300,226 @@ class UserSession(Base):
     def is_expired(self) -> bool:
         """Verifica se la sessione è scaduta"""
         return datetime.utcnow() > self.expires_at
+
+
+# ==========================================
+# 🏃‍♂️ Fitness Data Models
+# ==========================================
+
+
+class DailyFitnessData(Base):
+    """
+    Dati fitness giornalieri per tracking metriche utente.
+    Una riga per utente per giorno.
+    Enhanced per integrazione HealthKit.
+    """
+
+    __tablename__ = "daily_fitness_data"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
+    )
+    
+    # Data di riferimento (YYYY-MM-DD)
+    date = Column(DateTime, nullable=False, index=True)
+    
+    # ==========================================
+    # 🏃‍♂️ ACTIVITY METRICS (HealthKit Enhanced)
+    # ==========================================
+    steps = Column(Integer, default=0, nullable=False)
+    active_minutes = Column(Integer, default=0, nullable=False)
+    floors_climbed = Column(Integer, default=0, nullable=False)
+    distance_km = Column(Float, default=0.0, nullable=False)
+    
+    # ==========================================
+    # 🔥 CALORIE TRACKING (HealthKit Compatible)
+    # ==========================================
+    # Active Energy Burned
+    calories_active = Column(Float, default=0.0, nullable=False)
+    # Basal Energy Burned (BMR)
+    calories_basal = Column(Float, default=0.0, nullable=False)
+    # Total Daily Energy Expenditure
+    calories_total = Column(Float, default=0.0, nullable=False)
+    # Dietary Energy Consumed
+    calories_consumed = Column(Float, default=0.0, nullable=False)
+    
+    # Legacy field for backward compatibility (mapped to calories_active)
+    calories_burned = Column(Float, default=0.0, nullable=False)
+    
+    # ==========================================
+    # 📏 BODY COMPOSITION & HEALTH METRICS
+    # ==========================================
+    weight_kg = Column(Float, nullable=True)
+    body_mass_index = Column(Float, nullable=True)  # BMI
+    body_fat_percentage = Column(Float, nullable=True)  # Body Fat %
+    muscle_mass_kg = Column(Float, nullable=True)  # Lean Body Mass
+    
+    # ==========================================
+    # 💓 CARDIOVASCULAR HEALTH
+    # ==========================================
+    resting_heart_rate = Column(Integer, nullable=True)  # Resting HR (bpm)
+    heart_rate_variability = Column(Float, nullable=True)  # HRV (ms)
+    
+    # ==========================================
+    # 😴 SLEEP QUALITY ANALYSIS
+    # ==========================================
+    sleep_hours_total = Column(Float, nullable=True)  # Total time asleep
+    sleep_hours_in_bed = Column(Float, nullable=True)  # Total time in bed
+    # Sleep efficiency % (asleep/in_bed * 100)
+    sleep_efficiency = Column(Float, nullable=True)
+    
+    # Legacy field for backward compatibility (mapped to sleep_hours_total)
+    sleep_hours = Column(Float, nullable=True)
+    
+    # ==========================================
+    # 🎯 SUBJECTIVE METRICS (User Input)
+    # ==========================================
+    energy_level = Column(Integer, nullable=True)  # 1-10 scale
+    mood_score = Column(Integer, nullable=True)  # 1-10 scale
+    stress_level = Column(Integer, nullable=True)  # 1-10 scale
+    
+    # ==========================================
+    # 🏋️‍♀️ WORKOUT TRACKING
+    # ==========================================
+    workouts_completed = Column(Integer, default=0, nullable=False)
+    
+    # ==========================================
+    # 📱 DATA SOURCE & METADATA
+    # ==========================================
+    # Data source: "manual", "healthkit", "googlefit"
+    data_source = Column(String(100), default="manual", nullable=False)
+    notes = Column(Text, nullable=True)
+    
+    # Timestamps
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    
+    # ==========================================
+    # 🗂️ DATABASE CONSTRAINTS & INDEXES
+    # ==========================================
+    __table_args__ = (
+        # Unique constraint: one record per user per day
+        UniqueConstraint('user_id', 'date', name='unique_user_daily_fitness'),
+        # Indexes for common query patterns
+        Index('idx_daily_fitness_user_date', 'user_id', 'date'),
+        Index('idx_daily_fitness_date_range', 'date'),
+        Index('idx_daily_fitness_data_source', 'data_source'),
+    )
+
+    def __repr__(self):
+        return f"<DailyFitnessData user={self.user_id} date={self.date.date()}>"
+
+
+class UserActivity(Base):
+    """
+    Singole attività/allenamenti registrati dall'utente.
+    Enhanced per integrazione HealthKit avanzata.
+    """
+
+    __tablename__ = "user_activities"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
+    )
+    
+    # ==========================================
+    # 🏃‍♂️ ACTIVITY IDENTIFICATION
+    # ==========================================
+    # Activity type (running, weightlifting, yoga, etc.)
+    activity_type = Column(String(50), nullable=False)
+    activity_name = Column(String(100), nullable=False)
+    
+    # ==========================================
+    # ⏱️ TIMING INFORMATION
+    # ==========================================
+    started_at = Column(DateTime(timezone=True), nullable=False)
+    ended_at = Column(DateTime(timezone=True), nullable=True)
+    duration_minutes = Column(Integer, nullable=True)
+    
+    # ==========================================
+    # 📊 PERFORMANCE METRICS (HealthKit Enhanced)
+    # ==========================================
+    calories_burned = Column(Float, nullable=True)
+    distance_km = Column(Float, nullable=True)
+    steps = Column(Integer, nullable=True)
+    
+    # Cardiovascular metrics
+    avg_heart_rate = Column(Integer, nullable=True)
+    max_heart_rate = Column(Integer, nullable=True)
+    min_heart_rate = Column(Integer, nullable=True)  # New: from HealthKit
+    
+    # Environmental context (from HealthKit)
+    weather_temperature = Column(Float, nullable=True)  # Celsius
+    weather_humidity = Column(Float, nullable=True)  # Percentage
+    location_name = Column(String(200), nullable=True)  # Workout location
+    
+    # Elevation data (for outdoor activities)
+    elevation_gain_m = Column(Float, nullable=True)
+    elevation_loss_m = Column(Float, nullable=True)
+    
+    # ==========================================
+    # 🎯 INTENSITY & ZONES
+    # ==========================================
+    # Heart rate zones (time spent in each zone, in seconds)
+    hr_zone_1_seconds = Column(Integer, default=0, nullable=False)
+    hr_zone_2_seconds = Column(Integer, default=0, nullable=False)
+    hr_zone_3_seconds = Column(Integer, default=0, nullable=False)
+    hr_zone_4_seconds = Column(Integer, default=0, nullable=False)
+    hr_zone_5_seconds = Column(Integer, default=0, nullable=False)
+    
+    # ==========================================
+    # 📱 DATA SOURCE & METADATA
+    # ==========================================
+    # Data source: "manual", "healthkit", "apple_watch", "third_party_app"
+    data_source = Column(String(100), default="manual", nullable=False)
+    source_bundle = Column(String(255), nullable=True)  # Bundle ID
+    device_type = Column(String(100), nullable=True)  # "iPhone", "Apple Watch"
+    
+    # HealthKit workout identifier (for deduplication)
+    healthkit_uuid = Column(String(255), nullable=True, unique=True)
+    
+    # ==========================================
+    # 🏋️‍♂️ STRUCTURED ACTIVITY DATA (JSON)
+    # ==========================================
+    # Per weightlifting: sets, reps, weight
+    # Per running: pace, splits, elevation
+    # Per yoga: poses, difficulty
+    # Per swimming: strokes, pool length
+    activity_data = Column(JSON, nullable=True)
+    
+    # ==========================================
+    # 😊 USER FEEDBACK & NOTES
+    # ==========================================
+    notes = Column(Text, nullable=True)
+    difficulty_rating = Column(Integer, nullable=True)  # 1-10
+    enjoyment_rating = Column(Integer, nullable=True)  # 1-10
+    perceived_exertion = Column(Integer, nullable=True)  # RPE 1-10 scale
+    
+    # Timestamps
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    
+    # ==========================================
+    # 🗂️ DATABASE CONSTRAINTS & INDEXES
+    # ==========================================
+    __table_args__ = (
+        # Unique constraint on HealthKit UUID to prevent duplicates
+        UniqueConstraint('healthkit_uuid', name='unique_healthkit_workout'),
+        # Indexes for common query patterns
+        Index('idx_user_activities_user_date', 'user_id', 'started_at'),
+        Index('idx_user_activities_type', 'activity_type'),
+        Index('idx_user_activities_source', 'data_source'),
+        Index('idx_user_activities_date_range', 'started_at'),
+    )
+
+    def __repr__(self):
+        return f"<UserActivity {self.activity_name} by user {self.user_id}>"
 
 
 # ==========================================

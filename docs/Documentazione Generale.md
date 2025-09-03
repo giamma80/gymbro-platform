@@ -355,9 +355,8 @@ height="6.530555555555556in"}
 
 **Model Context Protocol Implementation:**
 
-python
-
-*\# services/ai-nutrition-coach/app/domain/mcp_server.py*
+```python
+# services/ai-nutrition-coach/app/domain/mcp_server.py
 
 from mcp import McpServer, Tool, Resource
 
@@ -887,11 +886,9 @@ echo "3. poetry run uvicorn app.main:app --reload --port 8000"
 
 **PostgreSQL Schema con Data Quality Management**
 
-sql
-
-*\-- migrations/001_constraint_aware_schema.sql*
-
-*\-- Enhanced users table con HealthKit integration*
+```sql
+-- migrations/001_constraint_aware_schema.sql
+-- Enhanced users table con HealthKit integration
 
 CREATE TABLE users (
 
@@ -901,54 +898,36 @@ email TEXT UNIQUE NOT NULL,
 
 created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 
-updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-
-*\-- Profile data*
-
-age INTEGER,
-
-gender TEXT CHECK (gender IN (\'MALE\', \'FEMALE\')),
-
-height_cm INTEGER,
-
-activity_level TEXT CHECK (activity_level IN (\'SEDENTARY\', \'LIGHT\',
-\'MODERATE\', \'ACTIVE\', \'VERY_ACTIVE\')),
-
-*\-- HealthKit integration status*
-
-healthkit_authorized BOOLEAN DEFAULT false,
-
-healthkit_last_sync TIMESTAMP WITH TIME ZONE,
-
-healthkit_sync_status TEXT DEFAULT \'UNKNOWN\' CHECK
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  
+  -- Profile data
+  age INTEGER,
+  gender TEXT CHECK (gender IN ('MALE', 'FEMALE')),
+  height_cm INTEGER,
+  activity_level TEXT CHECK (activity_level IN ('SEDENTARY', 'LIGHT', 'MODERATE', 'ACTIVE', 'VERY_ACTIVE')),
+  
+  -- HealthKit integration status
+  healthkit_authorized BOOLEAN DEFAULT false,
+  healthkit_last_sync TIMESTAMP WITH TIME ZONE,
+  healthkit_sync_status TEXT DEFAULT 'UNKNOWN' CHECK
 (healthkit_sync_status IN (\'HEALTHY\', \'STALE\', \'DENIED\',
 \'UNKNOWN\')),
 
-*\-- AI preferences*
-
-ai_coaching_enabled BOOLEAN DEFAULT true,
-
-conversation_style TEXT DEFAULT \'BALANCED\' CHECK (conversation_style
-IN (\'CASUAL\', \'PROFESSIONAL\', \'BALANCED\')),
-
-*\-- Preferences*
-
-timezone TEXT DEFAULT \'Europe/Rome\',
-
-language TEXT DEFAULT \'it\'
+  -- AI preferences
+  ai_coaching_enabled BOOLEAN DEFAULT true,
+  conversation_style TEXT DEFAULT 'BALANCED' CHECK (conversation_style IN ('CASUAL', 'PROFESSIONAL', 'BALANCED')),
+  
+  -- Preferences
+  timezone TEXT DEFAULT 'Europe/Rome',
+  language TEXT DEFAULT 'it'
 
 );
 
-*\-- Data quality tracking per ogni fonte*
-
+-- Data quality tracking per ogni fonte
 CREATE TABLE data_sources (
-
-id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
-name TEXT UNIQUE NOT NULL, *\-- \'OPENFOODFACTS\', \'HEALTHKIT\',
-\'CREA\', \'GPT4V\', \'MANUAL\'*
-
-base_confidence DECIMAL(3,2) NOT NULL, *\-- Confidence di base per la
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT UNIQUE NOT NULL, -- 'OPENFOODFACTS', 'HEALTHKIT', 'CREA', 'GPT4V', 'MANUAL'
+  base_confidence DECIMAL(3,2) NOT NULL, -- Confidence di base per la
 fonte*
 
 rate_limit_per_minute INTEGER,
@@ -1449,44 +1428,27 @@ FOR EACH ROW EXECUTE FUNCTION calculate_meal_confidence();
 
 CREATE OR REPLACE FUNCTION check_rate_limit(
 
-p_api_name TEXT,
-
-p_user_id UUID DEFAULT NULL,
-
-p_max_requests INTEGER DEFAULT 100,
-
-p_window_minutes INTEGER DEFAULT 1
-
-) RETURNS BOOLEAN AS \$\$
-
+  p_api_name TEXT,
+  p_user_id UUID DEFAULT NULL,
+  p_max_requests INTEGER DEFAULT 100,
+  p_window_minutes INTEGER DEFAULT 1
+) RETURNS BOOLEAN AS $$
 DECLARE
-
-current_window TIMESTAMP WITH TIME ZONE;
-
-current_count INTEGER;
-
+  current_window TIMESTAMP WITH TIME ZONE;
+  current_count INTEGER;
 BEGIN
+  current_window := date_trunc('minute', NOW());
 
-current_window := date_trunc(\'minute\', NOW());
-
-*\-- Get current count for this window*
-
-SELECT requests_count INTO current_count
-
-FROM api_rate_limits
-
-WHERE api_name = p_api_name
-
-AND (user_id = p_user_id OR (user_id IS NULL AND p_user_id IS NULL))
-
-AND window_start = current_window;
-
-IF current_count IS NULL THEN
-
-*\-- First request in this window*
-
-INSERT INTO api_rate_limits (api_name, user_id, window_start,
-requests_count, window_size_minutes, max_requests)
+  -- Get current count for this window
+  SELECT requests_count INTO current_count
+  FROM api_rate_limits
+  WHERE api_name = p_api_name
+    AND (user_id = p_user_id OR (user_id IS NULL AND p_user_id IS NULL))
+    AND window_start = current_window;
+    
+  IF current_count IS NULL THEN
+    -- First request in this window
+    INSERT INTO api_rate_limits (api_name, user_id, window_start, requests_count, window_size_minutes, max_requests)
 
 VALUES (p_api_name, p_user_id, current_window, 1, p_window_minutes,
 p_max_requests);

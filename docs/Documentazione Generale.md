@@ -223,7 +223,6 @@ class NutritionalDataFallbackStrategy {
     return result
   }
 }
-
 ```
 
 **Aggregates con Constraint Integration**
@@ -340,10 +339,7 @@ class DailyMealPlan {
 }
 ```
 
-**\
-**
-
-**3. Architettura Microservizi Integrata**
+## 3. Architettura Microservizi Integrata
 
 **5 Microservizi con AI-First Approach**
 
@@ -815,11 +811,10 @@ help: Include modelli per dati HealthKit?
 
 **Script Setup Automatizzato:**
 
-bash
-
+```bash
 #!/bin/bash
 
-*\# scripts/create-service.sh*
+# scripts/create-service.sh
 
 set -e
 
@@ -841,85 +836,52 @@ fi
 echo \"Creating microservice: \$SERVICE_NAME in bounded context:
 \$BOUNDED_CONTEXT\"
 
-*\# Create from template*
+# Create from template
+copier copy \
+  --data service_name="$SERVICE_NAME" \
+  --data bounded_context="$BOUNDED_CONTEXT" \
+  --data service_description="Microservizio $BOUNDED_CONTEXT per piattaforma fitness nutrizionale" \
+  --data use_postgres=true \
+  --data use_redis=true \
+  --data include_tests=true \
+  --data include_docker=true \
+  .copier/microservice \
+  services/$SERVICE_NAME
 
-copier copy \\
+# Setup Poetry dependencies
+cd services/$SERVICE_NAME
 
-\--data service_name=\"\$SERVICE_NAME\" \\
+# Add shared dependencies
+poetry add \
+  ../../../shared/models \
+  ../../../shared/utils \
+  --group dev
 
-\--data bounded_context=\"\$BOUNDED_CONTEXT\" \\
-
-\--data service_description=\"Microservizio \$BOUNDED_CONTEXT per
-piattaforma fitness nutrizionale\" \\
-
-\--data use_postgres=true \\
-
-\--data use_redis=true \\
-
-\--data include_tests=true \\
-
-\--data include_docker=true \\
-
-.copier/microservice \\
-
-services/\$SERVICE_NAME
-
-*\# Setup Poetry dependencies*
-
-cd services/\$SERVICE_NAME
-
-*\# Add shared dependencies*
-
-poetry add \\
-
-../../../shared/models \\
-
-../../../shared/utils \\
-
-\--group dev
-
-*\# Add context-specific dependencies*
-
-case \$BOUNDED_CONTEXT in
-
-\"ai-nutrition-coach\")
-
-poetry add openai mcp-python scikit-learn pandas numpy
-
-;;
-
-\"meal-tracking\")
-
-poetry add Pillow httpx
-
-;;
-
-\"health-monitor\")
-
-poetry add scipy statsmodels
-
-;;
-
+# Add context-specific dependencies
+case $BOUNDED_CONTEXT in
+  "ai-nutrition-coach")
+    poetry add openai mcp-python scikit-learn pandas numpy
+    ;;
+  "meal-tracking")
+    poetry add Pillow httpx
+    ;;
+  "health-monitor")
+    poetry add scipy statsmodels
+    ;;
 esac
 
-*\# Generate initial migration*
+# Generate initial migration
+poetry run alembic revision --autogenerate -m "Initial migration for $SERVICE_NAME"
 
-poetry run alembic revision \--autogenerate -m \"Initial migration for
-\$SERVICE_NAME\"
+# Setup Docker build context
+docker build -t fitness-nutrition/$SERVICE_NAME:dev .
 
-*\# Setup Docker build context*
-
-docker build -t fitness-nutrition/\$SERVICE_NAME:dev .
-
-echo \"Service \$SERVICE_NAME created successfully!\"
-
-echo \"Next steps:\"
-
-echo \"1. cd services/\$SERVICE_NAME\"
-
-echo \"2. poetry shell\"
-
-echo \"3. poetry run uvicorn app.main:app \--reload \--port 8000\"
+echo "Service $SERVICE_NAME created successfully!"
+echo "Next steps:"
+echo "1. cd services/$SERVICE_NAME"
+echo "2. poetry shell"
+echo "3. poetry run uvicorn app.main:app --reload --port 8000"
+```
 
 **4. Database Schema Constraint-Aware**
 

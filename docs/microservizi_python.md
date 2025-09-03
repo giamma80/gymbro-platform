@@ -123,21 +123,18 @@ N8N \--\> OPENAI
 
 **Core Framework Stack**
 
-\# pyproject.toml - Standard configuration per tutti i servizi
+```toml
+# pyproject.toml - Standard configuration per tutti i servizi
 
-\[tool.poetry\]
+[tool.poetry]
+name = "nutrifit-microservice-template"
 
-name = \"nutrifit-microservice-template\"
+version = "0.1.0"
+description = "NutriFit Microservice Template"
+authors = ["NutriFit Team <dev@nutrifit.com>"]
 
-version = \"0.1.0\"
-
-description = \"NutriFit Microservice Template\"
-
-authors = \[\"NutriFit Team \<dev@nutrifit.com\>\"\]
-
-\[tool.poetry.dependencies\]
-
-python = \"\^3.11\"
+[tool.poetry.dependencies]
+python = "^3.11"
 
 \# Core Framework
 

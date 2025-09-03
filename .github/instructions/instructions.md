@@ -38,7 +38,7 @@
 - **Code Quality**: black + isort + flake8 + mypy
 
 ### Project Structure Template
-```
+```bash
 services/{service_name}/
 ├── app/
 │   ├── main.py                 # FastAPI entry point
@@ -386,7 +386,7 @@ Questo template garantisce:
 - `hotfix/issue-description` - Emergency fixes
 
 ### Commit Conventions
-```
+```bash
 type(scope): description
 
 Types: feat, fix, docs, style, refactor, test, chore

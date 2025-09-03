@@ -1325,16 +1325,11 @@ borderRadius: BorderRadius.circular(8),
 
 ),
 
-child: Text(
-
-\'Posiziona il cibo al centro dell\\\'inquadratura.\\nPer prodotti
-confezionati, scansiona il barcode.\',
-
-style: TextStyle(color: Colors.white),
-
-textAlign: TextAlign.center,
-
-),
+          child: Text(
+            'Posiziona il cibo al centro dell\'inquadratura.\nPer prodotti confezionati, scansiona il barcode.',
+            style: TextStyle(color: Colors.white),
+            textAlign: TextAlign.center,
+          ),
 
 ),
 

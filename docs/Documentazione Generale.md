@@ -33,10 +33,7 @@ guidance nutrizionale personalizzata.
 
 **Mindmap degli Use Cases Principali**
 
-![Immagine che contiene testo, schermata, linea, Carattere Il contenuto
-generato dall\'IA potrebbe non essere
-corretto.](media/image1.png){width="6.6930555555555555in"
-height="2.4680555555555554in"}
+<img width="482" height="178" alt="image" src="https://github.com/user-attachments/assets/8dd5e25b-0b6d-4feb-92d1-b2cd8989b6cf" />
 
 **Core User Journeys**
 

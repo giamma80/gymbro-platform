@@ -92,431 +92,253 @@ scoring per ogni metrica.
 
 **Value Objects per Data Quality Management**
 ```typescript
-
 // Data Source Attribution con confidence reale
-
 class DataSourceAttribution {
-
-constructor(
-
-public readonly source: DataSource,
-
-public readonly confidence: number, // 0.0-1.0 basato su analisi API
-reale*
-
-public readonly lastUpdated: Date,
-
-public readonly syncLatency?: number // HealthKit: 15-30min delay*
-
-) {}
-
-static fromHealthKit(metric: HealthKitMetric): DataSourceAttribution {
-
-const confidenceMap = {
-
-'steps': 0.9, // 85-95% accuracy da analisi
-
-'activeCalories': 0.75, // ±10-15% margin
-
-'weight': 0.95, // Alta precisione se da bilancia smart*
-
-'heartRate': 0.92 // Apple Watch medical grade
-
+  constructor(
+    public readonly source: DataSource,
+    public readonly confidence: number, // 0.0-1.0 basato su analisi API reale
+    public readonly lastUpdated: Date,
+    public readonly syncLatency?: number // HealthKit: 15-30min delay
+  ) {}
+  
+  static fromHealthKit(metric: HealthKitMetric): DataSourceAttribution {
+    const confidenceMap = {
+      'steps': 0.9,           // 85-95% accuracy da analisi
+      'activeCalories': 0.75,  // ±10-15% margin
+      'weight': 0.95,         // Alta precisione se da bilancia smart
+      'heartRate': 0.92       // Apple Watch medical grade
+    }
+    
+    return new DataSourceAttribution(
+      DataSource.HEALTHKIT,
+      confidenceMap[metric] || 0.7,
+      new Date(),
+      30 // minuti di delay tipico HealthKit
+    )
+  }
+  
+  static fromOpenFoodFacts(product: OpenFoodFactsProduct): DataSourceAttribution {
+    // Analisi reale: micronutrienti disponibili solo per 10-30% prodotti
+    let confidence = 0.8 // Base per macronutrienti
+    
+    if (!product.nutriments.proteins_100g) confidence -= 0.2
+    if (!product.nutriments.fiber_100g) confidence -= 0.1
+    if (Object.keys(product.nutriments).filter(k => k.includes('vitamin')).length === 0) {
+      confidence -= 0.3 // Penalizza mancanza micronutrienti
+    }
+    
+    return new DataSourceAttribution(
+      DataSource.OPENFOODFACTS,
+      Math.max(confidence, 0.3),
+      new Date()
+    )
+  }
 }
 
-return new DataSourceAttribution(
-
-DataSource.HEALTHKIT,
-
-confidenceMap\[metric\] \|\| 0.7,
-
-new Date(),
-
-30 // minuti di delay tipico HealthKit*
-
-)
-
-}
-
-static fromOpenFoodFacts(product: OpenFoodFactsProduct):
-DataSourceAttribution {
-
-// Analisi reale: micronutrienti disponibili solo per 10-30% prodotti
-
-let confidence = 0.8 // Base per macronutrienti
-
-if (!product.nutriments.proteins_100g) confidence -= 0.2
-
-if (!product.nutriments.fiber_100g) confidence -= 0.1
-
-if (Object.keys(product.nutriments).filter(k =\>
-k.includes(\'vitamin\')).length === 0) {
-
-confidence -= 0.3 *// Penalizza mancanza micronutrienti*
-
-}
-
-return new DataSourceAttribution(
-
-DataSource.OPENFOODFACTS,
-
-Math.max(confidence, 0.3),
-
-new Date()
-
-)
-
-}
-
-}
-
-// Precision Management per accuratezza ±20g*
-
+// Precision Management per accuratezza ±20g
 class FoodQuantity {
-
-constructor(
-
-private \_value: number,
-
-public readonly unit: string,
-
-public readonly precision: number = 20 *// grammi, dal requisito*
-
-) {}
-
-get value(): number {
-
-*// Arrotonda alla precisione specificata*
-
-return Math.round(this.\_value / this.precision) \* this.precision
-
+  constructor(
+    private _value: number,
+    public readonly unit: string,
+    public readonly precision: number = 20 // grammi, dal requisito
+  ) {}
+  
+  get value(): number {
+    // Arrotonda alla precisione specificata
+    return Math.round(this._value / this.precision) * this.precision
+  }
+  
+  get confidenceInterval(): { min: number, max: number } {
+    return {
+      min: this.value - this.precision,
+      max: this.value + this.precision
+    }
+  }
 }
 
-get confidenceInterval(): { min: number, max: number } {
-
-return {
-
-min: this.value - this.precision,
-
-max: this.value + this.precision
-
-}
-
-}
-
-}
-
-// Gestione conflitti multi-source*
-
+// Gestione conflitti multi-source
 class NutritionDataConflictResolver {
-
-static resolve(sources: NutritionDataWithSource\[\]): NutritionData {
-
-// Weighted average basato su confidence + source priority
-
-const sourcePriority = {
-
-\[DataSource.MANUAL\]: 1.0, // Utente ha precedenza
-
-\[DataSource.OPENFOODFACTS\]: 0.8, // Dati strutturati
-
-\[DataSource.CREA\]: 0.9, // Database scientifico italiano
-
-\[DataSource.GPT4V\]: 0.6, // AI estimation
-
-\[DataSource.ESTIMATED\]: 0.3 // Fallback
-
+  static resolve(sources: NutritionDataWithSource[]): NutritionData {
+    // Weighted average basato su confidence + source priority
+    const sourcePriority = {
+      [DataSource.MANUAL]: 1.0,      // Utente ha precedenza
+      [DataSource.OPENFOODFACTS]: 0.8, // Dati strutturati
+      [DataSource.CREA]: 0.9,        // Database scientifico italiano
+      [DataSource.GPT4V]: 0.6,       // AI estimation
+      [DataSource.ESTIMATED]: 0.3    // Fallback
+    }
+    
+    const weightedSources = sources.map(s => ({
+      ...s,
+      weight: s.attribution.confidence * sourcePriority[s.attribution.source]
+    }))
+    
+    const totalWeight = weightedSources.reduce((sum, s) => sum + s.weight, 0)
+    
+    return {
+      calories: weightedSources.reduce((sum, s) => sum + (s.data.calories * s.weight), 0) / totalWeight,
+      proteins: weightedSources.reduce((sum, s) => sum + (s.data.proteins * s.weight), 0) / totalWeight,
+      // ... altri nutrienti con weighted average
+      finalConfidence: totalWeight / sources.length,
+      sourcesUsed: sources.map(s => s.attribution.source)
+    }
+  }
 }
 
-const weightedSources = sources.map(s =\> ({
-
-\...s,
-
-weight: s.attribution.confidence \
-sourcePriority\[s.attribution.source\]
-
-}))
-
-const totalWeight = weightedSources.reduce((sum, s) =\> sum + s.weight,
-0)
-
-return {
-
-calories: weightedSources.reduce((sum, s) =\> sum + (s.data.calories \s.weight), 0) / totalWeight,
-
-proteins: weightedSources.reduce((sum, s) =\> sum + (s.data.proteins \s.weight), 0) / totalWeight,
-
-// ... altri nutrienti con weighted average*
-
-finalConfidence: totalWeight / sources.length,
-
-sourcesUsed: sources.map(s =\> s.attribution.source)
-
-}
-
-}
-
-}
-
-*// Fallback Strategy per OpenFoodFacts gaps*
-
+// Fallback Strategy per OpenFoodFacts gaps
 class NutritionalDataFallbackStrategy {
-
-async getNutritionData(foodQuery: FoodQuery):
-Promise\<NutritionDataResult\> {
-
-const strategies = \[
-
-() =\> this.tryOpenFoodFacts(foodQuery),
-
-() =\> this.tryCreaDatabaseLookup(foodQuery), *// Database italiano*
-
-() =\> this.tryGPT4VEstimation(foodQuery),
-
-() =\> this.tryCrowdsourcingRequest(foodQuery),
-
-() =\> this.useGenericCategory(foodQuery)
-
-\]
-
-for (const strategy of strategies) {
-
-try {
-
-const result = await strategy()
-
-if (result.confidence \> 0.5) return result
-
-} catch (error) {
-
-*// Log e continua con strategia successiva*
-
-continue
-
+  async getNutritionData(foodQuery: FoodQuery): Promise<NutritionDataResult> {
+    const strategies = [
+      () => this.tryOpenFoodFacts(foodQuery),
+      () => this.tryCreaDatabaseLookup(foodQuery), // Database italiano
+      () => this.tryGPT4VEstimation(foodQuery),
+      () => this.tryCrowdsourcingRequest(foodQuery),
+      () => this.useGenericCategory(foodQuery)
+    ]
+    
+    for (const strategy of strategies) {
+      try {
+        const result = await strategy()
+        if (result.confidence > 0.5) return result
+      } catch (error) {
+        // Log e continua con strategia successiva
+        continue
+      }
+    }
+    
+    throw new NutritionDataNotAvailableError(foodQuery)
+  }
+  
+  private async tryOpenFoodFacts(query: FoodQuery): Promise<NutritionDataResult> {
+    // Rate limit: 100 req/min da constraint analysis
+    await this.rateLimiter.waitIfNeeded('openfoodfacts', 100)
+    
+    const result = await this.openFoodFactsClient.lookup(query)
+    
+    // Coverage reality check: prodotti italiani artigianali spesso mancanti
+    if (!result && query.isItalianArtisanal) {
+      throw new NotFoundError('Italian artisanal product not in OpenFoodFacts')
+    }
+    
+    return result
+  }
 }
 
-}
-
-throw new NutritionDataNotAvailableError(foodQuery)
-
-}
-
-private async tryOpenFoodFacts(query: FoodQuery):
-Promise\<NutritionDataResult\> {
-
-*// Rate limit: 100 req/min da constraint analysis*
-
-await this.rateLimiter.waitIfNeeded(\'openfoodfacts\', 100)
-
-const result = await this.openFoodFactsClient.lookup(query)
-
-*// Coverage reality check: prodotti italiani artigianali spesso
-mancanti*
-
-if (!result && query.isItalianArtisanal) {
-
-throw new NotFoundError(\'Italian artisanal product not in
-OpenFoodFacts\')
-
-}
-
-return result
-
-}
-
-}
 ```
+
 **Aggregates con Constraint Integration**
 
-typescript
-
-*// Calorie Balance Aggregate con HealthKit constraints*
-
+```typescript
+// Calorie Balance Aggregate con HealthKit constraints
 class CalorieBalance {
+  constructor(
+    private userId: UserId,
+    private goal: CalorieGoal,
+    private dailyEntries: DailyCalorieEntry[],
+    private healthKitSyncStatus: HealthKitSyncStatus // Nuovo!
+  ) {}
 
-constructor(
-
-private userId: UserId,
-
-private goal: CalorieGoal,
-
-private dailyEntries: DailyCalorieEntry\[\],
-
-private healthKitSyncStatus: HealthKitSyncStatus *// Nuovo!*
-
-) {}
-
-async updateFromHealthKit(data: HealthKitData): Promise\<void\> {
-
-*// Constraint: HealthKit sync delay 15-30 minuti*
-
-const now = new Date()
-
-const dataAge = now.getTime() - data.timestamp.getTime()
-
-const isStale = dataAge \> (45 \* 60 \* 1000) *// 45 minuti threshold*
-
-if (isStale) {
-
-*// Usa dati ma marca come potentially outdated*
-
-this.healthKitSyncStatus = HealthKitSyncStatus.STALE
-
+  async updateFromHealthKit(data: HealthKitData): Promise<void> {
+    // Constraint: HealthKit sync delay 15-30 minuti
+    const now = new Date()
+    const dataAge = now.getTime() - data.timestamp.getTime()
+    const isStale = dataAge > (45 * 60 * 1000) // 45 minuti threshold
+    
+    if (isStale) {
+      // Usa dati ma marca come potentially outdated
+      this.healthKitSyncStatus = HealthKitSyncStatus.STALE
+    }
+    
+    // Constraint: Permission opacity - iOS non dice se denied
+    if (data.isEmpty() && !this.hasExplicitHealthKitDenial()) {
+      // Potrebbe essere permission denied silently
+      this.schedulePermissionRecheck()
+    }
+    
+    const entry = this.findOrCreateDailyEntry(data.date)
+    entry.updateCaloriesExpenditure(
+      data.activeCalories,
+      data.basalCalories,
+      DataSourceAttribution.fromHealthKit('calories')
+    )
+  }
+  
+  getCurrentBalanceWithConfidence(): CalorieBalanceResult {
+    const latestEntry = this.getLatestEntry()
+    
+    // Calcola confidence composite
+    const intakeConfidence = latestEntry.getIntakeConfidence()
+    const expenditureConfidence = latestEntry.getExpenditureConfidence()
+    const overallConfidence = (intakeConfidence + expenditureConfidence) / 2
+    
+    return {
+      balance: latestEntry.balance,
+      confidence: overallConfidence,
+      dataFreshness: this.healthKitSyncStatus,
+      recommendations: this.generateRecommendations(overallConfidence)
+    }
+  }
 }
 
-*// Constraint: Permission opacity - iOS non dice se denied*
-
-if (data.isEmpty() && !this.hasExplicitHealthKitDenial()) {
-
-*// Potrebbe essere permission denied silently*
-
-this.schedulePermissionRecheck()
-
-}
-
-const entry = this.findOrCreateDailyEntry(data.date)
-
-entry.updateCaloriesExpenditure(
-
-data.activeCalories,
-
-data.basalCalories,
-
-DataSourceAttribution.fromHealthKit(\'calories\')
-
-)
-
-}
-
-getCurrentBalanceWithConfidence(): CalorieBalanceResult {
-
-const latestEntry = this.getLatestEntry()
-
-*// Calcola confidence composite*
-
-const intakeConfidence = latestEntry.getIntakeConfidence()
-
-const expenditureConfidence = latestEntry.getExpenditureConfidence()
-
-const overallConfidence = (intakeConfidence + expenditureConfidence) / 2
-
-return {
-
-balance: latestEntry.balance,
-
-confidence: overallConfidence,
-
-dataFreshness: this.healthKitSyncStatus,
-
-recommendations: this.generateRecommendations(overallConfidence)
-
-}
-
-}
-
-}
-
-*// Meal Tracking con OpenFoodFacts constraints*
-
+// Meal Tracking con OpenFoodFacts constraints  
 class DailyMealPlan {
+  constructor(
+    private date: Date,
+    private meals: Meal[],
+    private nutritionDataCache: NutritionDataCache, // Cache per rate limits
+    private italianFoodFallback: ItalianFoodDatabase  // Database CREA
+  ) {}
 
-constructor(
-
-private date: Date,
-
-private meals: Meal\[\],
-
-private nutritionDataCache: NutritionDataCache, *// Cache per rate
-limits*
-
-private italianFoodFallback: ItalianFoodDatabase *// Database CREA*
-
-) {}
-
-async addMealFromPhoto(photo: Photo, userId: UserId): Promise\<Meal\> {
-
-*// GPT-4V analysis con focus su cucina italiana*
-
-const analysis = await this.gpt4vService.analyzeItalianFood(photo, {
-
-includePortionEstimation: true,
-
-confidenceThreshold: 0.7,
-
-italianCuisineContext: true
-
-})
-
-const foods = \[\]
-
-for (const recognizedFood of analysis.foods) {
-
-const nutritionData = await this.resolveNutritionData(recognizedFood)
-
-foods.push(new FoodItem(
-
-recognizedFood.name,
-
-recognizedFood.estimatedPortion,
-
-nutritionData,
-
-DataSourceAttribution.fromGPT4V(analysis.confidence)
-
-))
-
+  async addMealFromPhoto(photo: Photo, userId: UserId): Promise<Meal> {
+    // GPT-4V analysis con focus su cucina italiana
+    const analysis = await this.gpt4vService.analyzeItalianFood(photo, {
+      includePortionEstimation: true,
+      confidenceThreshold: 0.7,
+      italianCuisineContext: true
+    })
+    
+    const foods = []
+    for (const recognizedFood of analysis.foods) {
+      const nutritionData = await this.resolveNutritionData(recognizedFood)
+      foods.push(new FoodItem(
+        recognizedFood.name,
+        recognizedFood.estimatedPortion,
+        nutritionData,
+        DataSourceAttribution.fromGPT4V(analysis.confidence)
+      ))
+    }
+    
+    const meal = new Meal(
+      MealId.generate(),
+      MealType.fromTimeOfDay(new Date()),
+      new Date(),
+      foods,
+      photo.url,
+      AnalysisSource.PHOTO
+    )
+    
+    this.meals.push(meal)
+    return meal
+  }
+  
+  private async resolveNutritionData(food: RecognizedFood): Promise<NutritionData> {
+    // Cache check per rate limit management
+    const cached = await this.nutritionDataCache.get(food.name)
+    if (cached && cached.isValid()) return cached.data
+    
+    // Fallback strategy per coverage gaps
+    const fallbackStrategy = new NutritionalDataFallbackStrategy()
+    const result = await fallbackStrategy.getNutritionData(food.toQuery())
+    
+    // Cache result per evitare re-fetch
+    await this.nutritionDataCache.set(food.name, result, {
+      ttl: result.confidence > 0.8 ? 7200 : 1800 // TTL based on confidence
+    })
+    
+    return result.data
+  }
 }
-
-const meal = new Meal(
-
-MealId.generate(),
-
-MealType.fromTimeOfDay(new Date()),
-
-new Date(),
-
-foods,
-
-photo.url,
-
-AnalysisSource.PHOTO
-
-)
-
-this.meals.push(meal)
-
-return meal
-
-}
-
-private async resolveNutritionData(food: RecognizedFood):
-Promise\<NutritionData\> {
-
-*// Cache check per rate limit management*
-
-const cached = await this.nutritionDataCache.get(food.name)
-
-if (cached && cached.isValid()) return cached.data
-
-*// Fallback strategy per coverage gaps*
-
-const fallbackStrategy = new NutritionalDataFallbackStrategy()
-
-const result = await fallbackStrategy.getNutritionData(food.toQuery())
-
-*// Cache result per evitare re-fetch*
-
-await this.nutritionDataCache.set(food.name, result, {
-
-ttl: result.confidence \> 0.8 ? 7200 : 1800 *// TTL based on confidence*
-
-})
-
-return result.data
-
-}
-
-}
+```
 
 **\
 **

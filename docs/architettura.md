@@ -1,42 +1,95 @@
-# Architettura generale e Microservizi
+# Architettura NutriFit Platform v2.0
 
-La piattaforma NutriFit adotterà un'**architettura a microservizi**, in
-cui ogni servizio è *piccolo, indipendente e a basso
-accoppiamento*[\[1\]](https://learn.microsoft.com/it-it/azure/architecture/guide/architecture-styles/microservices#:~:text=I%20microservizi%20sono%20componenti%20di,le%20implementazioni%20interne%20nascoste%20da).
-Ciò consente di sviluppare, distribuire e scalare ciascun componente (ad
-es. autenticazione, nutrizione, analisi dati) in modo autonomo,
-sfruttando il linguaggio o database più adatto a ogni
-caso[\[2\]](https://learn.microsoft.com/it-it/azure/architecture/guide/architecture-styles/microservices#:~:text=,prestazioni%20e%20resilienza%20del%20sistema)[\[3\]](https://learn.microsoft.com/en-us/azure/architecture/microservices/design/data-considerations#:~:text=A%20basic%20principle%20of%20microservices,other%20services%20cannot%20access%20directly).
-In un'architettura di questo tipo, i servizi comunicano tramite API ben
-definite, e ogni servizio possiede il proprio datastore
-isolato[\[3\]](https://learn.microsoft.com/en-us/azure/architecture/microservices/design/data-considerations#:~:text=A%20basic%20principle%20of%20microservices,other%20services%20cannot%20access%20directly)[\[1\]](https://learn.microsoft.com/it-it/azure/architecture/guide/architecture-styles/microservices#:~:text=I%20microservizi%20sono%20componenti%20di,le%20implementazioni%20interne%20nascoste%20da).
-La letteratura evidenzia che questa frammentazione accelera la
-scalabilità (nuovi componenti possono essere distribuiti senza downtime)
-e migliora la resilienza: un errore in un servizio non compromette
-l'intero
-sistema[\[4\]](https://www.atlassian.com/it/microservices/cloud-computing/advantages-of-microservices#:~:text=1)[\[1\]](https://learn.microsoft.com/it-it/azure/architecture/guide/architecture-styles/microservices#:~:text=I%20microservizi%20sono%20componenti%20di,le%20implementazioni%20interne%20nascoste%20da).
+## 🏗️ Architettura Cloud-Native con Orchestrazione N8N
 
--   **Contesto delimitato e poliglot persistence:** Ogni microservizio
-    definisce un dominio specifico e gestisce autonomamente i dati
-    relativi (ad es. il servizio "Alimenti" gestisce tabelle dedicate ai
-    cibi). Ogni servizio può quindi scegliere il database più opportuno
-    (SQL, NoSQL, ecc.) in base alle esigenze
-    specifiche[\[2\]](https://learn.microsoft.com/it-it/azure/architecture/guide/architecture-styles/microservices#:~:text=,prestazioni%20e%20resilienza%20del%20sistema),
-    evitando dipendenze incrociate.
--   **Gateway API:** Un gateway API centralizza l'accesso ai servizi,
-    gestendo autenticazione, registrazione, bilanciamento del carico e
-    instradamento delle
-    richieste[\[5\]](https://learn.microsoft.com/it-it/azure/architecture/guide/architecture-styles/microservices#:~:text=,e%20il%20controllo%20del%20traffico).
-    I client (app mobili, web) inviano richieste al gateway che le
-    distribuisce ai microservizi
-    appropriati[\[5\]](https://learn.microsoft.com/it-it/azure/architecture/guide/architecture-styles/microservices#:~:text=,e%20il%20controllo%20del%20traffico).
--   **Orchestrazione e scalabilità:** Strumenti come Kubernetes (o
-    servizi gestiti cloud) orchestrano i container Docker dei
-    microservizi, garantendo il riavvio in caso di errore e la
-    scalabilità automatica. L'osservabilità (log centralizzati,
-    metriche, tracing distribuito) monitora l'intero ecosistema,
-    facilitando debug e
-    affidabilità[\[6\]](https://learn.microsoft.com/it-it/azure/architecture/guide/architecture-styles/microservices#:~:text=,ostruzioni%20e%20migliorare%20le%20prestazioni).
+La piattaforma NutriFit adotta un'**architettura a microservizi cloud-native** basata su Python 3.11, con orchestrazione centralizzata tramite **N8N Cloud** e database segregati su **Supabase Cloud**. L'architettura è progettata per scalabilità enterprise, deployment automatizzato su Render.com e testing atomico per servizio.
+
+### 🌐 Stack Tecnologico Unificato
+
+- **Backend**: 5 microservizi Python 3.11 + FastAPI atomici
+- **Orchestrazione**: N8N Cloud per workflow complessi e comunicazione inter-service  
+- **Database**: Supabase Cloud con database segregati per microservizio
+- **Gateway**: API Gateway pattern per comunicazione mobile ↔ microservizi
+- **Mobile**: Flutter cross-platform production-ready
+- **Deployment**: Render.com + GitHub Actions CI/CD
+- **AI Integration**: MCP Server per microservizi con logica AI/ML
+
+## 🏛️ Architettura dei Componenti
+
+### Gateway Pattern per Mobile Communication
+
+```mermaid
+graph TB
+    subgraph "Mobile Layer"
+        FLUTTER[Flutter App<br/>iOS + Android]
+    end
+    
+    subgraph "API Gateway Layer"
+        GATEWAY[API Gateway<br/>Facade Pattern]
+    end
+    
+    subgraph "Orchestration Layer"  
+        N8N[N8N Cloud<br/>Workflow Orchestrator]
+    end
+    
+    subgraph "Microservices Layer"
+        CB[Calorie Balance<br/>Service]
+        MT[Meal Tracking<br/>Service] 
+        HM[Health Monitor<br/>Service]
+        NS[Notifications<br/>Service]
+        AI[AI Nutrition Coach<br/>Service + MCP]
+    end
+    
+    subgraph "Data Layer"
+        DB1[(Supabase DB<br/>calorie_balance)]
+        DB2[(Supabase DB<br/>meal_tracking)]
+        DB3[(Supabase DB<br/>health_monitor)]
+        DB4[(Supabase DB<br/>notifications)]
+        DB5[(Supabase DB<br/>ai_coach)]
+        PUSH[Supabase<br/>Push Notifications]
+    end
+    
+    subgraph "External Services"
+        OPENAI[OpenAI API]
+        HEALTHKIT[HealthKit/<br/>Health Connect]
+        OFF[OpenFoodFacts API]
+    end
+    
+    FLUTTER --> GATEWAY
+    FLUTTER <--> PUSH
+    GATEWAY --> CB
+    GATEWAY --> MT
+    GATEWAY --> HM
+    GATEWAY --> NS
+    GATEWAY --> AI
+    
+    N8N --> CB
+    N8N --> MT
+    N8N --> HM
+    N8N --> AI
+    N8N --> OPENAI
+    N8N --> OFF
+    N8N --> HEALTHKIT
+    
+    CB --> DB1
+    MT --> DB2
+    HM --> DB3
+    NS --> DB4
+    AI --> DB5
+    NS --> PUSH
+```
+
+### Database Segregation Strategy
+
+Ogni microservizio gestisce il proprio database isolato su Supabase Cloud:
+
+| Microservizio | Database Supabase | Responsabilità |
+|---------------|-------------------|----------------|
+| **calorie-balance** | `nutrifit_calorie_balance` | Energy balance, goals, BMR calculations |
+| **meal-tracking** | `nutrifit_meal_tracking` | Food data, nutrition facts, meal logs |
+| **health-monitor** | `nutrifit_health_monitor` | HealthKit data, metrics, trends |
+| **notifications** | `nutrifit_notifications` | Push tokens, preferences, templates |
+| **ai-coach** | `nutrifit_ai_coach` | AI conversations, knowledge base, RAG vectors |
 
 In sintesi, l'adozione dei microservizi apporta **maggiore agilità** e
 **manutenibilità**[\[4\]](https://www.atlassian.com/it/microservices/cloud-computing/advantages-of-microservices#:~:text=1)[\[1\]](https://learn.microsoft.com/it-it/azure/architecture/guide/architecture-styles/microservices#:~:text=I%20microservizi%20sono%20componenti%20di,le%20implementazioni%20interne%20nascoste%20da).
@@ -45,59 +98,132 @@ deploy, test d'integrazione, versionamento API) e previsto un robusto
 sistema di logging e
 monitoring[\[4\]](https://www.atlassian.com/it/microservices/cloud-computing/advantages-of-microservices#:~:text=1)[\[6\]](https://learn.microsoft.com/it-it/azure/architecture/guide/architecture-styles/microservices#:~:text=,ostruzioni%20e%20migliorare%20le%20prestazioni).
 
-## Gestione dei dati e Qualità
+## 🔄 N8N Orchestration e Workflow Management
 
-Nel dominio "fitness e nutrizione" i dati provengono da fonti eterogenee
-(HealthKit, database alimentari, input utente, ecc.). Per garantire
-**coerenza e qualità**, il design segue principi DDD e data management:
-ogni microservizio espone modelli fortemente tipizzati con *vincoli e
-validazioni* (es. pydantic o TS types). Ad esempio, le metriche
-nutrizionali possono essere modellate con **Value Objects** immutabili,
-che incapsulano non solo il valore ma anche informazioni di qualità
-(fiducia, timestamp, precisione). Come osserva la letteratura DDD, un
-Value Object "è un concetto che misura o descrive un elemento del
-dominio"[\[7\]](https://medium.com/@no1.melman10/the-value-of-value-objects-52f9e08e932d#:~:text=IDDD%20also%20states%20%E2%80%94%20A,thing%29%20has%20lived)
-e garantisce corretta gestione degli invarianti di dominio.
+### Ruolo di N8N Cloud come Orchestratore Centrale
 
--   **Isolamento dei dati:** Ogni servizio gestisce il proprio datastore
-    (principio "microservizio = proprietario dei
-    dati"[\[3\]](https://learn.microsoft.com/en-us/azure/architecture/microservices/design/data-considerations#:~:text=A%20basic%20principle%20of%20microservices,other%20services%20cannot%20access%20directly)).
-    Questo evita dipendenze dirette e rende più semplici aggiornamenti
-    mirati. I servizi collocano relazioni dati tramite API o pattern
-    come Saga/Event Sourcing, gestendo la consistenza eventuale secondo
-    necessità[\[8\]](https://learn.microsoft.com/en-us/azure/architecture/microservices/design/data-considerations#:~:text=,microservices%20for%20further%20component%20guidance)[\[2\]](https://learn.microsoft.com/it-it/azure/architecture/guide/architecture-styles/microservices#:~:text=,prestazioni%20e%20resilienza%20del%20sistema).
--   **Quality scoring:** Per tenere traccia dell'affidabilità dei dati,
-    si applicano punteggi di qualità. Ad esempio, piattaforme come
-    Cronometer utilizzano un "Data Confidence" che valuta la completezza
-    dei nutrienti
-    segnalati[\[9\]](https://support.cronometer.com/hc/en-us/articles/360042550452-Data-Confidence-Scores#:~:text=Data%20Confidence%20looks%20at%20each,data%20for%20that%20nutrient%20is)[\[10\]](https://support.cronometer.com/hc/en-us/articles/360042550452-Data-Confidence-Scores#:~:text=Image%3A%20blobid0).
-    Analogamente, NutriFit può attribuire a ogni dato (es.
-    macro-nutriente) un punteggio in base alla fonte e alla granularità
-    disponibile. Se un alimento contiene valori parziali (es. manca un
-    micronutriente), la confidenza cala (in Cronometer la confidenza di
-    magnesio scende al 50% se manca nei
-    dati)[\[10\]](https://support.cronometer.com/hc/en-us/articles/360042550452-Data-Confidence-Scores#:~:text=Image%3A%20blobid0).
-    Questo aiuta a gestire le incertezze e a mostrare all'utente
-    indicatori di affidabilità dei risultati.
--   **Conformità e pulizia:** Vengono imposte regole di validazione (ad
-    es. range plausibili per peso, calorie, ecc.) sia a livello di API
-    (middleware di validazione JSON) sia a livello di database
-    (constraint SQL). Transazioni o operazioni complesse utilizzano
-    pattern di compensazione se
-    necessario[\[11\]](https://learn.microsoft.com/en-us/azure/architecture/microservices/design/data-considerations#:~:text=,step%20transaction%20is%20in%20progress).
-    Inoltre, nel flusso ETL (es. fetch da OpenFoodFacts) si attua una
-    logica di fallback: se un API risponde lentamente o con errori, il
-    sistema può ripiegare su un'ultima versione cache o su una stima
-    basata sull'IA.
--   **Aggregazione e convergenza:** I dati di più fonti (HealthKit, OFF,
-    inserimenti manuali, IA) sono combinati tramite strategie come media
-    pesata basata su fiducia. Ad esempio, i record nutrizionali possono
-    essere uniti calcolando la media ponderata dei valori, secondo
-    priorità definite (dati manuali \> dati ufficiali \> stima IA).
-    Questo conflitto multi-sorgente è risolto applicando pesi in codice
-    che valorizzano le informazioni più affidabili.
+**N8N Cloud** gestisce tutti i workflow complessi che richiedono:
+- **Comunicazione inter-microservizi** con business logic avanzata
+- **Integrazione con AI/OpenAI** per food analysis e coaching
+- **Orchestrazione di External APIs** (OpenFoodFacts, HealthKit sync)
+- **Workflow asincroni** per processing complesso
+- **Error handling e retry logic** enterprise-grade
 
-In definitiva, il *datamodel* e le pipeline di dati riflettono questi
+### Flussi Principali Mobile App ↔ N8N
+
+#### 1. Food Analysis Workflow
+```
+Mobile App → API Gateway → Meal Tracking Service
+                ↓
+N8N Workflow: Photo → GPT-4V → OpenFoodFacts Lookup → Nutrition Data
+                ↓
+Meal Tracking Service ← Processed Food Data ← N8N
+```
+
+#### 2. AI Coaching Workflow
+```
+Mobile App → API Gateway → AI Coach Service (MCP Server)
+                ↓
+N8N Workflow: User Query → OpenAI → RAG Lookup → Personalized Response
+                ↓
+AI Coach Service ← AI Response ← N8N
+```
+
+#### 3. Health Data Sync Workflow
+```
+HealthKit/Health Connect → N8N Trigger
+                ↓
+N8N Workflow: Validate → Transform → Distribute to Multiple Services
+                ↓
+Health Monitor + Calorie Balance + Notifications Services ← N8N
+```
+
+### MCP Server Implementation
+
+I microservizi che gestiscono AI/ML espongono **MCP (Model Context Protocol) Server**:
+
+```python
+# AI Coach Service - MCP Server
+@mcp_server.endpoint("/nutrition-advice")
+async def get_nutrition_advice(context: UserNutritionContext) -> MCPResponse:
+    """Exposed to N8N for AI workflow orchestration"""
+    pass
+
+# Meal Tracking Service - MCP Server  
+@mcp_server.endpoint("/food-analysis")
+async def analyze_food_data(food_data: FoodAnalysisRequest) -> MCPResponse:
+    """Exposed to N8N for food processing workflow"""
+    pass
+```
+
+## 🐳 Docker Strategy e Local Development
+
+### Dockerfile Multi-Environment per Render Compatibility
+
+Ogni microservizio ha un Dockerfile ottimizzato per development locale e production su Render:
+
+```dockerfile
+# Dockerfile multi-stage per compatibilità locale/Render
+FROM python:3.11-slim as base
+WORKDIR /app
+COPY pyproject.toml poetry.lock ./
+RUN pip install poetry && poetry config virtualenvs.create false
+
+# Development stage
+FROM base as development
+ENV ENVIRONMENT=development
+RUN poetry install --with dev
+COPY . .
+CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+# Production stage (Render)
+FROM base as production  
+ENV ENVIRONMENT=production
+RUN poetry install --only main
+COPY . .
+EXPOSE 8000
+CMD ["poetry", "run", "gunicorn", "app.main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]
+```
+
+### Local Development Constraints
+
+**⚠️ Testing Limitations in Local Environment:**
+- ✅ **Atomic microservice testing** - Ogni servizio testabile singolarmente
+- ✅ **Supabase Cloud access** - Database calls dirette (test data)
+- ✅ **Outbound N8N calls** - Microservizi possono chiamare N8N webhooks
+- ❌ **Inbound N8N calls** - N8N non può chiamare servizi locali
+- ❌ **Full system testing** - Richiede deployment in produzione
+
+### Docker-Compose per Sviluppo Locale
+
+```yaml
+# docker-compose.yml - Solo per development locale
+version: '3.8'
+services:
+  calorie-balance:
+    build:
+      context: ./services/calorie-balance
+      target: development
+    ports:
+      - "8001:8000"
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL}
+  
+  meal-tracking:
+    build:
+      context: ./services/meal-tracking  
+      target: development
+    ports:
+      - "8002:8000"
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL}
+  
+  # ... altri servizi
+```
 principi, integrando sia il *domain model* (con oggetti e servizi
 applicativi fortemente tipizzati) sia componenti di qualità (score,
 auditing). Documentazione e test di dati (table di riferimento DRI,
@@ -198,55 +324,120 @@ contestualizzato: migliora la qualità dei suggerimenti nutrizionali e
 rende il chatbot più preciso e
 affidabile[\[14\]](https://aws.amazon.com/what-is/retrieval-augmented-generation/#:~:text=Retrieval,and%20useful%20in%20various%20contexts)[\[16\]](https://aws.amazon.com/what-is/retrieval-augmented-generation/#:~:text=Enhanced%20user%20trust).
 
-## CI/CD e Deployment
+## 🚀 CI/CD e Deployment Strategy
 
-Lo sviluppo segue un modello DevOps con pipeline **CI/CD**
-automatizzate. Il codice del backend e del progetto Flutter è versionato
-in GitHub, e ogni push/trunk merge innesca una workflow CI (GitHub
-Actions). La documentazione Docker e GitHub consiglia di configurare un
-workflow che "builda l'immagine Docker, esegue i test e pubblica
-l'immagine su Docker
-Hub"[\[13\]](https://docs.docker.com/guides/reactjs/configure-github-actions/#:~:text=Now%20you%27ll%20create%20a%20GitHub,the%20image%20to%20Docker%20Hub).
-In pratica:
+### GitHub Actions + Render.com Pipeline
 
-1.  **Build e test automatici:** Ad ogni push viene eseguito un
-    container build che installa dipendenze, compila il progetto e fa
-    partire i test automatici. Se un test fallisce, il flusso si
-    interrompe, garantendo che solo codice corretto proceda
-    oltre[\[13\]](https://docs.docker.com/guides/reactjs/configure-github-actions/#:~:text=Now%20you%27ll%20create%20a%20GitHub,the%20image%20to%20Docker%20Hub).
-2.  **Dockerizzazione:** Ogni servizio viene pacchettizzato in
-    un'immagine Docker. Questo assicura che l'ambiente sia
-    **consistente** fra sviluppo, test e
-    produzione[\[17\]](https://octopus.com/devops/ci-cd/ci-cd-with-docker/#:~:text=Create%20a%20consistent%20environment%20with,Docker%20containers).
-    Docker incapsula tutte le dipendenze, riducendo errori "funziona sul
-    mio PC" e semplificando i deploy. Si usano immagini di base minime e
-    *multi-stage builds* per ottimizzare le
-    dimensioni[\[18\]](https://octopus.com/devops/ci-cd/ci-cd-with-docker/#:~:text=This%20involves%20creating%20lean%20Docker,times%20and%20lower%20storage%20requirements).
-3.  **Registri e versioning:** Le immagini Docker vengono etichettate
-    semanticamente (versione e commit SHA) e pubblicate su un registry
-    (Docker Hub o privato). Un sistema di pulizia automatizzata (ad es.
-    `docker image prune`) gestisce il recupero di spazio eliminando
-    immagini
-    obsolete[\[19\]](https://octopus.com/devops/ci-cd/ci-cd-with-docker/#:~:text=Create%20a%20process%20to%20remove,unused%20images).
-4.  **Deployment:** L'infrastruttura (ad es. container orchestrator come
-    Kubernetes o piattaforme PaaS come Render.com) preleva le immagini
-    dall registry e le esegue in produzione. Ogni microservizio gira in
-    uno o più container replicati dietro un load balancer. Strumenti IaC
-    (Terraform) o script di deploy codificano la configurazione cloud,
-    garantendo replicabilità.
-5.  **Monitoraggio post-deploy:** Si integra la fase di deployment con
-    il monitoraggio (ad es. Prometheus, Grafana) per tenere sotto
-    controllo metriche chiave e log. In caso di anomalie, il deployment
-    può essere annullato (rollback al tag precedente).
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy Microservices
+on:
+  push:
+    branches: [main]
+    paths: ['services/**']
 
-Queste pratiche assicurano rilasci rapidi, ripetibili e
-affidabili[\[17\]](https://octopus.com/devops/ci-cd/ci-cd-with-docker/#:~:text=Create%20a%20consistent%20environment%20with,Docker%20containers)[\[13\]](https://docs.docker.com/guides/reactjs/configure-github-actions/#:~:text=Now%20you%27ll%20create%20a%20GitHub,the%20image%20to%20Docker%20Hub).
-Ad esempio, un nuovo servizio può essere creato da template e reso
-operativo automaticamente con pochi comandi nello script CI/CD (come
-nella sezione *Setup* del flusso GitHub
-Actions[\[13\]](https://docs.docker.com/guides/reactjs/configure-github-actions/#:~:text=Now%20you%27ll%20create%20a%20GitHub,the%20image%20to%20Docker%20Hub)).
-Nel complesso, l'uso di Docker e pipeline CI/CD riduce al minimo gli
-errori manuali e migliora la qualità del rilascio.
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.changes.outputs.services }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: changes
+        run: |
+          # Detect which services changed
+          changed_services=$(git diff --name-only HEAD~1 | grep '^services/' | cut -d'/' -f2 | sort -u)
+          echo "services=${changed_services}" >> $GITHUB_OUTPUT
+
+  deploy-services:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.services != ''
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.detect-changes.outputs.services) }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy ${{ matrix.service }} to Render
+        run: |
+          # Trigger Render deployment per service
+          curl -X POST "https://api.render.com/v1/services/${{ secrets[format('RENDER_{0}_SERVICE_ID', matrix.service)] }}/deploys" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}"
+```
+
+### Render Configuration per Microservizio
+
+Ogni microservizio ha una configurazione Render separata:
+
+```yaml
+# render.yaml per ogni microservizio
+services:
+  - type: web
+    name: nutrifit-calorie-balance
+    env: python
+    plan: starter
+    buildCommand: "pip install poetry && poetry install --only main"
+    startCommand: "poetry run gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT"
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: SUPABASE_URL
+        fromDatabase:
+          name: nutrifit-calorie-balance-db
+          property: connectionString
+      - key: N8N_WEBHOOK_URL
+        sync: false
+```
+
+### Configuration Management
+
+**Repository Structure per Configurazioni:**
+```
+config/
+├── n8n/
+│   ├── workflows/
+│   │   ├── food-analysis-workflow.json
+│   │   ├── ai-coaching-workflow.json
+│   │   └── health-sync-workflow.json
+│   └── settings/
+│       ├── environments.json
+│       └── credentials-template.json
+├── supabase/
+│   ├── schemas/
+│   │   ├── calorie-balance-schema.sql
+│   │   ├── meal-tracking-schema.sql
+│   │   └── ...
+│   └── seeds/
+│       ├── test-data.sql
+│       └── production-data.sql
+└── render/
+    ├── service-configs/
+    └── environment-variables.json
+```
+
+---
+
+## 📋 Summary Architetturale
+
+### ✅ **Caratteristiche Principali**
+- **Cloud-Native**: Supabase + N8N Cloud + Render deployment
+- **Database Segregation**: Un database Supabase per microservizio  
+- **Gateway Pattern**: Facade unico per mobile app communication
+- **N8N Orchestration**: Workflow complessi e inter-service communication
+- **MCP Integration**: AI/ML capabilities tramite Model Context Protocol
+- **Docker Multi-Stage**: Compatibilità development/production automatica
+- **Flutter Production**: Mobile cross-platform come strategia principale
+
+### ⚠️ **Constraint di Testing**
+- **Atomic Testing**: Solo singoli microservizi testabili in locale
+- **System Testing**: Richiede deployment completo in produzione
+- **Cloud Dependencies**: Tutti i servizi dipendono da Supabase/N8N Cloud
+
+### 🎯 **Deployment Target**
+- **Production**: Render.com con GitHub Actions CI/CD
+- **Development**: Docker-compose locale + Supabase Cloud access
+- **Configuration**: Versioned in repository per N8N e Supabase
 
 ## Applicazione mobile (Flutter)
 

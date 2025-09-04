@@ -28,37 +28,86 @@
 
 **Infrastructure**: Docker containerization + Render deployment + PostgreSQL + Redis
 
-## 📖 Developer Instructions
+## 📖 Documentazione e Setup
 
-> 🚨 **IMPORTANTE**: Prima di iniziare lo sviluppo, leggi le **[GitHub Instructions Complete](.github/instructions/instructions.md)**
+### � Quick Start per Developer
+> **Prima di iniziare**: Leggi le **[GitHub Instructions Complete](.github/instructions/instructions.md)** per setup e best practices
 
-Le instructions contengono:
-- 🏗️ **Architecture Overview** - Struttura microservizi e patterns DDD
-- 💻 **Development Guidelines** - Standards, templates, best practices  
-- 🐳 **Docker Guidelines** - Containerizzazione e deployment
-- 🚀 **Render Deployment** - Procedures production e staging
-- 🧪 **Testing Strategy** - Unit, integration, performance tests
-- 📊 **Quality Gates** - Coverage 80%+ e code review checklist
+### 📚 Documentazione Completa
+La documentazione tecnica è organizzata nella [cartella docs/](docs/):
 
-### Quick Start per Sviluppatori
+#### Core Documentation
+- **[📋 Documentazione Generale](docs/Documentazione%20Generale.md)** - Business strategy, ROI analysis, competitive positioning
+- **[🏗️ Architettura Cloud-Native](docs/architettura.md)** - Microservizi, database design, diagrammi Mermaid
+- **[🐍 Microservizi Python](docs/microservizi_python.md)** - FastAPI patterns, DDD, tech stack
+
+#### Development & Operations  
+- **[💻 Development Workflow](docs/DEVELOPMENT_WORKFLOW.md)** - Git flow, standards, CI/CD
+- **[🚀 Deployment Guide](docs/DEPLOYMENT.md)** - Render deployment, monitoring, scaling
+- **[🧪 Testing Guide](docs/TESTING_GUIDE.md)** - Unit tests, integration tests, coverage *(da creare)*
+
+#### Platform Specific
+- **[📱 Flutter Strategy](docs/flutter.md)** - Mobile development, cross-platform deployment
+- **[📡 API Documentation](docs/API_DOCUMENTATION.md)** - REST endpoints, GraphQL schema *(da creare)*
+
+#### Project Management
+- **[📝 Changelog](CHANGELOG.md)** - Project history, releases, major updates
+
+### 💻 Comandi di Sviluppo
+
 ```bash
+# Clone repository
+git clone https://github.com/giamma80/gymbro-platform.git
+cd gymbro-platform
+
 # Setup ambiente completo
-make setup && make dev
+make setup-dev
+
+# Start all services
+make dev-up
 
 # Crea nuovo microservice  
-make setup-service SERVICE=nome-servizio
+./scripts/create-service.sh my-service bounded-context
 
-# Quality check prima commit
-make quick-test
+# Run tests
+make test-all
+
+# Deploy to staging
+make deploy-staging
 ```
 
-## 🚀 Restart Progetto
+## 🚀 Project Status
 
-Questo progetto è stato **completamente riavviato** per un approccio architetturale migliore.
+### Current Phase: Foundation Development
+- ✅ Architettura cloud-native definita
+- ✅ Tech stack e patterns finalizzati  
+- ✅ Documentazione strategica completa
+- 🚧 MVP microservizi development
+- 🚧 Flutter mobile app foundation
 
-## � Storia del Progetto
+### Next Milestones
+- **Q1 2025**: MVP completion con AI coach base
+- **Q2 2025**: Production launch iOS + Android
+- **Q3 2025**: Enterprise features e scaling
 
-### 📚 Versioni e Migration
+## 🤝 Contributing
+
+1. Leggi [Development Workflow](docs/DEVELOPMENT_WORKFLOW.md) per best practices
+2. Consulta [GitHub Instructions](.github/instructions/instructions.md) per setup completo
+3. Crea feature branch da `main`
+4. Implementa con test coverage ≥ 80%
+5. Crea PR seguendo i template standard
+
+## 📄 License & Support
+
+- **License**: MIT License
+- **Architecture**: Cloud-native microservizi con enterprise patterns
+- **Deployment**: Render.com con CI/CD automatizzato
+- **Documentation**: Completa in [docs/](docs/) folder
+
+---
+
+**🏗️ Enterprise-ready architecture** | **🤖 AI-powered nutrition** | **📱 Cross-platform mobile**
 
 - **v1.0 (Backup)**: Implementazione microservizi completa → `backup-v1-microservices-20250903`  
 - **v2.0 (Corrente)**: **NutriFit Platform** - Architettura enterprise con AI e precision nutrition

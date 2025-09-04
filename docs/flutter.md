@@ -1,83 +1,160 @@
-# Analisi Tecnica Flutter - Piattaforma NutriFit POC
+# Documentazione Flutter - Piattaforma NutriFit Production
 
 ## Executive Summary
 
-Questo documento definisce l'implementazione Flutter per la piattaforma NutriFit, mantenendo l'architettura microservizi completa come Proof of Concept (POC). Flutter è stato selezionato per il rapid prototyping cross-platform, consentendo validazione simultanea su iOS e Android dell'approccio architetturale avanzato.
+Questo documento definisce l'implementazione Flutter per la piattaforma NutriFit come **soluzione mobile production**. Flutter è stato selezionato come framework primario per lo sviluppo cross-platform, garantendo time-to-market ottimale e consistenza UX su iOS e Android.
 
-**Strategia Confermata:**
-- ✅ Architettura completa mantenuta come POC
-- ✅ Mobile: Flutter cross-platform (sostituzione iOS nativo)
-- ✅ Full microservices stack per proof-of-concept
-- ✅ Validazione UX e performance su entrambe le piattaforme
-
----
-
-## 1. Vantaggi Strategici Flutter per POC
-
-### Cross-Platform Immediato
-- **Validazione UX simultanea** su iOS + Android
-- **Codebase unico** riduce development time del 40%
-- **Health plugin** supporta HealthKit + Health Connect out-of-the-box
-- **Time-to-market accelerato** per testing architettura
-
-### Rapid Prototyping Advantages
-- **Hot reload** per iterazioni rapide UI (3-5s vs 30s+ native)
-- **Rich ecosystem** per GraphQL, camera, notifications
-- **Material 3 + Cupertino** per native look automatico
-- **Code generation** avanzato per models e API clients
-
-### Validazione Tecnica
-- **Performance testing** real-world su entrambe le piattaforme
-- **Integration testing** con tutti i 5 microservizi simultaneo
-- **User feedback** gathering più rapido e completo
+**Strategia Production Confermata:**
+- ✅ **Flutter come mobile solution definitiva** (non più POC)
+- ✅ **Cross-platform production** per iOS + Android simultaneo
+- ✅ **Architettura cloud-native** con Supabase + N8N Cloud integration
+- ✅ **Performance e UX ottimizzate** per deployment production
+- ✅ **Integration completa** con 5 microservizi via API Gateway
+- ✅ **Capacitor deployment** per distribuzione app store
 
 ---
 
-## 2. Flutter Tech Stack Specifico
+## 1. Vantaggi Strategici Flutter Production
 
-### Core Dependencies per POC
+### Cross-Platform Production Ready
+- **Deployment simultaneo** iOS App Store + Google Play Store
+- **Codebase unificato** riduce maintenance overhead del 60%
+- **Health integration** nativa con HealthKit + Google Health Connect
+- **Performance native-like** con compilation AOT per production
+
+### Cloud-Native Mobile Architecture
+- **Supabase Auth integration** per authentication unificata
+- **Real-time subscriptions** tramite Supabase WebSocket
+- **Offline-first capability** con local SQLite + sync automatico
+- **N8N workflow triggers** da mobile per automation backend
+
+### Production Deployment Benefits
+- **App Store optimization** con bundle size ridotto (<50MB)
+- **Hot updates** via CodePush per bug fix senza store review
+- **Native performance** con Flutter Engine ottimizzato
+- **Platform-specific customization** quando necessario (iOS/Android specifico)
+
+---
+
+## 2. Flutter Tech Stack Production
+
+### Core Dependencies per Production Deployment
 
 ```yaml
-# pubspec.yaml - POC Configuration
-name: nutrifit_poc
-description: NutriFit Nutrition Platform POC
+# pubspec.yaml - Production Configuration
+name: nutrifit
+description: NutriFit Nutrition Platform - Production Mobile App
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=3.16.0"
 
 dependencies:
   flutter:
     sdk: flutter
   
-  # State Management - Per complessità microservizi
-  flutter_riverpod: ^2.4.0          # Reactive state management
+  # State Management - Production scalable
+  flutter_riverpod: ^2.4.9          # Reactive state management + DevTools
+  riverpod_annotation: ^2.3.5       # Code generation per providers
   
-  # GraphQL Client - Apollo alternative
-  graphql_flutter: ^5.1.2           # GraphQL client con cache
-  ferry: ^0.15.0                     # Code generation per GraphQL
+  # Supabase Cloud Integration
+  supabase_flutter: ^2.3.4          # Supabase client completo
+  supabase_auth_ui: ^0.4.6          # Pre-built auth UI components
   
-  # Health Integration 
-  health: ^10.2.0                    # HealthKit + Health Connect unified
+  # API Gateway & GraphQL
+  graphql_flutter: ^5.1.2           # GraphQL client con cache avanzata
+  ferry: ^0.15.0                     # Type-safe GraphQL code generation
+  dio: ^5.4.0                        # HTTP client per REST endpoints
+  retrofit: ^4.0.3                   # Type-safe REST client generation
   
-  # Camera & Image Processing
+  # Health Integration - Production Ready
+  health: ^10.2.0                    # HealthKit + Google Health Connect
+  permission_handler: ^11.3.0       # Runtime permissions management
+  
+  # Camera & AI Features
   camera: ^0.10.5                    # Camera access nativo
-  image_picker: ^1.0.4               # Gallery + camera picker
-  image: ^4.0.17                     # Image manipulation
+  image_picker: ^1.0.7               # Gallery + camera unified
+  ml_kit_text_recognition: ^0.13.0   # OCR per food labels
   
-  # Networking & HTTP
-  dio: ^5.3.2                        # HTTP client con interceptors
-  retrofit: ^4.0.3                   # Type-safe REST client
-  pretty_dio_logger: ^1.3.1          # Network logging
+  # Local Storage - Offline First
+  drift: ^2.14.1                     # SQLite con type-safe queries
+  sqlite3_flutter_libs: ^0.5.20     # SQLite native libraries
+  path_provider: ^2.1.2             # File system paths
+  flutter_secure_storage: ^9.0.0    # Secure credential storage
   
-  # Local Storage - Offline capability
-  hive_flutter: ^1.1.0               # NoSQL local database
-  drift: ^2.13.0                     # SQLite con type-safe queries
-  secure_storage: ^9.0.0             # Secure token storage
+  # Real-time & Notifications
+  firebase_messaging: ^14.7.10      # Push notifications FCM
+  firebase_analytics: ^10.8.0       # Analytics tracking
+  web_socket_channel: ^2.4.0        # WebSocket per real-time
   
-  # UI & Animations
-  flutter_animate: ^4.2.0            # Advanced animations
-  shimmer: ^3.0.0                    # Loading skeletons
-  cached_network_image: ^3.3.0       # Image caching
+  # UI/UX Production
+  flutter_animate: ^4.5.0           # Advanced animations library
+  cached_network_image: ^3.3.1      # Network image caching
+  shimmer: ^3.0.0                   # Loading state animations
+  flutter_svg: ^2.0.9               # SVG asset support
   
-  # Push Notifications
-  firebase_messaging: ^14.7.0        # Cross-platform notifications
+  # Navigation & Routing
+  go_router: ^13.2.0                # Declarative routing
+  
+  # Utilities Production
+  freezed_annotation: ^2.4.1        # Immutable data classes
+  json_annotation: ^4.8.1           # JSON serialization
+  get_it: ^7.6.7                    # Dependency injection
+  logger: ^2.0.2                    # Structured logging
+  intl: ^0.19.0                     # Internationalization
+  package_info_plus: ^6.0.0        # App version info
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  
+  # Code Generation - Production Pipeline
+  build_runner: ^2.4.7
+  freezed: ^2.4.7
+  json_serializable: ^6.7.1
+  retrofit_generator: ^8.0.6
+  riverpod_generator: ^2.3.11
+  
+  # Testing Suite
+  mocktail: ^1.0.3                  # Mock testing modern
+  integration_test:
+    sdk: flutter
+  patrol: ^3.6.1                   # Advanced integration testing
+  
+  # Quality & Analysis
+  flutter_lints: ^3.0.1
+  very_good_analysis: ^5.1.0
+  dart_code_metrics: ^5.7.6        # Code quality metrics
+
+# Flutter build configuration
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/animations/
+  
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700
+```
+
+### Architecture Dependencies Matrix per Cloud Services
+
+| Layer | Primary Package | Cloud Integration | Microservice Target |
+|-------|----------------|-------------------|-------------------|
+| **State** | flutter_riverpod | Supabase real-time | All 5 microservices sync |
+| **Auth** | supabase_flutter | Supabase Auth | User authentication unified |
+| **API** | dio + graphql_flutter | API Gateway + GraphQL | REST + GraphQL endpoints |
+| **Storage** | drift + secure_storage | Supabase Database | Offline-first + cloud sync |
+| **Health** | health + permissions | HealthKit/Google Health | health-monitor service |
+| **Camera** | camera + ml_kit | Firebase ML + N8N | meal-tracking + ai-coach |
+| **Push** | firebase_messaging | FCM + N8N triggers | notifications service |
   
   # Utilities
   freezed_annotation: ^2.4.1         # Immutable classes
@@ -105,109 +182,548 @@ dev_dependencies:
   very_good_analysis: ^5.1.0
 ```
 
-### Architecture Dependencies Matrix
-
-| Layer | Primary Package | Purpose | Microservice Integration |
-|-------|----------------|---------|-------------------------|
-| **State** | flutter_riverpod | Reactive state management | All 5 microservizi |
-| **Network** | dio + retrofit | HTTP clients per service | Individual REST endpoints |
-| **GraphQL** | graphql_flutter | Data fetching optimized | API Gateway aggregation |
-| **Storage** | drift + hive | Offline + cache | Local data persistence |
-| **Health** | health | Native health APIs | health-monitor service |
-| **Camera** | camera + image | Food scanning workflow | meal-tracking + AI coach |
-
 ---
 
-## 3. Flutter App Architecture
+## 3. Flutter App Architecture Production
 
-### Layer Architecture per Microservizi
+### Clean Architecture per Cloud-Native Services
 
 ```
 lib/
-├── core/                                    # Cross-cutting concerns
+├── app/                                     # Application layer
+│   ├── app.dart                            # Main app widget
+│   ├── router/
+│   │   ├── app_router.dart                 # GoRouter configuration
+│   │   └── route_constants.dart            # Route definitions
+│   └── theme/
+│       ├── app_theme.dart                  # Material 3 + Cupertino themes
+│       └── theme_extensions.dart           # Custom theme extensions
+├── core/                                   # Cross-cutting concerns
+│   ├── config/
+│   │   ├── environment.dart                # Environment configuration
+│   │   └── app_config.dart                 # App-wide settings
 │   ├── network/
-│   │   ├── graphql_client.dart             # Apollo-like GraphQL client
-│   │   ├── rest_client.dart                # Retrofit per REST APIs
-│   │   ├── interceptors/
-│   │   │   ├── auth_interceptor.dart       # JWT token handling
-│   │   │   ├── error_interceptor.dart      # Global error handling
-│   │   │   └── logging_interceptor.dart    # Network request logging
-│   │   └── error_handling.dart
+│   │   ├── supabase_client.dart           # Supabase client singleton
+│   │   ├── api_gateway_client.dart        # HTTP client per API Gateway
+│   │   ├── graphql_client.dart            # GraphQL client con auth
+│   │   └── interceptors/
+│   │       ├── auth_interceptor.dart       # JWT token auto-refresh
+│   │       ├── error_interceptor.dart      # Global error handling
+│   │       └── retry_interceptor.dart      # Network retry logic
 │   ├── storage/
-│   │   ├── secure_storage.dart             # Token e sensitive data
-│   │   ├── cache_manager.dart              # Application cache
-│   │   └── database/
-│   │       ├── app_database.dart           # Drift database
-│   │       └── tables/                     # Database tables
+│   │   ├── secure_storage.dart            # Token e credentials sicure
+│   │   ├── database/
+│   │   │   ├── app_database.dart          # Drift database principale
+│   │   │   ├── tables/                    # Database tables offline
+│   │   │   └── dao/                       # Data Access Objects
+│   │   └── cache_manager.dart             # Cache strategies
 │   ├── di/
-│   │   └── injection.dart                  # GetIt service locator
+│   │   └── injection.dart                 # GetIt dependency injection
 │   ├── constants/
-│   │   ├── api_constants.dart              # Microservizi endpoints
-│   │   └── app_constants.dart              # App-wide constants
+│   │   ├── api_constants.dart             # Microservizi URLs
+│   │   ├── supabase_constants.dart        # Supabase configuration
+│   │   └── app_constants.dart             # App constants
+│   ├── extensions/
+│   │   ├── context_extensions.dart        # BuildContext utilities
+│   │   └── string_extensions.dart         # String helpers
 │   └── utils/
-├── data/                                   # Data layer
-│   ├── models/                             # Freezed data classes
-│   │   ├── user/
+│       ├── validators.dart                # Form validation
+│       ├── formatters.dart                # Data formatting
+│       └── logger.dart                    # Structured logging
+├── data/                                  # Data layer
+│   ├── models/                            # Freezed data models
+│   │   ├── auth/
+│   │   │   ├── user.dart                  # User model
+│   │   │   └── auth_response.dart         # Authentication responses
 │   │   ├── nutrition/
+│   │   │   ├── food_item.dart             # Food item model
+│   │   │   ├── meal.dart                  # Meal model
+│   │   │   └── nutrition_facts.dart       # Nutrition information
 │   │   ├── health/
-│   │   └── ai/
-│   ├── repositories/                       # Repository implementations
+│   │   │   ├── health_metric.dart         # Health data model
+│   │   │   └── fitness_data.dart          # Fitness tracking
+│   │   ├── ai/
+│   │   │   ├── ai_suggestion.dart         # AI recommendations
+│   │   │   └── conversation.dart          # AI chat conversations
+│   │   └── common/
+│   │       ├── api_response.dart          # Generic API response
+│   │       └── pagination.dart            # Pagination models
+│   ├── repositories/                      # Repository pattern implementations
+│   │   ├── auth_repository.dart           # Supabase Auth wrapper
 │   │   ├── calorie_balance_repository.dart
 │   │   ├── meal_tracking_repository.dart
 │   │   ├── health_monitor_repository.dart
 │   │   ├── notifications_repository.dart
 │   │   └── ai_coach_repository.dart
 │   ├── datasources/
-│   │   ├── remote/                         # API clients per microservizio
+│   │   ├── remote/                        # Cloud data sources
+│   │   │   ├── supabase_auth_datasource.dart
+│   │   │   ├── api_gateway_datasource.dart
 │   │   │   ├── calorie_balance_api.dart
 │   │   │   ├── meal_tracking_api.dart
 │   │   │   ├── health_monitor_api.dart
 │   │   │   ├── notifications_api.dart
 │   │   │   └── ai_coach_api.dart
-│   │   └── local/                          # Cache + offline storage
-│   │       ├── local_storage.dart
-│   │       └── cache_storage.dart
-├── domain/                                 # Business logic layer
-│   ├── entities/                           # Domain objects
-│   │   ├── user.dart
-│   │   ├── nutrition_data.dart
-│   │   ├── meal.dart
-│   │   ├── health_metrics.dart
-│   │   └── ai_response.dart
-│   ├── repositories/                       # Abstract interfaces
-│   │   └── base_repository.dart
-│   ├── usecases/                           # Business logic
-│   │   ├── auth/
-│   │   ├── nutrition/
-│   │   ├── health/
-│   │   └── ai/
-│   └── failures/
-│       └── failures.dart
-├── presentation/                           # Presentation layer
-│   ├── providers/                          # Riverpod providers
-│   │   ├── auth_provider.dart
-│   │   ├── nutrition_provider.dart
-│   │   ├── health_provider.dart
-│   │   └── ai_coach_provider.dart
-│   ├── pages/                              # App screens
-│   │   ├── auth/
-│   │   ├── dashboard/
-│   │   ├── food_scanning/
-│   │   ├── health/
-│   │   ├── ai_chat/
-│   │   └── profile/
-│   ├── widgets/                            # Reusable widgets
-│   │   ├── common/
-│   │   ├── nutrition/
-│   │   ├── health/
-│   │   └── ai/
-│   ├── theme/
-│   │   ├── app_theme.dart
-│   │   ├── app_colors.dart
-│   │   └── app_text_styles.dart
-│   └── routing/
-│       └── app_router.dart
-└── main.dart                               # App entry point
+│   │   └── local/                         # Local storage
+│   │       ├── user_local_datasource.dart
+│   │       ├── meals_local_datasource.dart
+│   │       └── health_local_datasource.dart
+│   └── sync/
+│       ├── sync_manager.dart              # Offline-online sync
+│       └── conflict_resolver.dart         # Data conflict resolution
+├── features/                                 # Feature-based organization
+│   ├── auth/                              # Authentication feature
+│   │   ├── presentation/
+│   │   │   ├── pages/
+│   │   │   │   ├── login_page.dart
+│   │   │   │   └── signup_page.dart
+│   │   │   ├── widgets/
+│   │   │   │   ├── auth_form.dart
+│   │   │   │   └── social_login_buttons.dart
+│   │   │   └── providers/
+│   │   │       └── auth_provider.dart     # Riverpod state management
+│   │   └── domain/
+│   │       ├── entities/
+│   │       └── usecases/
+│   ├── calorie_balance/                   # Calorie tracking feature
+│   │   ├── presentation/
+│   │   │   ├── pages/
+│   │   │   │   ├── calorie_dashboard_page.dart
+│   │   │   │   └── goal_setting_page.dart
+│   │   │   ├── widgets/
+│   │   │   │   ├── calorie_progress_widget.dart
+│   │   │   │   └── bmr_calculator_widget.dart
+│   │   │   └── providers/
+│   │   │       └── calorie_provider.dart
+│   │   └── domain/
+│   ├── meal_tracking/                     # Meal and food tracking
+│   │   ├── presentation/
+│   │   │   ├── pages/
+│   │   │   │   ├── food_scanner_page.dart
+│   │   │   │   ├── meal_log_page.dart
+│   │   │   │   └── food_search_page.dart
+│   │   │   ├── widgets/
+│   │   │   │   ├── camera_widget.dart
+│   │   │   │   ├── nutrition_card.dart
+│   │   │   │   └── meal_timeline.dart
+│   │   │   └── providers/
+│   │   │       └── meal_tracking_provider.dart
+│   │   └── domain/
+│   ├── health_monitor/                    # Health data integration
+│   │   ├── presentation/
+│   │   │   ├── pages/
+│   │   │   │   ├── health_dashboard_page.dart
+│   │   │   │   └── fitness_sync_page.dart
+│   │   │   ├── widgets/
+│   │   │   │   ├── health_chart_widget.dart
+│   │   │   │   └── fitness_summary.dart
+│   │   │   └── providers/
+│   │   │       └── health_provider.dart
+│   │   └── domain/
+│   ├── notifications/                     # Push notifications
+│   │   ├── presentation/
+│   │   │   ├── pages/
+│   │   │   │   └── notification_settings_page.dart
+│   │   │   ├── widgets/
+│   │   │   │   └── notification_card.dart
+│   │   │   └── providers/
+│   │   │       └── notification_provider.dart
+│   │   └── domain/
+│   └── ai_coach/                         # AI coaching feature
+│       ├── presentation/
+│       │   ├── pages/
+│       │   │   ├── ai_chat_page.dart
+│       │   │   └── ai_recommendations_page.dart
+│       │   ├── widgets/
+│       │   │   ├── chat_bubble.dart
+│       │   │   ├── ai_suggestion_card.dart
+│       │   │   └── voice_input_widget.dart
+│       │   └── providers/
+│       │       └── ai_coach_provider.dart
+│       └── domain/
+├── shared/                               # Shared UI components
+│   ├── widgets/
+│   │   ├── buttons/
+│   │   ├── cards/
+│   │   ├── forms/
+│   │   ├── loading/
+│   │   └── navigation/
+│   └── styles/
+│       ├── colors.dart
+│       ├── typography.dart
+│       └── spacing.dart
+└── l10n/                                # Internationalization
+    ├── app_en.arb
+    ├── app_it.arb
+    └── app_localizations.dart
+```
+
+### Riverpod State Management Architecture
+
+```dart
+// features/calorie_balance/presentation/providers/calorie_provider.dart
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../data/repositories/calorie_balance_repository.dart';
+import '../../data/models/nutrition/calorie_goal.dart';
+
+part 'calorie_provider.g.dart';
+
+@riverpod
+class CalorieBalance extends _$CalorieBalance {
+  @override
+  Future<CalorieGoal> build() async {
+    // Load initial calorie goal from Supabase
+    final repository = ref.read(calorieBalanceRepositoryProvider);
+    return await repository.getCurrentGoal();
+  }
+
+  Future<void> updateDailyGoal(int newGoal) async {
+    state = const AsyncValue.loading();
+    try {
+      final repository = ref.read(calorieBalanceRepositoryProvider);
+      final updatedGoal = await repository.updateGoal(newGoal);
+      state = AsyncValue.data(updatedGoal);
+      
+      // Trigger N8N workflow per goal update
+      ref.read(n8nTriggerProvider).triggerWorkflow(
+        'calorie-goal-updated',
+        {'userId': ref.read(authProvider).value?.id, 'newGoal': newGoal}
+      );
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+    }
+  }
+
+  Future<void> logCaloriesConsumed(int calories) async {
+    final currentState = state.value;
+    if (currentState != null) {
+      // Optimistic update per UI responsiveness
+      final updatedGoal = currentState.copyWith(
+        consumed: currentState.consumed + calories,
+      );
+      state = AsyncValue.data(updatedGoal);
+      
+      // Sync to Supabase + trigger AI analysis
+      final repository = ref.read(calorieBalanceRepositoryProvider);
+      await repository.logCalories(calories);
+    }
+  }
+}
+
+@riverpod
+CalorieBalanceRepository calorieBalanceRepository(CalorieBalanceRepositoryRef ref) {
+  final supabaseClient = ref.read(supabaseClientProvider);
+  return CalorieBalanceRepository(supabaseClient);
+}
+```
+
+## 4. Supabase Cloud Integration
+
+### Authentication Flow
+
+```dart
+// core/network/supabase_client.dart
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'supabase_client.g.dart';
+
+@riverpod
+SupabaseClient supabaseClient(SupabaseClientRef ref) {
+  return Supabase.instance.client;
+}
+
+// features/auth/presentation/providers/auth_provider.dart
+@riverpod
+class Auth extends _$Auth {
+  @override
+  Future<User?> build() async {
+    final supabase = ref.read(supabaseClientProvider);
+    
+    // Listen to auth state changes
+    supabase.auth.onAuthStateChange.listen((data) {
+      final event = data.event;
+      final user = data.session?.user;
+      
+      if (event == AuthChangeEvent.signedIn && user != null) {
+        state = AsyncValue.data(user);
+      } else if (event == AuthChangeEvent.signedOut) {
+        state = const AsyncValue.data(null);
+      }
+    });
+    
+    // Return current user if session exists
+    return supabase.auth.currentUser;
+  }
+
+  Future<void> signInWithEmail(String email, String password) async {
+    state = const AsyncValue.loading();
+    try {
+      final supabase = ref.read(supabaseClientProvider);
+      final response = await supabase.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+      
+      if (response.user != null) {
+        state = AsyncValue.data(response.user);
+      } else {
+        throw Exception('Login failed');
+      }
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+    }
+  }
+
+  Future<void> signUpWithEmail(String email, String password) async {
+    state = const AsyncValue.loading();
+    try {
+      final supabase = ref.read(supabaseClientProvider);
+      final response = await supabase.auth.signUp(
+        email: email,
+        password: password,
+      );
+      
+      if (response.user != null) {
+        // Create user profile in Supabase
+        await _createUserProfile(response.user!);
+        state = AsyncValue.data(response.user);
+      }
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+    }
+  }
+
+  Future<void> _createUserProfile(User user) async {
+    final supabase = ref.read(supabaseClientProvider);
+    await supabase.from('user_profiles').insert({
+      'id': user.id,
+      'email': user.email,
+      'created_at': DateTime.now().toIso8601String(),
+      'subscription_tier': 'free',
+      'permissions': ['basic_access'],
+    });
+  }
+
+  Future<void> signOut() async {
+    final supabase = ref.read(supabaseClientProvider);
+    await supabase.auth.signOut();
+    state = const AsyncValue.data(null);
+  }
+}
+```
+
+### Real-time Data Sync
+
+```dart
+// data/repositories/meal_tracking_repository.dart
+class MealTrackingRepository {
+  final SupabaseClient _supabase;
+  late final RealtimeChannel _mealsChannel;
+
+  MealTrackingRepository(this._supabase) {
+    _setupRealtimeSubscription();
+  }
+
+  void _setupRealtimeSubscription() {
+    _mealsChannel = _supabase
+        .channel('meals-changes')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'meals',
+          callback: (payload) {
+            // Handle real-time updates
+            _handleMealUpdate(payload);
+          },
+        )
+        .subscribe();
+  }
+
+  void _handleMealUpdate(PostgresChangePayload payload) {
+    // Update local cache and notify UI
+    switch (payload.eventType) {
+      case PostgresChangeEvent.insert:
+        // New meal added
+        break;
+      case PostgresChangeEvent.update:
+        // Meal updated
+        break;
+      case PostgresChangeEvent.delete:
+        // Meal deleted
+        break;
+    }
+  }
+
+  Future<List<Meal>> getMealsForUser(String userId) async {
+    final response = await _supabase
+        .from('meals')
+        .select()
+        .eq('user_id', userId)
+        .order('created_at', ascending: false);
+    
+    return response.map((json) => Meal.fromJson(json)).toList();
+  }
+
+  Future<Meal> addMeal(Meal meal) async {
+    final response = await _supabase
+        .from('meals')
+        .insert(meal.toJson())
+        .select()
+        .single();
+    
+    return Meal.fromJson(response);
+  }
+}
+```
+
+## 5. Camera e AI Integration
+
+### Food Scanner Implementation
+
+```dart
+// features/meal_tracking/presentation/pages/food_scanner_page.dart
+class FoodScannerPage extends ConsumerStatefulWidget {
+  @override
+  ConsumerState<FoodScannerPage> createState() => _FoodScannerPageState();
+}
+
+class _FoodScannerPageState extends ConsumerState<FoodScannerPage> {
+  CameraController? _controller;
+  late Future<void> _initializeControllerFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeCamera();
+  }
+
+  Future<void> _initializeCamera() async {
+    final cameras = await availableCameras();
+    _controller = CameraController(
+      cameras.first,
+      ResolutionPreset.high,
+      enableAudio: false,
+    );
+    _initializeControllerFuture = _controller!.initialize();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Scan Food')),
+      body: FutureBuilder<void>(
+        future: _initializeControllerFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            return Stack(
+              children: [
+                CameraPreview(_controller!),
+                _buildScanOverlay(),
+                _buildCaptureButton(),
+              ],
+            );
+          } else {
+            return Center(child: CircularProgressIndicator());
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildCaptureButton() {
+    return Positioned(
+      bottom: 32,
+      left: 0,
+      right: 0,
+      child: Center(
+        child: FloatingActionButton(
+          onPressed: _captureAndAnalyze,
+          child: Icon(Icons.camera_alt),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _captureAndAnalyze() async {
+    try {
+      final image = await _controller!.takePicture();
+      
+      // Show loading state
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(
+          child: Card(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Analyzing food...'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      
+      // Send to AI analysis
+      final analysisResult = await ref
+          .read(foodAnalysisProvider.notifier)
+          .analyzeFood(image.path);
+      
+      Navigator.pop(context); // Close loading dialog
+      
+      if (analysisResult != null) {
+        // Navigate to food details page
+        context.pushNamed('/food-details', extra: analysisResult);
+      } else {
+        // Show error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not analyze food. Please try again.')),
+        );
+      }
+    } catch (e) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+}
+
+// AI Analysis Provider
+@riverpod
+class FoodAnalysis extends _$FoodAnalysis {
+  @override
+  FoodAnalysisResult? build() => null;
+
+  Future<FoodAnalysisResult?> analyzeFood(String imagePath) async {
+    try {
+      final file = File(imagePath);
+      final bytes = await file.readAsBytes();
+      
+      // Send to AI coach microservice via API Gateway
+      final repository = ref.read(aiCoachRepositoryProvider);
+      final result = await repository.analyzeFoodImage(bytes);
+      
+      state = result;
+      return result;
+    } catch (e) {
+      throw Exception('Food analysis failed: $e');
+    }
+  }
+}
+```
 ```
 
 ---
@@ -1613,16 +2129,73 @@ flutter pub run build_runner build
 
 ---
 
-## Conclusioni
+## 📋 Summary degli Aggiornamenti Flutter Production
 
-L'implementazione Flutter per NutriFit POC rappresenta la strategia ottimale per validare l'architettura microservizi complessa mantenendo rapid development e cross-platform reach. 
+### ✅ Cambiamenti Strategici Applicati
 
-**Vantaggi chiave:**
-- **Time-to-market ridotto** del 40% rispetto a sviluppo nativo separato
-- **Validazione simultanea** iOS + Android dell'architettura
-- **Ecosystem ricco** per integrazioni complesse (HealthKit, AI, GraphQL)
-- **Performance native** per user experience ottimale
+1. **Production Strategy Confermata**: Flutter è la soluzione mobile production definitiva (non più POC), ottimizzata per deployment su App Store e Google Play
+2. **Cloud-Native Integration**: Integrazione completa con Supabase Cloud per auth, database, real-time + N8N Cloud per workflow automation
+3. **Modern Architecture**: Clean architecture con feature-based organization, Riverpod per state management reattivo, e dependency injection con GetIt
+4. **Offline-First Capability**: Implementazione Drift database con sync intelligente, conflict resolution automatica, e cache strategica
+5. **Real-time Features**: WebSocket integration con Supabase per sincronizzazione real-time cross-device
+6. **AI Integration**: Camera + ML Kit per food scanning, integrazione con microservizi AI tramite API Gateway
+7. **Production Deployment**: Capacitor setup per iOS/Android deployment con CI/CD pipeline automatizzato
 
-**Roadmap realistica** con delivery incrementale e focus su core value proposition prima di advanced features. La scelta Flutter supporta perfettamente gli obiettivi POC mantenendo scalabilità per produzione futura.
+### 🚀 Production Deployment Benefits
 
-**Investment POC**: ~€30,000 development + €5,000 infrastructure (6 settimane) per validazione completa architettura che può supportare €240K+ ARR scaling.
+#### **App Store Ready Features:**
+- **Bundle size optimization** (<50MB per platform)
+- **Native performance** con Flutter Engine AOT compilation
+- **Platform-specific customization** (iOS/Android adaptive UI)
+- **Hot updates** via CodePush per bug fix senza store review
+- **Health integration** nativa (HealthKit + Google Health Connect)
+
+#### **Cloud-Native Advantages:**
+- **Supabase Auth** per authentication unificata cross-platform
+- **Real-time subscriptions** per sync istantaneo dati
+- **Offline-first** con sync automatico quando online
+- **N8N workflow triggers** da mobile per automation backend
+- **Scalable infrastructure** con Render + Supabase managed services
+
+#### **Developer Experience:**
+- **Type-safe development** con Dart + code generation
+- **Hot reload** per iterazioni rapide (3-5s dev cycle)
+- **Unified codebase** riduce maintenance overhead 60%
+- **Rich ecosystem** per integrazioni complesse
+
+### 🔄 Prossimi Deliverable
+
+1. **✅ docs/architettura.md** - Completato con cloud-native architecture
+2. **✅ docs/microservizi_python.md** - Completato con Supabase + MCP + N8N patterns  
+3. **✅ docs/flutter.md** - Completato con production strategy
+4. **🔄 docs/Documentazione Generale.md** - Da aggiornare per rimuovere contraddizioni
+5. **🔄 instructions.md** - Da aggiornare come single source of truth finale
+6. **📝 Makefile** - Da creare per orchestrazione development locale
+7. **📁 config/** - Da setup per workflow N8N e schema Supabase versionati
+
+### 💡 Strategic Impact
+
+**Mobile-First Strategy**: Flutter production deployment consente launch simultaneo iOS + Android, massimizzando market reach con investment ottimizzato.
+
+**Cloud-Native Scalability**: Architettura Supabase + N8N + Render supporta crescita da MVP a enterprise scale senza refactoring maggiori.
+
+**AI-Enabled Experience**: Integration nativa camera + ML per food scanning posiziona NutriFit come leader tech nel nutrition tracking.
+
+**Investment ROI**: €45,000 development + €8,000/anno infrastructure supporta scaling a €500K+ ARR con architettura production-ready dal Day 1.
+
+---
+
+## Conclusioni Production Strategy
+
+L'implementazione Flutter per NutriFit rappresenta la strategia mobile production ottimale per il mercato nutrition tech, combinando **time-to-market accelerato**, **user experience native**, e **scalabilità cloud-native**.
+
+**Vantaggi competitivi chiave:**
+- **Deployment simultaneo** iOS + Android per market penetration massima
+- **Cloud-native scalability** con Supabase + N8N per automation avanzata
+- **AI-powered features** native per competitive differentiation
+- **Offline-first** architecture per user experience superiore
+- **Production-ready** dal Day 1 con CI/CD e monitoring integration
+
+**Roadmap execution** supporta crescita incrementale da MVP a market leader, con architettura che scala naturalmente con user growth e feature expansion.
+
+La scelta Flutter + Supabase + N8N Cloud posiziona NutriFit per dominare il segmento mobile nutrition tracking con technical excellence e user experience di livello enterprise.

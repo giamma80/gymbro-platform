@@ -1,89 +1,99 @@
-# Analisi Tecnica Microservizi Python - Piattaforma NutriFit
+# Microservizi Python 3.11 - NutriFit Platform
 
 ## Executive Summary
 
-Questo documento definisce l'implementazione completa dei 5 microservizi Python per la piattaforma NutriFit, basata su Domain-Driven Design e architettura constraint-aware. L'approccio utilizza FastAPI, PostgreSQL e tecnologie moderne per garantire scalabilità, maintainability e performance enterprise-grade.
+Implementazione completa dei 5 microservizi Python 3.11 per la piattaforma NutriFit, basata su **Domain-Driven Design** e architettura **cloud-native**. L'approccio utilizza **FastAPI**, **Supabase Cloud** per database segregati e **N8N Cloud** per orchestrazione workflow, garantendo scalabilità, maintainability e deployment automatizzato su **Render.com**.
 
 **Architettura Confermata:**
-- ✅ 5 Microservizi Python indipendenti
-- ✅ FastAPI + PostgreSQL + Poetry stack
-- ✅ Domain-Driven Design con Value Objects
-- ✅ Constraint-aware design per API esterne
-- ✅ Self-hosted deployment su Render/Docker
+- ✅ **5 Microservizi Python 3.11** atomici e indipendenti
+- ✅ **FastAPI + Supabase Cloud + Poetry** stack unificato
+- ✅ **Domain-Driven Design** con Value Objects constraint-aware
+- ✅ **N8N Cloud orchestration** per workflow complessi
+- ✅ **Docker multi-stage** per compatibilità locale/Render
+- ✅ **MCP Server** per microservizi con AI/ML capabilities
 
 ---
 
-## 1. Architettura Microservizi Overview
+## 1. Architettura Microservizi con Database Segregation
 
-### 5 Bounded Contexts Indipendenti
+### 5 Microservizi Atomici con Supabase Cloud
 
 ```mermaid
 graph TB
-    subgraph "API Gateway Layer"
-        GW[API Gateway<br/>GraphQL + REST]
+    subgraph "Mobile App"
+        FLUTTER[Flutter App]
     end
     
-    subgraph "Core Business Services"
-        CB[Calorie Balance<br/>Service]
-        MT[Meal Tracking<br/>Service]
+    subgraph "API Gateway"
+        GATEWAY[API Gateway<br/>Facade Pattern]
+    end
+    
+    subgraph "N8N Cloud Orchestration"
+        N8N[N8N Workflows<br/>AI + External APIs]
+    end
+    
+    subgraph "Microservizi Python 3.11"
+        CB[Calorie Balance<br/>Service + MCP]
+        MT[Meal Tracking<br/>Service + MCP]
         HM[Health Monitor<br/>Service]
-    end
-    
-    subgraph "Support Services"
         NS[Notifications<br/>Service]
-        AI[AI Nutrition Coach<br/>Service]
+        AI[AI Nutrition Coach<br/>Service + MCP]
     end
     
-    subgraph "External Integration Layer"
-        N8N[n8n Orchestrator]
-        SUPABASE[Supabase Database]
-        OPENAI[OpenAI API]
-        OFF[OpenFoodFacts API]
-        HK[HealthKit/Health Connect]
+    subgraph "Supabase Cloud Databases"
+        DB1[(nutrifit_calorie_balance)]
+        DB2[(nutrifit_meal_tracking)]
+        DB3[(nutrifit_health_monitor)]
+        DB4[(nutrifit_notifications)]
+        DB5[(nutrifit_ai_coach)]
+        PUSH[Push Notifications]
     end
     
-    GW --> CB
-    GW --> MT
-    GW --> HM
-    GW --> NS
-    GW --> AI
+    FLUTTER --> GATEWAY
+    GATEWAY --> CB
+    GATEWAY --> MT
+    GATEWAY --> HM
+    GATEWAY --> NS
+    GATEWAY --> AI
     
-    CB --> SUPABASE
-    MT --> SUPABASE
-    MT --> OFF
-    MT --> N8N
-    HM --> SUPABASE
-    HM --> HK
-    NS --> SUPABASE
-    AI --> SUPABASE
-    AI --> OPENAI
+    N8N --> CB
+    N8N --> MT
+    N8N --> AI
+    N8N <--> OPENAI[OpenAI API]
+    N8N <--> OFF[OpenFoodFacts]
     
-    N8N --> OFF
-    N8N --> OPENAI
+    CB --> DB1
+    MT --> DB2
+    HM --> DB3
+    NS --> DB4
+    AI --> DB5
+    NS --> PUSH
 ```
 
-### Service Responsibility Matrix
+### Database Segregation su Supabase
 
-| Service | Primary Domain | Key Responsibilities | External Integrations |
-|---------|----------------|---------------------|----------------------|
-| **Calorie Balance** | Energy metabolism | Daily balance calculation, goals tracking, precision management | HealthKit data |
-| **Meal Tracking** | Food & nutrition | Food recognition, nutrition analysis, meal logging | OpenFoodFacts, GPT-4V |
-| **Health Monitor** | Health metrics | HealthKit sync, data quality scoring, trend analysis | HealthKit/Health Connect |
-| **Notifications** | User engagement | Smart notifications, coaching prompts, reminders | Push services |
-| **AI Nutrition Coach** | Conversational AI | RAG system, meal suggestions, coaching chat | OpenAI, Knowledge base |
+**Principio**: Ogni microservizio ha il proprio database isolato su Supabase Cloud per garantire autonomia completa e evitare coupling.
+
+| Microservizio | Database Supabase | Schema Domain | MCP Server |
+|---------------|-------------------|---------------|------------|
+| **calorie-balance** | `nutrifit_calorie_balance` | Energy metabolism, goals, BMR | ✅ Per AI workflows |
+| **meal-tracking** | `nutrifit_meal_tracking` | Food data, nutrition, meals | ✅ Per food analysis |
+| **health-monitor** | `nutrifit_health_monitor` | HealthKit data, metrics | ❌ Solo data sync |
+| **notifications** | `nutrifit_notifications` | Push tokens, templates | ❌ Solo messaging |
+| **ai-coach** | `nutrifit_ai_coach` | Conversations, RAG vectors | ✅ Primary AI service |
 
 ---
 
-## 2. Python Tech Stack Unificato
+## 2. Python 3.11 Tech Stack Unificato
 
-### Core Framework Stack
+### Core Framework Stack per Tutti i Microservizi
 
 ```python
-# pyproject.toml - Standard configuration per tutti i servizi
+# pyproject.toml - Template standard per ogni microservizio
 [tool.poetry]
-name = "nutrifit-microservice-template"
-version = "0.1.0"
-description = "NutriFit Microservice Template"
+name = "nutrifit-{service-name}"
+version = "1.0.0"  
+description = "NutriFit {Service Name} Microservice"
 authors = ["NutriFit Team <dev@nutrifit.com>"]
 
 [tool.poetry.dependencies]
@@ -91,74 +101,1036 @@ python = "^3.11"
 
 # Core Framework
 fastapi = "^0.104.1"              # Modern async API framework
-uvicorn = {extras = ["standard"], version = "^0.24.0"}  # ASGI server
-gunicorn = "^21.2.0"              # Production WSGI server
+uvicorn = {extras = ["standard"], version = "^0.24.0"}  # ASGI server development
+gunicorn = "^21.2.0"              # Production WSGI server per Render
 
-# Database & ORM
+# Database & Supabase Integration
+supabase = "^2.3.0"               # Supabase Python client
+asyncpg = "^0.29.0"               # PostgreSQL async driver  
 sqlalchemy = "^2.0.23"            # Modern async ORM
-alembic = "^1.12.1"               # Database migrations
-asyncpg = "^0.29.0"               # PostgreSQL async driver
-psycopg2-binary = "^2.9.9"        # PostgreSQL sync driver (backup)
+pydantic = {extras = ["email"], version = "^2.4.0"}   # Data validation
 
-# Data Validation & Serialization
-pydantic = "^2.5.0"               # Data validation con V2
-pydantic-settings = "^2.1.0"      # Settings management
-
-# HTTP Client & External APIs
+# HTTP & External APIs  
 httpx = "^0.25.2"                 # Modern async HTTP client
-aiohttp = "^3.9.1"                # Alternative HTTP client
-requests = "^2.31.0"              # Sync HTTP client (backup)
+aiofiles = "^23.2.1"              # Async file operations
 
-# Authentication & Security
-python-jose = {extras = ["cryptography"], version = "^3.3.0"}  # JWT handling
-passlib = {extras = ["bcrypt"], version = "^1.7.4"}           # Password hashing
-python-multipart = "^0.0.6"      # File uploads support
+# Model Context Protocol (per servizi AI)
+mcp = "^1.0.0"                    # MCP server implementation
+openai = "^1.3.0"                 # OpenAI API client (se needed)
 
-# Background Tasks & Async
-celery = "^5.3.4"                 # Distributed task queue
-redis = "^5.0.1"                  # Redis client
-aioredis = "^2.0.1"               # Async Redis client
-
-# Observability & Monitoring
+# Monitoring & Logging
 structlog = "^23.2.0"             # Structured logging
 prometheus-client = "^0.19.0"     # Metrics collection
-opentelemetry-api = "^1.21.0"     # Distributed tracing
-sentry-sdk = {extras = ["fastapi"], version = "^1.38.0"}  # Error tracking
 
-# Development & Testing
-pytest = "^7.4.3"                 # Testing framework
-pytest-asyncio = "^0.21.1"        # Async testing
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"                 # Testing framework
+pytest-asyncio = "^0.21.0"        # Async test support
 pytest-cov = "^4.1.0"             # Coverage reporting
-httpx-test = "^0.22.0"            # HTTP testing utilities
+httpx = "^0.25.2"                 # Test HTTP client
+factory-boy = "^3.3.0"            # Test data factories
 
 # Code Quality
-black = "^23.11.0"                # Code formatter
-isort = "^5.12.0"                 # Import sorter
-flake8 = "^6.1.0"                 # Linting
-mypy = "^1.7.1"                   # Type checking
-pre-commit = "^3.5.0"             # Git hooks
-
-# Service-Specific Dependencies
-[tool.poetry.group.ai.dependencies]
-openai = "^1.3.7"                 # OpenAI API client
-tiktoken = "^0.5.2"               # Token counting
-numpy = "^1.25.2"                 # Numerical computing
-scikit-learn = "^1.3.2"           # ML utilities
-pgvector = "^0.2.4"               # Vector database support
-
-[tool.poetry.group.image.dependencies]
-Pillow = "^10.1.0"                # Image processing
-opencv-python = "^4.8.1.78"       # Computer vision
-python-magic = "^0.4.27"          # File type detection
-
-[tool.poetry.group.health.dependencies]
-pandas = "^2.1.3"                 # Data analysis
-scipy = "^1.11.4"                 # Scientific computing
-statsmodels = "^0.14.0"           # Statistical analysis
+black = "^23.7.0"                 # Code formatting
+isort = "^5.12.0"                 # Import sorting  
+flake8 = "^6.0.0"                 # Linting
+mypy = "^1.5.0"                   # Type checking
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+```
+
+### Configurazione Standard per Supabase Cloud
+
+```python
+# app/core/config.py - Template per ogni microservizio
+from pydantic_settings import BaseSettings
+from typing import List, Optional
+
+class Settings(BaseSettings):
+    """Configuration per microservizio NutriFit"""
+    
+    # Service Identity
+    service_name: str = "{service-name}"
+    environment: str = "development"
+    debug: bool = False
+    
+    # Supabase Cloud Configuration (REQUIRED)
+    supabase_url: str                      # Supabase project URL
+    supabase_anon_key: str                 # Public anon key
+    supabase_service_key: str              # Service role key (backend only)
+    
+    # Database specifico per servizio
+    database_name: str = "nutrifit_{service_name}"
+    
+    # N8N Cloud Integration
+    n8n_webhook_url: Optional[str] = None  # N8N webhook per questo servizio
+    n8n_api_key: Optional[str] = None      # N8N API key
+    
+    # Security
+    secret_key: str                        # JWT secret
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
+    
+    # CORS per mobile app
+    allowed_origins: List[str] = [
+        "http://localhost:3000",           # Flutter web debug
+        "capacitor://localhost",           # Capacitor iOS
+        "https://localhost",               # Capacitor Android
+    ]
+    
+    # MCP Server Configuration (se applicable)
+    mcp_server_enabled: bool = False
+    mcp_server_port: Optional[int] = None
+    
+    class Config:
+        env_file = ".env"
+        case_sensitive = False
+
+settings = Settings()
+```
+
+### Struttura Database Segregata per Microservizio
+
+```python
+# app/database.py - Template per ogni microservizio
+from supabase import create_client, Client
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.orm import declarative_base
+from typing import AsyncGenerator
+import asyncpg
+from app.core.config import settings
+
+# Supabase Client per operazioni dirette
+supabase: Client = create_client(
+    settings.supabase_url,
+    settings.supabase_service_key  # Service key per backend operations
+)
+
+# SQLAlchemy Async Engine per ORM avanzato
+DATABASE_URL = f"postgresql+asyncpg://postgres:{settings.supabase_service_key}@{settings.supabase_url.split('https://')[1]}/postgres"
+
+engine = create_async_engine(
+    DATABASE_URL,
+    echo=settings.debug,
+    pool_size=10,
+    max_overflow=20,
+)
+
+AsyncSessionLocal = async_sessionmaker(
+    engine, 
+    class_=AsyncSession,
+    expire_on_commit=False
+)
+
+Base = declarative_base()
+
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """Dependency per ottenere sessione database"""
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
+
+# Health check funzioni
+async def check_supabase_connection() -> bool:
+    """Verifica connessione a Supabase"""
+    try:
+        result = supabase.table('_health_check').select('*').limit(1).execute()
+        return True
+    except Exception:
+        return False
+
+async def check_sqlalchemy_connection() -> bool:
+    """Verifica connessione SQLAlchemy"""
+    try:
+        async with engine.begin() as conn:
+            await conn.execute("SELECT 1")
+        return True
+    except Exception:
+        return False
+```
+
+### Modelli Base per Database Segregato
+
+```python
+# app/models/base.py - Base models per ogni microservizio
+from sqlalchemy import Column, String, DateTime, Boolean, Text, func
+from sqlalchemy.dialects.postgresql import UUID
+from app.database import Base
+import uuid
+
+class BaseModel(Base):
+    """Classe base per tutti i modelli del microservizio"""
+    __abstract__ = True
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    deleted_at = Column(DateTime(timezone=True), nullable=True)  # Soft delete
+    
+    # Audit fields
+    created_by = Column(String(255), nullable=True)
+    updated_by = Column(String(255), nullable=True)
+    
+    # Metadata per cross-service communication
+    external_refs = Column(Text, nullable=True)  # JSON per riferimenti esterni
+    sync_status = Column(String(50), default='active')  # active, syncing, error
+
+class ServiceHealthCheck(Base):
+    """Tabella health check per ogni microservizio"""
+    __tablename__ = "_health_check"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    service_name = Column(String(100), nullable=False)
+    status = Column(String(20), default='healthy')
+    last_check = Column(DateTime(timezone=True), server_default=func.now())
+    version = Column(String(20), nullable=False)
+```
+
+## 3. Cloud-Native Authentication e Security
+
+### JWT Authentication con Supabase Auth
+
+```python
+# app/core/auth.py - Authentication middleware unificato
+from fastapi import HTTPException, Depends, Request
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from supabase import Client
+from jose import JWTError, jwt
+from typing import Optional
+from app.database import supabase
+from app.core.config import settings
+
+security = HTTPBearer()
+
+class SupabaseAuthManager:
+    """Gestione autenticazione centralizzata con Supabase"""
+    
+    def __init__(self, supabase_client: Client):
+        self.supabase = supabase_client
+    
+    async def verify_token(self, token: str) -> Optional[dict]:
+        """Verifica JWT token tramite Supabase"""
+        try:
+            # Supabase gestisce automaticamente la verifica JWT
+            user = self.supabase.auth.get_user(token)
+            return user.user if user.user else None
+        except Exception:
+            return None
+    
+    async def get_user_metadata(self, user_id: str) -> dict:
+        """Recupera metadata utente per autorizzazione"""
+        try:
+            result = self.supabase.table('user_profiles').select(
+                'id, role, permissions, subscription_tier'
+            ).eq('id', user_id).single().execute()
+            return result.data if result.data else {}
+        except Exception:
+            return {}
+
+auth_manager = SupabaseAuthManager(supabase)
+
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+) -> dict:
+    """Dependency per ottenere utente corrente"""
+    token = credentials.credentials
+    user = await auth_manager.verify_token(token)
+    
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid authentication credentials"
+        )
+    
+    return user
+
+async def require_permission(permission: str):
+    """Factory per dependency che richiede specifica permission"""
+    async def permission_checker(current_user: dict = Depends(get_current_user)):
+        metadata = await auth_manager.get_user_metadata(current_user['id'])
+        permissions = metadata.get('permissions', [])
+        
+        if permission not in permissions:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Permission '{permission}' required"
+            )
+        
+        return current_user
+    
+    return permission_checker
+```
+
+### Cross-Service Communication Security
+
+```python
+# app/core/inter_service.py - Comunicazione sicura tra microservizi
+import httpx
+import time
+import hmac
+import hashlib
+from typing import Dict, Any
+from app.core.config import settings
+
+class InterServiceClient:
+    """Client per comunicazione sicura tra microservizi"""
+    
+    def __init__(self):
+        self.client = httpx.AsyncClient(
+            timeout=30.0,
+            limits=httpx.Limits(max_keepalive_connections=10)
+        )
+        self.service_secret = settings.secret_key
+    
+    def _generate_signature(self, payload: str, timestamp: str) -> str:
+        """Genera signature HMAC per request inter-service"""
+        message = f"{timestamp}:{payload}"
+        signature = hmac.new(
+            self.service_secret.encode(),
+            message.encode(),
+            hashlib.sha256
+        ).hexdigest()
+        return signature
+    
+    async def call_service(
+        self,
+        service_name: str,
+        endpoint: str,
+        method: str = "GET",
+        data: Dict[Any, Any] = None
+    ) -> httpx.Response:
+        """Chiamata autenticata ad altro microservizio"""
+        timestamp = str(int(time.time()))
+        payload = json.dumps(data) if data else ""
+        signature = self._generate_signature(payload, timestamp)
+        
+        headers = {
+            "X-Service-Name": settings.service_name,
+            "X-Timestamp": timestamp,
+            "X-Signature": signature,
+            "Content-Type": "application/json"
+        }
+        
+        service_url = f"https://{service_name}.render.com"  # Render URLs
+        url = f"{service_url}{endpoint}"
+        
+        response = await self.client.request(
+            method=method,
+            url=url,
+            json=data,
+            headers=headers
+        )
+        
+        return response
+    
+    async def verify_inter_service_request(self, request: Request) -> bool:
+        """Verifica richiesta da altro microservizio"""
+        service_name = request.headers.get("X-Service-Name")
+        timestamp = request.headers.get("X-Timestamp")
+        signature = request.headers.get("X-Signature")
+        
+        if not all([service_name, timestamp, signature]):
+            return False
+        
+        # Verifica timestamp (max 5 minuti)
+        current_time = int(time.time())
+        if abs(current_time - int(timestamp)) > 300:
+            return False
+        
+        # Verifica signature
+        body = await request.body()
+        expected_signature = self._generate_signature(body.decode(), timestamp)
+        
+        return hmac.compare_digest(signature, expected_signature)
+
+inter_service = InterServiceClient()
+```
+
+## 4. N8N Cloud Integration Pattern
+
+### N8N Webhook Handler
+
+```python
+# app/integrations/n8n.py - N8N Cloud integration per ogni servizio
+from fastapi import APIRouter, Request, HTTPException, BackgroundTasks
+from typing import Dict, Any, Optional
+import httpx
+import structlog
+from app.core.config import settings
+
+logger = structlog.get_logger()
+
+class N8NIntegration:
+    """Integrazione con N8N Cloud per orchestrazione workflows"""
+    
+    def __init__(self):
+        self.n8n_base_url = "https://n8n.cloud/webhook/"  # N8N Cloud
+        self.api_key = settings.n8n_api_key
+        self.client = httpx.AsyncClient(timeout=30.0)
+    
+    async def trigger_workflow(
+        self, 
+        workflow_id: str, 
+        data: Dict[str, Any],
+        wait_for_response: bool = False
+    ) -> Optional[Dict[str, Any]]:
+        """Trigger N8N workflow tramite webhook"""
+        webhook_url = f"{self.n8n_base_url}{workflow_id}"
+        
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}" if self.api_key else None
+        }
+        
+        try:
+            response = await self.client.post(
+                webhook_url,
+                json={
+                    "service": settings.service_name,
+                    "timestamp": time.time(),
+                    "data": data
+                },
+                headers=headers
+            )
+            
+            if wait_for_response and response.status_code == 200:
+                return response.json()
+            
+            logger.info(
+                "N8N workflow triggered",
+                workflow_id=workflow_id,
+                service=settings.service_name,
+                status_code=response.status_code
+            )
+            
+            return {"status": "triggered", "workflow_id": workflow_id}
+            
+        except Exception as e:
+            logger.error(
+                "Failed to trigger N8N workflow",
+                workflow_id=workflow_id,
+                error=str(e)
+            )
+            raise HTTPException(
+                status_code=500,
+                detail=f"N8N workflow trigger failed: {str(e)}"
+            )
+    
+    async def receive_webhook(self, request: Request) -> Dict[str, Any]:
+        """Ricevi webhook da N8N workflow"""
+        try:
+            data = await request.json()
+            
+            # Log received data
+            logger.info(
+                "Received N8N webhook",
+                service=settings.service_name,
+                workflow_data=data
+            )
+            
+            return data
+            
+        except Exception as e:
+            logger.error("Failed to process N8N webhook", error=str(e))
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid webhook data: {str(e)}"
+            )
+
+n8n = N8NIntegration()
+
+# Router per webhook N8N
+n8n_router = APIRouter(prefix="/webhooks/n8n", tags=["n8n"])
+
+@n8n_router.post("/receive")
+async def receive_n8n_webhook(request: Request, background_tasks: BackgroundTasks):
+    """Endpoint per ricevere webhook da N8N"""
+    data = await n8n.receive_webhook(request)
+    
+    # Process webhook in background
+    background_tasks.add_task(process_n8n_data, data)
+    
+    return {"status": "received", "timestamp": time.time()}
+
+async def process_n8n_data(data: Dict[str, Any]):
+    """Process N8N webhook data in background"""
+    # Implementazione specifica per ogni servizio
+    pass
+```
+
+## 5. Model Context Protocol (MCP) Server Implementation
+
+### MCP Server Base per AI Services
+
+```python
+# app/mcp/server.py - MCP Server implementation per servizi AI
+from mcp.server import Server
+from mcp.types import Tool, TextContent
+from typing import Dict, Any, List
+import asyncio
+import structlog
+from app.core.config import settings
+
+logger = structlog.get_logger()
+
+class NutriFitMCPServer:
+    """MCP Server base per microservizi AI-enabled"""
+    
+    def __init__(self, service_name: str):
+        self.service_name = service_name
+        self.server = Server(f"nutrifit-{service_name}")
+        self.tools: Dict[str, Tool] = {}
+        
+        # Setup server handlers
+        self._setup_handlers()
+    
+    def _setup_handlers(self):
+        """Setup MCP server handlers"""
+        
+        @self.server.list_tools()
+        async def list_tools() -> List[Tool]:
+            """Lista tools disponibili"""
+            return list(self.tools.values())
+        
+        @self.server.call_tool()
+        async def call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
+            """Execute tool con argomenti"""
+            if name not in self.tools:
+                raise ValueError(f"Tool '{name}' not found")
+            
+            try:
+                # Execute tool method
+                method_name = f"_tool_{name.replace('-', '_')}"
+                if hasattr(self, method_name):
+                    result = await getattr(self, method_name)(**arguments)
+                    return [TextContent(type="text", text=str(result))]
+                else:
+                    raise ValueError(f"Tool method {method_name} not implemented")
+                    
+            except Exception as e:
+                logger.error(f"Tool execution failed", tool=name, error=str(e))
+                return [TextContent(type="text", text=f"Error: {str(e)}")]
+    
+    def register_tool(self, tool: Tool):
+        """Registra nuovo tool"""
+        self.tools[tool.name] = tool
+        logger.info(f"Registered MCP tool", tool=tool.name, service=self.service_name)
+    
+    async def start_server(self, port: int = None):
+        """Avvia MCP server"""
+        server_port = port or settings.mcp_server_port or 8000
+        
+        logger.info(
+            "Starting MCP server",
+            service=self.service_name,
+            port=server_port
+        )
+        
+        # Implementation dipende dalla libreria MCP specifica
+        # Placeholder per avvio server
+        await asyncio.sleep(0.1)
+```
+
+### MCP Tools per Calorie Balance Service
+
+```python
+# services/calorie-balance/app/mcp/tools.py - Esempio tools specifici
+from mcp.types import Tool
+from app.mcp.server import NutriFitMCPServer
+from app.services.calorie_calculator import CalorieCalculatorService
+from typing import Dict, Any
+
+class CalorieBalanceMCPServer(NutriFitMCPServer):
+    """MCP Server per Calorie Balance Service"""
+    
+    def __init__(self):
+        super().__init__("calorie-balance")
+        self.calorie_service = CalorieCalculatorService()
+        self._register_tools()
+    
+    def _register_tools(self):
+        """Registra tools specifici per calorie balance"""
+        
+        # Tool: Calculate BMR
+        bmr_tool = Tool(
+            name="calculate-bmr",
+            description="Calculate Basal Metabolic Rate based on user data",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "weight": {"type": "number", "description": "Weight in kg"},
+                    "height": {"type": "number", "description": "Height in cm"},
+                    "age": {"type": "number", "description": "Age in years"},
+                    "gender": {"type": "string", "enum": ["male", "female"]},
+                    "activity_level": {"type": "string", "enum": ["sedentary", "light", "moderate", "high", "extreme"]}
+                },
+                "required": ["weight", "height", "age", "gender", "activity_level"]
+            }
+        )
+        self.register_tool(bmr_tool)
+        
+        # Tool: Calculate calorie goal
+        goal_tool = Tool(
+            name="calculate-calorie-goal",
+            description="Calculate daily calorie goal based on BMR and objectives",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "bmr": {"type": "number", "description": "Basal Metabolic Rate"},
+                    "goal": {"type": "string", "enum": ["lose", "maintain", "gain"]},
+                    "intensity": {"type": "string", "enum": ["slow", "moderate", "fast"]}
+                },
+                "required": ["bmr", "goal", "intensity"]
+            }
+        )
+        self.register_tool(goal_tool)
+    
+    async def _tool_calculate_bmr(self, **kwargs) -> Dict[str, Any]:
+        """Implementazione tool BMR calculation"""
+        return await self.calorie_service.calculate_bmr(**kwargs)
+    
+    async def _tool_calculate_calorie_goal(self, **kwargs) -> Dict[str, Any]:
+        """Implementazione tool calorie goal calculation"""
+        return await self.calorie_service.calculate_daily_goal(**kwargs)
+```
+
+## 6. FastAPI Application Structure Template
+
+### Main Application Setup
+
+```python
+# app/main.py - Template standard per ogni microservizio
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from contextlib import asynccontextmanager
+import structlog
+from app.core.config import settings
+from app.core.auth import auth_manager
+from app.database import check_supabase_connection, check_sqlalchemy_connection
+from app.integrations.n8n import n8n_router
+from app.api import health, auth
+
+# Setup logging
+structlog.configure(
+    processors=[
+        structlog.stdlib.filter_by_level,
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+        structlog.processors.JSONRenderer()
+    ],
+    context_class=dict,
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    wrapper_class=structlog.stdlib.BoundLogger,
+    cache_logger_on_first_use=True,
+)
+
+logger = structlog.get_logger()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan management"""
+    # Startup
+    logger.info(f"Starting {settings.service_name} service")
+    
+    # Verifica connessioni
+    supabase_ok = await check_supabase_connection()
+    sqlalchemy_ok = await check_sqlalchemy_connection()
+    
+    if not (supabase_ok and sqlalchemy_ok):
+        logger.error("Database connection failed")
+        raise RuntimeError("Cannot connect to database")
+    
+    # Start MCP server se abilitato
+    if settings.mcp_server_enabled:
+        from app.mcp.server import mcp_server
+        await mcp_server.start_server(settings.mcp_server_port)
+    
+    logger.info(f"{settings.service_name} service started successfully")
+    
+    yield
+    
+    # Shutdown
+    logger.info(f"Shutting down {settings.service_name} service")
+
+app = FastAPI(
+    title=f"NutriFit {settings.service_name.title()} Service",
+    description=f"Microservizio {settings.service_name} per NutriFit Platform",
+    version="1.0.0",
+    lifespan=lifespan,
+    docs_url="/docs" if settings.debug else None,
+    redoc_url="/redoc" if settings.debug else None
+)
+
+# Middleware setup
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=["*.render.com", "localhost", "127.0.0.1"]
+)
+
+# Include routers
+app.include_router(health.router, prefix="/health", tags=["health"])
+app.include_router(auth.router, prefix="/auth", tags=["authentication"])
+app.include_router(n8n_router)
+
+# Service-specific routers vanno aggiunti qui
+# app.include_router(service_router, prefix="/api/v1", tags=[settings.service_name])
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """Global HTTP exception handler"""
+    logger.error(
+        "HTTP exception",
+        status_code=exc.status_code,
+        detail=exc.detail,
+        path=request.url.path
+    )
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail, "service": settings.service_name}
+    )
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=settings.debug
+    )
+```
+
+### Health Check Endpoints
+
+```python
+# app/api/health.py - Health check standardizzato
+from fastapi import APIRouter, Depends
+from typing import Dict, Any
+import time
+from app.database import check_supabase_connection, check_sqlalchemy_connection
+from app.core.config import settings
+
+router = APIRouter()
+
+@router.get("/")
+async def health_check() -> Dict[str, Any]:
+    """Basic health check"""
+    return {
+        "service": settings.service_name,
+        "status": "healthy",
+        "timestamp": time.time(),
+        "version": "1.0.0"
+    }
+
+@router.get("/ready")
+async def readiness_check() -> Dict[str, Any]:
+    """Readiness check per Kubernetes/Render"""
+    supabase_ok = await check_supabase_connection()
+    sqlalchemy_ok = await check_sqlalchemy_connection()
+    
+    is_ready = supabase_ok and sqlalchemy_ok
+    
+    return {
+        "service": settings.service_name,
+        "ready": is_ready,
+        "checks": {
+            "supabase": supabase_ok,
+            "sqlalchemy": sqlalchemy_ok
+        },
+        "timestamp": time.time()
+    }
+
+@router.get("/live")
+async def liveness_check() -> Dict[str, Any]:
+    """Liveness check per Kubernetes/Render"""
+    return {
+        "service": settings.service_name,
+        "alive": True,
+        "timestamp": time.time()
+    }
+```
+
+## 7. Docker Multi-Stage per Local e Production
+
+### Dockerfile Unificato
+
+```dockerfile
+# Dockerfile - Multi-stage per local development e production
+FROM python:3.11-slim as base
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Poetry
+RUN pip install poetry==1.7.1
+
+# Configure Poetry
+ENV POETRY_NO_INTERACTION=1 \
+    POETRY_VENV_IN_PROJECT=1 \
+    POETRY_CACHE_DIR=/tmp/poetry_cache
+
+WORKDIR /app
+
+# Copy dependency files
+COPY pyproject.toml poetry.lock ./
+
+# Development stage
+FROM base as development
+
+# Install all dependencies including dev
+RUN poetry install --with dev && rm -rf $POETRY_CACHE_DIR
+
+# Create non-root user
+RUN useradd --create-home --shell /bin/bash app
+USER app
+
+# Copy application code
+COPY --chown=app:app . .
+
+# Expose port
+EXPOSE 8000
+
+# Development command
+CMD ["poetry", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+# Production stage
+FROM base as production
+
+# Install only production dependencies
+RUN poetry install --only=main && rm -rf $POETRY_CACHE_DIR
+
+# Create non-root user
+RUN useradd --create-home --shell /bin/bash app
+USER app
+
+# Copy application code
+COPY --chown=app:app . .
+
+# Expose port
+EXPOSE 8000
+
+# Production command con Gunicorn
+CMD ["poetry", "run", "gunicorn", "app.main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]
+```
+
+### Docker Compose Development
+
+```yaml
+# docker-compose.dev.yml - Template per ogni microservizio
+version: '3.8'
+
+services:
+  nutrifit-{service-name}:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: nutrifit-{service-name}-dev
+    ports:
+      - "800{port}:8000"  # Porta specifica per ogni servizio
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - SECRET_KEY=${SECRET_KEY}
+      - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL}
+      - N8N_API_KEY=${N8N_API_KEY}
+    volumes:
+      - .:/app
+      - {service-name}-poetry-cache:/app/.venv
+    networks:
+      - nutrifit-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  {service-name}-poetry-cache:
+
+networks:
+  nutrifit-network:
+    external: true
+```
+
+## 8. Testing Strategy con Supabase
+
+### Test Configuration
+
+```python
+# tests/conftest.py - Configurazione test unificata
+import pytest
+import asyncio
+from typing import AsyncGenerator
+from httpx import AsyncClient
+from fastapi.testclient import TestClient
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from app.main import app
+from app.database import get_db, Base
+from app.core.config import settings
+
+# Test database URL (usando Supabase test project)
+TEST_DATABASE_URL = "postgresql+asyncpg://postgres:test@localhost:54322/postgres"
+
+# Test engine
+test_engine = create_async_engine(TEST_DATABASE_URL, echo=True)
+
+@pytest.fixture(scope="session")
+def event_loop():
+    """Event loop per session"""
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
+
+@pytest.fixture(scope="session")
+async def setup_test_db():
+    """Setup test database"""
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+
+@pytest.fixture
+async def test_db_session(setup_test_db) -> AsyncGenerator[AsyncSession, None]:
+    """Test database session"""
+    async with AsyncSession(test_engine) as session:
+        yield session
+        await session.rollback()
+
+@pytest.fixture
+async def test_client(test_db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+    """Test HTTP client"""
+    
+    async def override_get_db():
+        yield test_db_session
+    
+    app.dependency_overrides[get_db] = override_get_db
+    
+    async with AsyncClient(app=app, base_url="http://test") as client:
+        yield client
+    
+    app.dependency_overrides.clear()
+
+@pytest.fixture
+def auth_headers() -> dict:
+    """Mock auth headers per test"""
+    return {
+        "Authorization": "Bearer test-token",
+        "Content-Type": "application/json"
+    }
+```
+
+### Test Cases Template
+
+```python
+# tests/test_api.py - Template test per API endpoints
+import pytest
+from httpx import AsyncClient
+from app.core.config import settings
+
+class TestHealthEndpoints:
+    """Test health check endpoints"""
+    
+    async def test_health_check(self, test_client: AsyncClient):
+        """Test basic health check"""
+        response = await test_client.get("/health/")
+        assert response.status_code == 200
+        
+        data = response.json()
+        assert data["service"] == settings.service_name
+        assert data["status"] == "healthy"
+        assert "timestamp" in data
+    
+    async def test_readiness_check(self, test_client: AsyncClient):
+        """Test readiness check"""
+        response = await test_client.get("/health/ready")
+        assert response.status_code == 200
+        
+        data = response.json()
+        assert data["service"] == settings.service_name
+        assert "ready" in data
+        assert "checks" in data
+
+class TestServiceSpecific:
+    """Test service-specific endpoints"""
+    
+    async def test_protected_endpoint(
+        self, 
+        test_client: AsyncClient, 
+        auth_headers: dict
+    ):
+        """Test protected endpoint con authentication"""
+        response = await test_client.get(
+            "/api/v1/protected", 
+            headers=auth_headers
+        )
+        assert response.status_code == 200
+    
+    async def test_n8n_webhook(self, test_client: AsyncClient):
+        """Test N8N webhook reception"""
+        webhook_data = {
+            "workflow_id": "test-workflow",
+            "data": {"test": "value"}
+        }
+        
+        response = await test_client.post(
+            "/webhooks/n8n/receive",
+            json=webhook_data
+        )
+        assert response.status_code == 200
+        assert response.json()["status"] == "received"
+```
+
+---
+
+## 📋 Summary degli Aggiornamenti
+
+### ✅ Cambiamenti Applicati
+
+1. **Cloud-Native Database Strategy**: Migrazione completa da PostgreSQL locale a Supabase Cloud con database segregati per microservizio
+2. **N8N Cloud Integration**: Pattern standardizzato per integrazione con N8N Cloud tramite webhook e API
+3. **MCP Server Implementation**: Template per Model Context Protocol servers per servizi AI-enabled  
+4. **Security Enhancement**: Authentication unificata con Supabase Auth e inter-service communication security
+5. **Docker Multi-Stage**: Configurazione per development locale e production deployment
+6. **Testing Strategy**: Framework di test compatibile con Supabase e cloud services
+
+### 🔄 Prossimi Step
+
+1. **Aggiornare docs/flutter.md** con strategia mobile production
+2. **Aggiornare docs/Documentazione Generale.md** per rimuovere contraddizioni  
+3. **Aggiornare instructions.md** come single source of truth definitivo
+4. **Creare Makefile** per orchestrazione local development  
+5. **Setup config/** directory per workflow N8N e schema Supabase versionati
 
 # Configuration
 [tool.black]

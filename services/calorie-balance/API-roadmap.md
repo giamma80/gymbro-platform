@@ -1,12 +1,24 @@
-# > **Status del mi| **📈 Timeline Analytics (NEW)** | 0 | 12 | 🔴 0% |
+# API Roadmap - Calorie Balance Service
+
+> **Status del microservizio**: ✅ **Production Ready** - Soluzione UUID per PgBouncer implementata!  
+> **Versione attuale**: v1.3.0 (Persistence Solution + Full Test Validation)  
+> **Ultimo aggiornamento**: 5 settembre 2025  
+> **🎉 MILESTONE**: DuplicatePreparedStatementError risolto - API completamente funzionali
+
+## 📊 Overview dello Stato
+
+| Categoria | Implementate | Totali | Completamento |
+|-----------|--------------|--------|---------------|
+| **Health & Status** | 3 | 3 | � 100% |
+| **User Management** | 3 | 5 | � 60% |
+| **Calorie Goals** | 2 | 6 | � 33% |
+| **🔥 Calorie Events (NEW)** | 4 | 6 | � 67% |
+| **Daily Balance (Legacy)** | 4 | 7 | 🟡 57% |
+| **📈 Timeline Analytics (NEW)** | 0 | 12 | 🔴 0% |
 | **🗓️ Temporal Views (DB Ready)** | 5 | 5 | 🟢 100% |
 | **Analytics & Trends** | 0 | 4 | 🔴 0% |
 | **Metabolic Profiles** | 0 | 3 | 🔴 0% |
-| **Advanced Features** | 0 | 3 | 🔴 0% |
-| **TOTALE** | **17** | **54** | **🟡 31%** |rvizio**: ✅ **Event-Driven Ready** - Database migrato con successo!  
-> **Versione attuale**: v1.2.0 (Multi-Level Temporal Analytics)  
-> **Ultimo aggiornamento**: 5 settembre 2025  
-> **🎉 MAJOR UPDATE**: 5-Level Temporal Views implementate (hourly → monthly)Roadmap - Calorie Balance Service
+| **TOTALE** | **21** | **54** | **🟡 39%** |
 
 > **Status del microservizio**: � **Major Refactoring** - Ristrutturazione per supporto eventi ad alta frequenza  
 > **Versione attuale**: v1.1.0 (Event-Driven Architecture)  
@@ -58,13 +70,13 @@
 | `/api/v1/goals/users/{user_id}/history` | GET | ❌ **TODO** | P2 | Goals history |
 | `/api/v1/goals/users/{user_id}/goals` | GET | ❌ **TODO** | P2 | List all user goals |
 
-### 🔥 Calorie Events (High-Frequency Data)
+### 🔥 Calorie Events (Event-Driven Architecture)
 | Endpoint | Metodo | Status | Priorità | Note |
 |----------|--------|--------|----------|------|
-| `/api/v1/events/users/{user_id}/calorie-consumed` | POST | ❌ **TODO** | P0 | Log calorie consumption event |
-| `/api/v1/events/users/{user_id}/calorie-burned` | POST | ❌ **TODO** | P0 | Log exercise calorie burn |
-| `/api/v1/events/users/{user_id}/weight` | POST | ❌ **TODO** | P0 | Log weight measurement |
-| `/api/v1/events/users/{user_id}/batch` | POST | ❌ **TODO** | P0 | Batch events from mobile |
+| `/api/v1/calorie-event/consumed` | POST | ✅ **FATTO** | P0 | Log consumption event |
+| `/api/v1/calorie-event/burned` | POST | ✅ **FATTO** | P0 | Log exercise burn |
+| `/api/v1/calorie-event/weight` | POST | ✅ **FATTO** | P0 | Log weight measurement |
+| `/api/v1/calorie-event/batch` | POST | ✅ **FATTO** | P0 | Batch events from mobile |
 | `/api/v1/events/users/{user_id}/timeline` | GET | ❌ **TODO** | P1 | Get events timeline |
 | `/api/v1/events/users/{user_id}/latest` | GET | ❌ **TODO** | P2 | Get latest events |
 

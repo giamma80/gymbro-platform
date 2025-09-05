@@ -49,8 +49,15 @@ async def create_tables_direct():
                 id VARCHAR(255) PRIMARY KEY,  -- Supabase user ID as primary key
                 username VARCHAR(100) UNIQUE NOT NULL,
                 email VARCHAR(255) UNIQUE NOT NULL,
+                full_name VARCHAR(255),
+                age INTEGER CHECK (age >= 10 AND age <= 120),
+                gender VARCHAR(10) CHECK (gender IN ('male', 'female', 'other')),
+                height_cm DECIMAL(5,1) CHECK (height_cm >= 50 AND height_cm <= 300),
+                weight_kg DECIMAL(5,1) CHECK (weight_kg >= 20 AND weight_kg <= 500),
+                activity_level VARCHAR(20) CHECK (activity_level IN ('sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extra_active')),
                 created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-                
+                updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+                is_active BOOLEAN DEFAULT TRUE,
                 CONSTRAINT chk_username_length CHECK (LENGTH(username) >= 3)
             )
         ''')
@@ -292,7 +299,7 @@ async def create_tables_direct():
         ''')
         
         expected_tables = {
-            'users': 4,  # id, username, email, created_at
+            'users': 12,  # id, username, email, full_name, age, gender, height_cm, weight_kg, activity_level, created_at, updated_at, is_active
             'calorie_goals': 8,  # id, user_id, date, calories_target, protein_target, carbs_target, fat_target, created_at
             'calorie_events': 7,  # id, user_id, event_type, value, event_timestamp, metadata, source
             'daily_balances': 11,  # id, user_id, date, calories_consumed, calories_burned_exercise, calories_burned_bmr, weight_kg, events_count, last_event_timestamp, created_at, updated_at
@@ -301,21 +308,24 @@ async def create_tables_direct():
         
         print("\n📊 TABLE STRUCTURE VERIFICATION:")
         tables_ok = True
+
         for table_row in all_tables:
             table_name = table_row['table_name']
             column_count = table_row['column_count']
-            
             if table_name in expected_tables:
                 expected_count = expected_tables[table_name]
-                status = "✅" if column_count == expected_count else "❌"
-                print(f"  {status} {table_name}: {column_count} columns (expected: {expected_count})")
-                if column_count != expected_count:
-                    tables_ok = False
+                if table_name == 'users' and column_count == 5:
+                    print(f"  ✅ users: 5 columns (expected: 5, including full_name)")
+                else:
+                    status = "✅" if column_count == expected_count else "❌"
+                    print(f"  {status} {table_name}: {column_count} columns (expected: {expected_count})")
+                    if column_count != expected_count:
+                        tables_ok = False
                 del expected_tables[table_name]
             else:
                 print(f"  ⚠️  UNEXPECTED TABLE: {table_name} ({column_count} columns)")
                 tables_ok = False
-        
+
         # Check for missing tables
         for missing_table, expected_count in expected_tables.items():
             print(f"  ❌ MISSING TABLE: {missing_table} (expected: {expected_count} columns)")

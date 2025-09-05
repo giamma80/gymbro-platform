@@ -12,6 +12,7 @@ class UserModel(Base):
     __tablename__ = "users"
     
     id = Column(String(255), primary_key=True)  # This will store the Supabase user ID
+    username = Column(String(100), unique=True, nullable=False, index=True)
     email = Column(String(255), unique=True, nullable=False, index=True)
     full_name = Column(String(255), nullable=True)
     age = Column(Integer, nullable=True)

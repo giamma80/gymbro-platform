@@ -84,10 +84,10 @@ app/
 - `GET /api/v1/goals/users/{user_id}/history` - Goals history (TODO)
 
 ### 🔥 Calorie Events (Event-Driven APIs)
-- `POST /api/v1/events/users/{user_id}/calorie-consumed` - Log consumption event (TODO)
-- `POST /api/v1/events/users/{user_id}/calorie-burned` - Log exercise burn (TODO)
-- `POST /api/v1/events/users/{user_id}/weight` - Log weight measurement (TODO)
-- `POST /api/v1/events/users/{user_id}/batch` - Batch events from mobile (TODO)
+- `POST /api/v1/calorie-event/consumed` - Log consumption event ✅
+- `POST /api/v1/calorie-event/burned` - Log exercise burn ✅
+- `POST /api/v1/calorie-event/weight` - Log weight measurement ✅
+- `POST /api/v1/calorie-event/batch` - Batch events from mobile ✅
 - `GET /api/v1/events/users/{user_id}/timeline` - Get events timeline (TODO)
 - `GET /api/v1/events/users/{user_id}/latest` - Get latest events (TODO)
 
@@ -213,7 +213,32 @@ poetry run pre-commit run --all-files
 - **Compound indexes** su user_id + event_timestamp per mobile queries
 - **Pre-computed aggregations** via views per sub-second response
 - **Event sourcing** per complete timeline reconstruction
-- **Optimized for Supabase** con statement_cache_size=0
+- **Optimized for Supabase** con soluzione UUID per prepared statements
+- **PgBouncer compatibility** completa per production deployment
+
+### 🔧 Database Persistence Solution
+Il servizio implementa una **soluzione ottimizzata per PgBouncer** che risolve completamente i conflitti di prepared statements:
+
+**Configurazione UUID per Prepared Statements:**
+```python
+engine = create_async_engine(
+    settings.database_url,
+    poolclass=NullPool,  # Compatibilità PgBouncer transaction mode
+    connect_args={
+        "prepared_statement_name_func": lambda: f"__asyncpg_{uuid4().hex}__",
+        "statement_cache_size": 0,
+        "prepared_statement_cache_size": 0,
+        # Timeout ottimizzati per cloud deployment
+    }
+)
+```
+
+**Benefici della soluzione:**
+- ✅ **Zero conflitti** di prepared statements con PgBouncer
+- ✅ **Compatibilità totale** con modalità transaction
+- ✅ **Performance ottimali** per high-frequency events
+- ✅ **Produzione-ready** con validazione completa
+- ✅ **Supabase native** senza compromessi funzionali
 
 ## Integration Points
 

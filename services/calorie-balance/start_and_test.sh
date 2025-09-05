@@ -126,6 +126,7 @@ EMAIL="test$TIMESTAMP@example.com"
 
 USER_DATA="{
     \"user_id\": \"$USER_ID\",
+    \"username\": \"testuser$TIMESTAMP\",
     \"email\": \"$EMAIL\",
     \"full_name\": \"Test User\"
 }"
@@ -134,12 +135,105 @@ CREATE_RESPONSE=$(curl -s -X POST "http://localhost:8001/api/v1/users/" \
     -H "Content-Type: application/json" \
     -d "$USER_DATA")
 
+
 if echo "$CREATE_RESPONSE" | grep -q '"success":true'; then
     echo -e "${GREEN}✅ Creazione utente PASS${NC}"
     echo "$CREATE_RESPONSE" | python3 -m json.tool
 else
     echo -e "${RED}❌ Creazione utente FAIL${NC}"
     echo "$CREATE_RESPONSE"
+    exit 1
+fi
+
+# Test API Eventi Calorici
+echo -e "\n${BLUE}🔥 Test API Eventi Calorici...${NC}"
+
+# Test evento calorie consumate
+TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+CALORIE_EVENT_CONSUMED=$(cat <<EOF
+{
+  "user_id": "$USER_ID",
+  "event_type": "consumed",
+  "calories": 500,
+  "timestamp": "$TIMESTAMP"
+}
+EOF
+)
+CONSUMED_RESPONSE=$(curl -s -X POST "http://localhost:8001/api/v1/calorie-event/consumed" -H "Content-Type: application/json" -d "$CALORIE_EVENT_CONSUMED")
+echo -e "${GREEN}Risposta evento 'consumed':${NC}"
+echo "$CONSUMED_RESPONSE" | python3 -m json.tool
+if echo "$CONSUMED_RESPONSE" | grep -q '"event_type": *"consumed"'; then
+    echo -e "${GREEN}✅ Evento calorie consumate PASS${NC}"
+else
+    echo -e "${RED}❌ Evento calorie consumate FAIL${NC}"
+    exit 1
+fi
+
+# Test evento calorie bruciate
+CALORIE_EVENT_BURNED=$(cat <<EOF
+{
+  "user_id": "$USER_ID",
+  "event_type": "burned",
+  "calories": 300,
+  "timestamp": "$TIMESTAMP"
+}
+EOF
+)
+BURNED_RESPONSE=$(curl -s -X POST "http://localhost:8001/api/v1/calorie-event/burned" -H "Content-Type: application/json" -d "$CALORIE_EVENT_BURNED")
+echo -e "${GREEN}Risposta evento 'burned':${NC}"
+echo "$BURNED_RESPONSE" | python3 -m json.tool
+if echo "$BURNED_RESPONSE" | grep -q '"event_type": *"burned"'; then
+    echo -e "${GREEN}✅ Evento calorie bruciate PASS${NC}"
+else
+    echo -e "${RED}❌ Evento calorie bruciate FAIL${NC}"
+    exit 1
+fi
+
+# Test evento peso
+CALORIE_EVENT_WEIGHT=$(cat <<EOF
+{
+  "user_id": "$USER_ID",
+  "event_type": "weight",
+  "weight_kg": 75.5,
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+EOF
+)
+WEIGHT_RESPONSE=$(curl -s -X POST "http://localhost:8001/api/v1/calorie-event/weight" -H "Content-Type: application/json" -d "$CALORIE_EVENT_WEIGHT")
+echo -e "${GREEN}Risposta evento 'weight':${NC}"
+echo "$WEIGHT_RESPONSE" | python3 -m json.tool
+if echo "$WEIGHT_RESPONSE" | grep -q '"event_type": *"weight"'; then
+    echo -e "${GREEN}✅ Evento peso PASS${NC}"
+else
+    echo -e "${RED}❌ Evento peso FAIL${NC}"
+    exit 1
+fi
+
+# Test batch eventi
+BATCH_EVENTS=$(cat <<EOF
+[
+  {
+    "user_id": "$USER_ID",
+    "event_type": "consumed",
+    "calories": 200,
+    "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  },
+  {
+    "user_id": "$USER_ID",
+    "event_type": "burned",
+    "calories": 100,
+    "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  }
+]
+EOF
+)
+BATCH_RESPONSE=$(curl -s -X POST "http://localhost:8001/api/v1/calorie-event/batch" -H "Content-Type: application/json" -d "$BATCH_EVENTS")
+echo -e "${GREEN}Risposta batch eventi:${NC}"
+echo "$BATCH_RESPONSE" | python3 -m json.tool
+if echo "$BATCH_RESPONSE" | grep -q '"event_type": *"consumed"' && echo "$BATCH_RESPONSE" | grep -q '"event_type": *"burned"'; then
+    echo -e "${GREEN}✅ Batch eventi PASS${NC}"
+else
+    echo -e "${RED}❌ Batch eventi FAIL${NC}"
     exit 1
 fi
 
@@ -163,10 +257,10 @@ UPDATE_DATA='{
     "gender": "MALE",
     "height_cm": 180.5,
     "weight_kg": 75.0,
-    "activity_level": "MODERATE"
+    "activity_level": "MODERATELY_ACTIVE"
 }'
 
-UPDATE_RESPONSE=$(curl -s -X PUT "http://localhost:8001/api/v1/users/$USER_ID" \
+UPDATE_RESPONSE=$(curl -s --max-time 10 -X PUT "http://localhost:8001/api/v1/users/$USER_ID" \
     -H "Content-Type: application/json" \
     -d "$UPDATE_DATA")
 
@@ -244,6 +338,7 @@ echo "$HEALTH_RESPONSE" | python3 -m json.tool
 echo -e "${BLUE}👤 Test creazione utente...${NC}"
 USER_DATA='{
     "user_id": "test_user_123",
+    "username": "testuser123",
     "email": "test@example.com",
     "full_name": "Test User"
 }'

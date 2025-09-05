@@ -79,5 +79,26 @@ trap cleanup INT
 # Start the service
 echo -e "${BLUE}🏃‍♂️ Starting FastAPI server on http://localhost:8001${NC}"
 echo -e "${GREEN}📖 Documentazione API disponibile su: http://localhost:8001/docs${NC}"
-echo -e "${YELLOW}Press CTRL+C to stop the server${NC}"
-poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
+echo -e "${YELLOW}Server running in background. Output in dev-server.log${NC}"
+echo -e "${YELLOW}Use 'pkill -f uvicorn' to stop the server${NC}"
+
+# Start server in background and redirect output to log file
+poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8001 > dev-server.log 2>&1 &
+
+# Save PID for potential cleanup
+SERVER_PID=$!
+echo -e "${GREEN}✅ Server started with PID: $SERVER_PID${NC}"
+
+# Wait a moment for server to start
+sleep 3
+
+# Check if server is responding
+if curl -s -f "http://localhost:8001/health/" > /dev/null 2>&1; then
+    echo -e "${GREEN}✅ Server is responding on http://localhost:8001${NC}"
+    echo -e "${BLUE}📊 Check dev-server.log for server output${NC}"
+else
+    echo -e "${RED}❌ Server failed to start properly${NC}"
+    echo -e "${YELLOW}📋 Last few lines from dev-server.log:${NC}"
+    tail -10 dev-server.log 2>/dev/null || echo "No log file found"
+    exit 1
+fi

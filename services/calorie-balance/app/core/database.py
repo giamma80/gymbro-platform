@@ -1,22 +1,33 @@
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import text
+from sqlalchemy.pool import NullPool
 from typing import AsyncGenerator
+from uuid import uuid4
 import structlog
 from .config import settings
 
 logger = structlog.get_logger(__name__)
 
 # SQLAlchemy async engine with Supabase-compatible settings
+# Using UUID-based prepared statement names for PgBouncer transaction mode compatibility
 engine = create_async_engine(
     settings.database_url,
     echo=settings.debug,
-    pool_pre_ping=True,
-    pool_recycle=300,
-    # Disable prepared statements for Supabase transaction pooling
+    poolclass=NullPool,  # Required for transaction mode compatibility
+    # PgBouncer transaction mode compatibility with UUID prepared statements
     connect_args={
-        "statement_cache_size": 0
-    }
+        "prepared_statement_name_func": lambda: f"__asyncpg_{uuid4().hex}__",
+        "statement_cache_size": 0,
+        "prepared_statement_cache_size": 0,
+        "server_settings": {
+            "application_name": "calorie_balance_service",
+            "jit": "off",
+            "statement_timeout": "60000",
+            "idle_in_transaction_session_timeout": "60000",
+        }
+    },
+    pool_pre_ping=False,  # Disable to avoid prepared statement conflicts
 )
 
 # Session factory

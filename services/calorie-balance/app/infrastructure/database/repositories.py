@@ -16,7 +16,8 @@ from .models import UserModel, CalorieGoalModel, DailyBalanceModel, MetabolicPro
 def user_model_to_entity(model: UserModel) -> User:
     """Convert UserModel to User entity"""
     return User(
-        id=model.id,  # Now the id field contains what was supabase_user_id
+        id=model.id,
+        username=model.username,
         email=model.email,
         full_name=model.full_name,
         age=model.age,
@@ -33,7 +34,8 @@ def user_model_to_entity(model: UserModel) -> User:
 def user_entity_to_model(entity: User) -> UserModel:
     """Convert User entity to UserModel"""
     return UserModel(
-        id=entity.id,  # entity.id is the user identifier (from auth system)
+        id=entity.id,
+        username=entity.username,
         email=entity.email,
         full_name=entity.full_name,
         age=entity.age,

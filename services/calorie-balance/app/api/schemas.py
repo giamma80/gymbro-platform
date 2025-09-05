@@ -1,6 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel, Field, validator, EmailStr
-from datetime import date as date_type
+from datetime import date as date_type, datetime
 from decimal import Decimal
 import re
 
@@ -11,6 +11,7 @@ from ..domain.entities import ActivityLevel, Gender, GoalType
 class UserCreateRequest(BaseModel):
     """Request schema for creating a user"""
     user_id: str = Field(..., description="User unique identifier")
+    username: str = Field(..., min_length=3, max_length=100, description="Username (unique, min 3 chars)")
     email: str = Field(..., description="User email address")
     full_name: Optional[str] = None
 
@@ -97,6 +98,7 @@ class UserUpdateRequest(BaseModel):
 class UserResponse(BaseModel):
     """Response schema for user data"""
     id: str
+    username: str
     email: str
     full_name: Optional[str]
     age: Optional[int]
@@ -177,6 +179,31 @@ class MetabolicProfileResponse(BaseModel):
     calculated_at: date_type
     valid_until: date_type
     is_valid: bool = True
+
+    class Config:
+        from_attributes = True
+
+
+# Calorie Event Schemas
+class CalorieEventCreate(BaseModel):
+    """Request schema for creating a calorie event (consumed, burned, weight, batch)"""
+    user_id: str
+    event_type: str  # 'consumed', 'burned', 'weight', 'batch'
+    calories: Optional[Decimal] = Field(None, ge=0, le=10000)
+    weight_kg: Optional[Decimal] = Field(None, ge=20, le=500)
+    timestamp: datetime
+    notes: Optional[str] = Field(None, max_length=500)
+
+
+class CalorieEventRead(BaseModel):
+    """Response schema for reading a calorie event"""
+    id: str
+    user_id: str
+    event_type: str
+    calories: Optional[Decimal]
+    weight_kg: Optional[Decimal]
+    timestamp: datetime
+    notes: Optional[str]
 
     class Config:
         from_attributes = True

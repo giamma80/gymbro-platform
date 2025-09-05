@@ -42,6 +42,7 @@ async def create_user(
     try:
         command = CreateUserCommand(
             user_id=request.user_id,
+            username=request.username,
             email=request.email,
             full_name=request.full_name
         )

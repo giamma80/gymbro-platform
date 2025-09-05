@@ -6,7 +6,7 @@ import structlog
 from .core.config import settings
 from .core.database import init_db, close_db
 from .core.logging import configure_logging
-from .api.routers import health, users, goals, balance
+from .api.routers import health, users, goals, balance, calorie_event
 
 
 # Configure logging
@@ -17,7 +17,7 @@ logger = structlog.get_logger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan"""
-    logger.info("Starting Calorie Balance Service", version="1.0.0")
+    logger.info("Starting Calorie Balance Service", version="1.3.0")
     
     # Skip database initialization for now since tables exist
     # await init_db()
@@ -49,6 +49,7 @@ app.include_router(health.router, prefix="/health", tags=["Health"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
 app.include_router(goals.router, prefix="/api/v1/goals", tags=["Calorie Goals"])
 app.include_router(balance.router, prefix="/api/v1/balance", tags=["Daily Balance"])
+app.include_router(calorie_event.router, prefix="/api/v1/calorie-event", tags=["Eventi Calorici"])
 
 
 @app.get("/")

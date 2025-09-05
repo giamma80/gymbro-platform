@@ -15,10 +15,12 @@ class CreateUserCommand:
     def __init__(
         self,
         user_id: str,
+        username: str,
         email: str,
         full_name: Optional[str] = None
     ):
         self.user_id = user_id
+        self.username = username
         self.email = email
         self.full_name = full_name
 
@@ -102,6 +104,7 @@ class UserCommandHandler:
             # Create new user
             user = User(
                 id=command.user_id,
+                username=command.username,
                 email=command.email,
                 full_name=command.full_name
             )

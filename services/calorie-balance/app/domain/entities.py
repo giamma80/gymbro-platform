@@ -33,6 +33,7 @@ class GoalType(str, Enum):
 class User(BaseModel):
     """User domain entity"""
     id: str = Field(..., description="User unique identifier")
+    username: str = Field(..., min_length=3, max_length=100, description="Username (unique, min 3 chars)")
     email: str = Field(..., description="User email address")
     full_name: Optional[str] = None
     age: Optional[int] = Field(None, ge=10, le=120)

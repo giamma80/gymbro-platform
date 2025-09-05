@@ -52,36 +52,33 @@ class User(BaseModel):
         return v
 
     def calculate_bmr(self) -> Optional[Decimal]:
-        """Calculate Basal Metabolic Rate using Mifflin-St Jeor equation"""
+        """Calcola il Basal Metabolic Rate usando la formula Mifflin-St Jeor"""
         if not all([self.weight_kg, self.height_cm, self.age, self.gender]):
             return None
-        
-        # Mifflin-St Jeor equation
-        bmr = 10 * self.weight_kg + 6.25 * self.height_cm - 5 * self.age
-        
+        weight = float(self.weight_kg)
+        height = float(self.height_cm)
+        age = float(self.age)
+        bmr = 10 * weight + 6.25 * height - 5 * age
         if self.gender == Gender.MALE:
             bmr += 5
         elif self.gender == Gender.FEMALE:
             bmr -= 161
-        
         return Decimal(str(bmr)).quantize(Decimal('0.1'))
 
     def calculate_tdee(self) -> Optional[Decimal]:
-        """Calculate Total Daily Energy Expenditure"""
-        bmr = self.calculate_bmr()
-        if not bmr or not self.activity_level:
-            return None
-        
+        """Calcola il Total Daily Energy Expenditure (TDEE) usando il BMR e il livello di attività"""
         activity_multipliers = {
-            ActivityLevel.SEDENTARY: Decimal('1.2'),
-            ActivityLevel.LIGHTLY_ACTIVE: Decimal('1.375'),
-            ActivityLevel.MODERATELY_ACTIVE: Decimal('1.55'),
-            ActivityLevel.VERY_ACTIVE: Decimal('1.725'),
-            ActivityLevel.EXTRA_ACTIVE: Decimal('1.9'),
+            ActivityLevel.SEDENTARY: 1.2,
+            ActivityLevel.LIGHTLY_ACTIVE: 1.375,
+            ActivityLevel.MODERATELY_ACTIVE: 1.55,
+            ActivityLevel.VERY_ACTIVE: 1.725,
+            ActivityLevel.EXTRA_ACTIVE: 1.9,
         }
-        
+        bmr = self.calculate_bmr()
+        if bmr is None or self.activity_level is None:
+            return None
         multiplier = activity_multipliers[self.activity_level]
-        return (bmr * multiplier).quantize(Decimal('0.1'))
+        return (bmr * Decimal(str(multiplier))).quantize(Decimal('0.1'))
 
 
 class CalorieGoal(BaseModel):
@@ -117,12 +114,12 @@ class CalorieGoal(BaseModel):
 
 class DailyBalance(BaseModel):
     """Daily calorie balance domain entity"""
-    id: UUID = Field(default_factory=uuid4)
+    id: Optional[UUID] = Field(default=None)  # Let database generate ID
     user_id: str = Field(..., description="Reference to user")
     date: date_type = Field(..., description="Date for this balance record")
     calories_consumed: Decimal = Field(Decimal('0.0'), ge=0, le=10000, decimal_places=1)
     calories_burned_exercise: Decimal = Field(Decimal('0.0'), ge=0, le=5000, decimal_places=1)
-    calories_burned_bmr: Optional[Decimal] = Field(None, ge=0, le=5000, decimal_places=1)
+    calories_burned_bmr: Decimal = Field(Decimal('0.0'), ge=0, le=5000, decimal_places=1)
     net_calories: Decimal = Field(Decimal('0.0'), decimal_places=1)
     weight_kg: Optional[Decimal] = Field(None, ge=20, le=500, decimal_places=1)
     notes: Optional[str] = Field(None, max_length=500)

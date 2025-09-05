@@ -58,10 +58,15 @@ async def update_daily_balance(
         
         balance = await balance_command_handler.handle_update_balance(command)
         
+        # Convert UUID fields to strings before serialization
+        balance_dict = balance.dict()
+        balance_dict["id"] = str(balance.id)
+        balance_dict["user_id"] = str(balance.user_id)
+        
         return APIResponse(
-            success=True,
-            message="Daily balance updated successfully",
-            data=DailyBalanceResponse.from_orm(balance)
+                success=True,
+                message="Daily balance updated successfully",
+                data=DailyBalanceResponse(**balance_dict)
         )
         
     except ValueError as e:
@@ -89,9 +94,14 @@ async def get_daily_balance(
             detail="Daily balance not found for this date"
         )
     
+    # Convert UUID fields to strings before serialization
+    balance_dict = balance.dict()
+    balance_dict["id"] = str(balance.id)
+    balance_dict["user_id"] = str(balance.user_id)
+    
     return APIResponse(
         success=True,
-        data=DailyBalanceResponse.from_orm(balance)
+        data=DailyBalanceResponse(**balance_dict)
     )
 
 
@@ -115,9 +125,14 @@ async def get_today_balance(
             data=None
         )
     
+    # Convert UUID fields to strings before serialization
+    balance_dict = balance.dict()
+    balance_dict["id"] = str(balance.id)
+    balance_dict["user_id"] = str(balance.user_id)
+    
     return APIResponse(
         success=True,
-        data=DailyBalanceResponse.from_orm(balance)
+        data=DailyBalanceResponse(**balance_dict)
     )
 
 

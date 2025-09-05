@@ -224,7 +224,8 @@ class DailyBalanceCommandHandler:
             
             if not balance:
                 balance = DailyBalance(
-                    user_id=command.user_id,
+                    id=None,  # Let database generate ID
+                    user_id=str(command.user_id),
                     date=command.date
                 )
             

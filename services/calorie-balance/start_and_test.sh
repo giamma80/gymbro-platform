@@ -121,7 +121,7 @@ echo -e "\n${BLUE}👤 Test 2: Creazione utente...${NC}"
 
 # Genera ID unico per il test
 TIMESTAMP=$(date +%s)
-USER_ID="test_user_$TIMESTAMP"
+USER_ID=$(uuidgen)
 EMAIL="test$TIMESTAMP@example.com"
 
 USER_DATA="{
@@ -287,13 +287,99 @@ else
     echo -e "${YELLOW}⚠️ ReDoc non disponibile${NC}"
 fi
 
-# Test 6: Test endpoint non esistente (dovrebbe restituire 404)
+# Test 6: Endpoint inesistente (404 atteso)
 echo -e "\n${BLUE}🚫 Test 6: Endpoint inesistente (404 atteso)...${NC}"
 NOT_FOUND_RESPONSE=$(curl -s -w "%{http_code}" "http://localhost:8001/api/v1/nonexistent")
 if echo "$NOT_FOUND_RESPONSE" | grep -q "404"; then
     echo -e "${GREEN}✅ Gestione 404 PASS${NC}"
 else
     echo -e "${YELLOW}⚠️ Gestione 404 inaspettata${NC}"
+fi
+
+# Test 7: Goals - Creazione obiettivo calorico
+echo -e "\n${BLUE}🎯 Test 7: Creazione obiettivo calorico...${NC}"
+ START_DATE=$(date -u +%Y-%m-%d)
+ END_DATE=$(date -u -v+7d +%Y-%m-%d)
+GOAL_DATA=$(cat <<EOF
+{
+    "user_id": "$USER_ID",
+    "goal_calories": 2200,
+    "goal_type": "maintenance",
+    "start_date": "$START_DATE",
+    "end_date": "$END_DATE"
+}
+EOF
+)
+GOAL_CREATE_RESPONSE=$(curl -s -X POST "http://localhost:8001/api/v1/goals/users/$USER_ID" -H "Content-Type: application/json" -d "$GOAL_DATA")
+if echo "$GOAL_CREATE_RESPONSE" | grep -q '"success":true'; then
+    echo -e "${GREEN}✅ Creazione obiettivo calorico PASS${NC}"
+    echo "$GOAL_CREATE_RESPONSE" | python3 -m json.tool
+else
+    echo -e "${RED}❌ Creazione obiettivo calorico FAIL${NC}"
+    echo "$GOAL_CREATE_RESPONSE"
+    exit 1
+fi
+
+# Test 8: Goals - Recupero obiettivo attivo
+echo -e "\n${BLUE}🎯 Test 8: Recupero obiettivo attivo...${NC}"
+GOAL_ACTIVE_RESPONSE=$(curl -s "http://localhost:8001/api/v1/goals/users/$USER_ID/active")
+if echo "$GOAL_ACTIVE_RESPONSE" | grep -q '"target_calories"'; then
+    echo -e "${GREEN}✅ Recupero obiettivo attivo PASS${NC}"
+    echo "$GOAL_ACTIVE_RESPONSE" | python3 -m json.tool
+else
+    echo -e "${RED}❌ Recupero obiettivo attivo FAIL${NC}"
+    echo "$GOAL_ACTIVE_RESPONSE"
+    exit 1
+fi
+
+# Test 9: Balance - Aggiornamento bilancio giornaliero
+echo -e "\n${BLUE}⚖️ Test 9: Aggiornamento bilancio giornaliero...${NC}"
+BALANCE_DATA="{\"user_id\": \"$USER_ID\", \"date\": \"$(date -u +%Y-%m-%d)\", \"calories_consumed\": 1800, \"calories_burned\": 500}"
+BALANCE_UPDATE_RESPONSE=$(curl -s -X PUT "http://localhost:8001/api/v1/balance/users/$USER_ID" -H "Content-Type: application/json" -d "$BALANCE_DATA")
+if echo "$BALANCE_UPDATE_RESPONSE" | grep -q '"success":true'; then
+    echo -e "${GREEN}✅ Aggiornamento bilancio PASS${NC}"
+    echo "$BALANCE_UPDATE_RESPONSE" | python3 -m json.tool
+else
+    echo -e "${RED}❌ Aggiornamento bilancio FAIL${NC}"
+    echo "$BALANCE_UPDATE_RESPONSE"
+    exit 1
+fi
+
+# Test 10: Balance - Recupero bilancio per data
+echo -e "\n${BLUE}⚖️ Test 10: Recupero bilancio per data...${NC}"
+BALANCE_DATE_RESPONSE=$(curl -s "http://localhost:8001/api/v1/balance/users/$USER_ID/date/$(date -u +%Y-%m-%d)")
+if echo "$BALANCE_DATE_RESPONSE" | grep -q '"calories_consumed"'; then
+    echo -e "${GREEN}✅ Recupero bilancio per data PASS${NC}"
+    echo "$BALANCE_DATE_RESPONSE" | python3 -m json.tool
+else
+    echo -e "${RED}❌ Recupero bilancio per data FAIL${NC}"
+    echo "$BALANCE_DATE_RESPONSE"
+    exit 1
+fi
+
+# Test 11: Balance - Recupero bilancio di oggi
+echo -e "\n${BLUE}⚖️ Test 11: Recupero bilancio di oggi...${NC}"
+BALANCE_TODAY_RESPONSE=$(curl -s "http://localhost:8001/api/v1/balance/users/$USER_ID/today")
+if echo "$BALANCE_TODAY_RESPONSE" | grep -q '"calories_consumed"'; then
+    echo -e "${GREEN}✅ Recupero bilancio di oggi PASS${NC}"
+    echo "$BALANCE_TODAY_RESPONSE" | python3 -m json.tool
+else
+    echo -e "${RED}❌ Recupero bilancio di oggi FAIL${NC}"
+    echo "$BALANCE_TODAY_RESPONSE"
+    exit 1
+fi
+
+# Test 12: Balance - Recupero progress dati
+echo -e "\n${BLUE}⚖️ Test 12: Recupero progress dati...${NC}"
+BALANCE_PROGRESS_DATA="{\"user_id\": \"$USER_ID\", \"start_date\": \"$(date -u +%Y-%m-%d)\", \"end_date\": \"$(date -u -v+7d +%Y-%m-%d)\"}"
+BALANCE_PROGRESS_RESPONSE=$(curl -s -X POST "http://localhost:8001/api/v1/balance/users/$USER_ID/progress" -H "Content-Type: application/json" -d "$BALANCE_PROGRESS_DATA")
+if echo "$BALANCE_PROGRESS_RESPONSE" | grep -q '"metrics"'; then
+    echo -e "${GREEN}✅ Recupero progress dati PASS${NC}"
+    echo "$BALANCE_PROGRESS_RESPONSE" | python3 -m json.tool
+else
+    echo -e "${RED}❌ Recupero progress dati FAIL${NC}"
+    echo "$BALANCE_PROGRESS_RESPONSE"
+    exit 1
 fi
 
 # Summary finale

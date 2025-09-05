@@ -44,7 +44,7 @@ async def create_calorie_goal(
     
     try:
         command = CreateCalorieGoalCommand(
-            user_id=user_id,
+            user_id=str(user_id),
             goal_type=request.goal_type.value,
             target_weight_kg=request.target_weight_kg,
             weekly_weight_change_kg=request.weekly_weight_change_kg,
@@ -53,10 +53,13 @@ async def create_calorie_goal(
         
         goal = await goal_command_handler.handle_create_goal(command)
         
+        # Conversione id in stringa per la response
+        goal_dict = goal.dict()
+        goal_dict["id"] = str(goal_dict["id"])
         return APIResponse(
             success=True,
             message="Calorie goal created successfully",
-            data=CalorieGoalResponse.from_orm(goal)
+            data=CalorieGoalResponse(**goal_dict)
         )
         
     except ValueError as e:
@@ -83,7 +86,10 @@ async def get_active_goal(
             detail="No active calorie goal found for user"
         )
     
+    # Conversione id in stringa per la response
+    goal_dict = goal.dict()
+    goal_dict["id"] = str(goal_dict["id"])
     return APIResponse(
         success=True,
-        data=CalorieGoalResponse.from_orm(goal)
+        data=CalorieGoalResponse(**goal_dict)
     )

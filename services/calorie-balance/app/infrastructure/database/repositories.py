@@ -16,7 +16,7 @@ from .models import UserModel, CalorieGoalModel, DailyBalanceModel, MetabolicPro
 def user_model_to_entity(model: UserModel) -> User:
     """Convert UserModel to User entity"""
     return User(
-        id=model.id,
+        id=str(model.id) if model.id is not None else None,
         username=model.username,
         email=model.email,
         full_name=model.full_name,
@@ -52,8 +52,8 @@ def user_entity_to_model(entity: User) -> UserModel:
 def goal_model_to_entity(model: CalorieGoalModel) -> CalorieGoal:
     """Convert CalorieGoalModel to CalorieGoal entity"""
     return CalorieGoal(
-        id=model.id,
-        user_id=model.user_id,
+        id=str(model.id) if model.id is not None else None,
+        user_id=str(model.user_id) if model.user_id is not None else None,
         goal_type=GoalType(model.goal_type),
         target_calories=model.target_calories,
         target_weight_kg=model.target_weight_kg,
@@ -68,9 +68,10 @@ def goal_model_to_entity(model: CalorieGoalModel) -> CalorieGoal:
 
 def goal_entity_to_model(entity: CalorieGoal) -> CalorieGoalModel:
     """Convert CalorieGoal entity to CalorieGoalModel"""
+    from uuid import UUID
     return CalorieGoalModel(
-        id=entity.id,
-        user_id=entity.user_id,
+        id=UUID(str(entity.id)) if entity.id is not None else None,
+        user_id=UUID(str(entity.user_id)) if entity.user_id is not None else None,
         goal_type=entity.goal_type.value,
         target_calories=entity.target_calories,
         target_weight_kg=entity.target_weight_kg,
@@ -86,8 +87,8 @@ def goal_entity_to_model(entity: CalorieGoal) -> CalorieGoalModel:
 def balance_model_to_entity(model: DailyBalanceModel) -> DailyBalance:
     """Convert DailyBalanceModel to DailyBalance entity"""
     return DailyBalance(
-        id=model.id,
-        user_id=model.user_id,
+        id=str(model.id) if model.id is not None else None,
+        user_id=str(model.user_id) if model.user_id is not None else None,
         date=model.date,
         calories_consumed=model.calories_consumed,
         calories_burned_exercise=model.calories_burned_exercise,
@@ -120,8 +121,8 @@ def balance_entity_to_model(entity: DailyBalance) -> DailyBalanceModel:
 def profile_model_to_entity(model: MetabolicProfileModel) -> MetabolicProfile:
     """Convert MetabolicProfileModel to MetabolicProfile entity"""
     return MetabolicProfile(
-        id=model.id,
-        user_id=model.user_id,
+        id=str(model.id) if model.id is not None else None,
+        user_id=str(model.user_id) if model.user_id is not None else None,
         bmr=model.bmr,
         tdee=model.tdee,
         calculated_at=model.calculated_at,
@@ -213,7 +214,12 @@ class SqlUserRepository(UserRepository):
     
     async def get_by_id(self, user_id: str) -> Optional[User]:
         """Get user by user ID"""
-        stmt = select(UserModel).where(UserModel.id == user_id)
+        from uuid import UUID
+        try:
+            user_id_uuid = UUID(user_id)
+        except Exception:
+            user_id_uuid = user_id  # fallback, ma dovrebbe essere UUID
+        stmt = select(UserModel).where(UserModel.id == user_id_uuid)
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
         return user_model_to_entity(model) if model else None

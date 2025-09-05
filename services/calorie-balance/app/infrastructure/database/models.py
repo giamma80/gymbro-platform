@@ -11,7 +11,7 @@ class UserModel(Base):
     """SQLAlchemy model for User entity"""
     __tablename__ = "users"
     
-    id = Column(String(255), primary_key=True)  # This will store the Supabase user ID
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     username = Column(String(100), unique=True, nullable=False, index=True)
     email = Column(String(255), unique=True, nullable=False, index=True)
     full_name = Column(String(255), nullable=True)
@@ -35,7 +35,7 @@ class CalorieGoalModel(Base):
     __tablename__ = "calorie_goals"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(String(255), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     goal_type = Column(String(30), nullable=False)
     target_calories = Column(Numeric(6, 1), nullable=False)
     target_weight_kg = Column(Numeric(5, 1), nullable=True)
@@ -55,7 +55,7 @@ class DailyBalanceModel(Base):
     __tablename__ = "daily_balances"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(String(255), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     date = Column(Date, nullable=False, index=True)
     calories_consumed = Column(Numeric(6, 1), default=0.0, nullable=False)
     calories_burned_exercise = Column(Numeric(6, 1), default=0.0, nullable=False)
@@ -80,7 +80,7 @@ class MetabolicProfileModel(Base):
     __tablename__ = "metabolic_profiles"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(String(255), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     bmr = Column(Numeric(6, 1), nullable=False)
     tdee = Column(Numeric(6, 1), nullable=False)
     calculated_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

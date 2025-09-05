@@ -46,7 +46,7 @@ async def create_tables_direct():
         print("👤 Creating users table...")
         await conn.execute('''
             CREATE TABLE users (
-                id VARCHAR(255) PRIMARY KEY,  -- Supabase user ID as primary key
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 username VARCHAR(100) UNIQUE NOT NULL,
                 email VARCHAR(255) UNIQUE NOT NULL,
                 full_name VARCHAR(255),
@@ -71,26 +71,28 @@ async def create_tables_direct():
         await conn.execute('''
             CREATE TABLE calorie_goals (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                date DATE NOT NULL,
-                calories_target DECIMAL(6, 1) NOT NULL,
-                protein_target DECIMAL(5, 1),
-                carbs_target DECIMAL(5, 1),
-                fat_target DECIMAL(5, 1),
+                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                goal_type VARCHAR(30) NOT NULL,
+                target_calories DECIMAL(6, 1) NOT NULL,
+                target_weight_kg DECIMAL(5, 1),
+                weekly_weight_change_kg DECIMAL(3, 1) DEFAULT 0.0 NOT NULL,
+                start_date DATE NOT NULL,
+                end_date DATE,
+                is_active BOOLEAN DEFAULT TRUE NOT NULL,
                 created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+                updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
                 
-                CONSTRAINT chk_calories_target CHECK (calories_target >= 800 AND calories_target <= 5000),
-                CONSTRAINT chk_protein_target CHECK (protein_target >= 0 AND protein_target <= 500),
-                CONSTRAINT chk_carbs_target CHECK (carbs_target >= 0 AND carbs_target <= 1000),
-                CONSTRAINT chk_fat_target CHECK (fat_target >= 0 AND fat_target <= 300),
-                UNIQUE(user_id, date)
+                CONSTRAINT chk_target_calories CHECK (target_calories >= 800 AND target_calories <= 5000),
+                CONSTRAINT chk_target_weight_kg CHECK (target_weight_kg >= 0 AND target_weight_kg <= 500),
+                CONSTRAINT chk_weekly_weight_change_kg CHECK (weekly_weight_change_kg >= -2 AND weekly_weight_change_kg <= 2),
+                UNIQUE(user_id, start_date)
             )
         ''')
         
         # Create indexes for calorie_goals
         await conn.execute('CREATE INDEX idx_calorie_goals_user_id ON calorie_goals(user_id)')
-        await conn.execute('CREATE INDEX idx_calorie_goals_date ON calorie_goals(date)')
-        await conn.execute('CREATE INDEX idx_calorie_goals_user_date ON calorie_goals(user_id, date)')
+        await conn.execute('CREATE INDEX idx_calorie_goals_start_date ON calorie_goals(start_date)')
+        await conn.execute('CREATE INDEX idx_calorie_goals_user_start_date ON calorie_goals(user_id, start_date)')
         print("✅ Calorie goals table created")
         
         # Create calorie_events table (NEW - High Frequency Events)
@@ -98,7 +100,7 @@ async def create_tables_direct():
         await conn.execute('''
             CREATE TABLE calorie_events (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 event_type VARCHAR(30) NOT NULL,  -- consumed, burned_exercise, burned_bmr, weight
                 value DECIMAL(8, 2) NOT NULL,     -- calories or weight value
                 event_timestamp TIMESTAMPTZ DEFAULT NOW() NOT NULL,  -- precise timestamp for 2-minute sampling
@@ -124,14 +126,16 @@ async def create_tables_direct():
         await conn.execute('''
             CREATE TABLE daily_balances (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 date DATE NOT NULL,
                 calories_consumed DECIMAL(6, 1) DEFAULT 0.0 NOT NULL,
                 calories_burned_exercise DECIMAL(6, 1) DEFAULT 0.0 NOT NULL,
                 calories_burned_bmr DECIMAL(6, 1) DEFAULT 0.0 NOT NULL,
+                net_calories DECIMAL(6, 1),
                 weight_kg DECIMAL(5, 1),
                 events_count INTEGER DEFAULT 0 NOT NULL,  -- NEW: Track number of events for this day
                 last_event_timestamp TIMESTAMPTZ,  -- NEW: Last event for this day
+                notes TEXT,
                 created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
                 updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
                 
@@ -156,7 +160,7 @@ async def create_tables_direct():
         await conn.execute('''
             CREATE TABLE metabolic_profiles (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 bmr DECIMAL(6, 1) NOT NULL,
                 tdee DECIMAL(6, 1) NOT NULL,
                 calculated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,

@@ -9,6 +9,8 @@ Il **Calorie Balance Service** è il microservizio centrale della piattaforma Nu
 - 🎯 **Goal Management**: Gestione obiettivi calorici dinamici con AI optimization
 - 📊 **Analytics**: Pattern analysis e trend calculation per insights nutrizionali
 
+> **📋 [API Development Roadmap](API-roadmap.md)** - Stato completo delle API implementate e da sviluppare
+
 ## Architecture
 
 Questo servizio implementa **Domain-Driven Design** con Clean Architecture:

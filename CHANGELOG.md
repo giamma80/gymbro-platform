@@ -7,6 +7,51 @@ e questo progetto aderisce al [Semantic Versioning](https://semver.org/spec/v2.0
 
 ## [Unreleased]
 
+### 🚀 Added - v1.2.0 Event-Driven Architecture (2025-09-05)
+- **Event-Driven Database Schema** - Migrazione completa ad architettura event-driven per Calorie Balance Service
+- **5-Level Temporal Analytics** - Sistema completo di aggregazioni temporali (hourly → daily → weekly → monthly → balance)
+- **High-Frequency Event Collection** - Supporto campionamento smartphone ogni 2 minuti via `calorie_events` table
+- **Performance Views** - 5 viste database pre-calcolate per analytics sub-secondo:
+  - `hourly_calorie_summary` - Real-time intraday trends
+  - `daily_calorie_summary` - Day-over-day comparisons  
+  - `weekly_calorie_summary` - Weekly patterns con active_days tracking
+  - `monthly_calorie_summary` - Long-term trends con multi-level averages
+  - `daily_balance_summary` - Net calorie calculations con weight correlation
+- **Mobile-First Architecture** - Ottimizzazioni per raccolta dati smartphone ad alta frequenza
+- **Enhanced API Roadmap** - Espansione da 45 a 54 endpoints con timeline analytics APIs
+- **Database Validation System** - Check strutturale completo con verifica tabelle, viste, indici e constraints
+- **Event Sourcing Capability** - Completa ricostruzione timeline da eventi granulari
+- **Comprehensive Documentation** - Aggiornamento README.md e API-roadmap.md per nuova architettura
+
+### 🔄 Changed - Event-Driven Migration
+- **Database Schema**: Migrazione da daily-only a bi-level (events + aggregations)
+- **daily_balances** enhanced con `events_count` e `last_event_timestamp` per aggregation tracking
+- **API Completion**: 27% → 31% (17/54 endpoints) con nuove categorie temporal analytics
+- **Performance Strategy**: Da query real-time a pre-computed views per mobile optimization
+- **Documentation**: API-roadmap.md e README.md completamente rivisti per event-driven architecture
+
+### 🔥 New Database Features
+- **calorie_events table** - Eventi ad alta frequenza con precision al secondo
+- **Event types**: consumed, burned_exercise, burned_bmr, weight con JSONB metadata
+- **Compound indexes** - Ottimizzati per query pattern mobile (user_id + event_timestamp)
+- **Event sourcing** - Capacità ricostruzione completa timeline utente
+- **Multi-source support** - Tracking source eventi (app, smartwatch, manual, api, sync)
+
+### 📊 Analytics Capabilities
+- **Real-time intraday** - Trends orari per meal timing analysis
+- **Pattern detection** - Weekly habits e seasonal patterns
+- **Engagement metrics** - Active days, event frequency, consistency tracking
+- **Cross-period analysis** - Week numbers, month numbers per seasonal comparisons
+- **Balance calculations** - Net calories, deficit/surplus analysis, peso correlation
+
+### 🏗️ Breaking Changes
+- **Database Migration Required** - Schema migration da legacy daily_balances
+- **setup_database.py REMOVED** - Consolidato in create_tables_direct.py
+- **UNIQUE constraint changed** - daily_balances.UNIQUE(user_id, date) ora compatible con eventi
+- **API Versioning** - Preparazione per /api/v1/events/ e /api/v1/timeline/ endpoints
+
+## [v1.1.0] - 2025-09-04 - API Roadmap Foundation
+
 ### Added
 - **Calorie Balance Microservice** - Completa implementazione del microservizio per calcolo calorie e metabolismo
 - **Clean Architecture** - Domain-driven design con separazione layers (Domain, Application, Infrastructure, API)

@@ -12,6 +12,20 @@
 - **Model Context Protocol (MCP)** per AI integration avanzata
 
 ## 📚 Documentazione Completa
+### 📚 Documentazione microservizi
+Per ogni microservizio, consulta la documentazione specifica nella cartella:
+
+- **Calorie Balance Service**: [docs/databases/calorie-balance-db.md](../../docs/databases/calorie-balance-db.md)
+- Altri microservizi avranno una documentazione dedicata nella stessa struttura.
+
+#### Checklist per la documentazione microservizi
+- [ ] Creare la documentazione di dettaglio in `docs/databases/<nome-microservizio>-db.md`
+- [ ] Aggiornare il README del microservizio con link alla documentazione database
+- [ ] Aggiornare questo file con il riferimento al nuovo microservizio
+- [ ] Verificare la coerenza tra datamodel applicativo e schema SQL
+- [ ] Aggiornare la documentazione generale se necessario (architettura, microservizi_python)
+- [ ] Versionare tutte le modifiche (commit & push)
+- [ ] Aggiornare l'issue tracker segnalando la chiusura della procedura
 
 ### 🏗️ Architettura & Design
 - **[Architettura Cloud-Native](../../docs/architettura.md)** - Schema microservizi, database design, diagrammi Mermaid

@@ -229,6 +229,27 @@ applicativi fortemente tipizzati) sia componenti di qualità (score,
 auditing). Documentazione e test di dati (table di riferimento DRI,
 normative europee) vengono inseriti per ogni funzionalità nutrizionale.
 
+## API Gateway e GraphQL Federation
+
+Per aggregare i microservizi Python in un'unica API scalabile, la piattaforma adotta **Apollo Federation** come gateway GraphQL e **Strawberry GraphQL** come libreria Python minimal-effort per l'esposizione degli endpoint federati.
+
+- **Apollo Federation**: gestisce la composizione e l'orchestrazione delle API GraphQL, permettendo di federare i diversi microservizi senza modifiche invasive.
+- **Strawberry GraphQL**: consente di aggiungere rapidamente endpoint GraphQL a FastAPI, con supporto nativo per la federation (subgraph) e mapping automatico dei modelli Pydantic.
+
+### Vantaggi
+- Sviluppo minimale sui microservizi: basta aggiungere Strawberry come dipendenza e definire lo schema GraphQL accanto agli endpoint REST.
+- Separazione tra logica di dominio e aggregazione API: ogni servizio espone solo i dati di sua competenza.
+- Scalabilità e evoluzione: nuovi servizi possono essere federati senza refactoring.
+
+### Linee guida di implementazione
+1. Aggiungi `strawberry-graphql` come dipendenza Poetry nel microservizio.
+2. Definisci lo schema GraphQL (types, query, mutation) accanto agli endpoint REST.
+3. Esponi il subgraph su `/graphql` (FastAPI + Strawberry).
+4. Registra il subgraph in Apollo Gateway (configurazione centralizzata).
+5. Consulta la sezione "Microservizi Python" per esempio di implementazione.
+
+Per dettagli e snippet, vedi anche [🐍 Microservizi Python](microservizi_python.md).
+
 ## Codice e Precision Management
 
 Il codice del backend è organizzato secondo le best practice *clean

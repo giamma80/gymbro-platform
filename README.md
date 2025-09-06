@@ -24,6 +24,8 @@
 4. **Notifications Service** - Notifiche smart e coaching prompts
 5. **AI Nutrition Coach Service** - Sistema RAG e AI conversazionale
 
+- **API Gateway GraphQL Federation** - Aggregazione microservizi tramite Apollo Federation e Strawberry GraphQL ([vedi dettagli](docs/architettura.md#api-gateway-e-graphql-federation))
+
 **Frontend**: Flutter cross-platform (POC per validazione simultanea iOS/Android)
 
 **Infrastructure**: Docker containerization + Render deployment + PostgreSQL + Redis

@@ -117,7 +117,44 @@ aiofiles = "^23.2.1"              # Async file operations
 # Model Context Protocol (per servizi AI)
 mcp = "^1.0.0"                    # MCP server implementation
 openai = "^1.3.0"                 # OpenAI API client (se needed)
+strawberry-graphql = "^0.211.0"   # GraphQL per FastAPI, supporto federation
 
+## GraphQL Federation con Strawberry
+
+Per integrare ogni microservizio Python nella federazione GraphQL, aggiungi la dipendenza `strawberry-graphql` e definisci uno schema federato accanto agli endpoint REST.
+
+### Esempio base (FastAPI + Strawberry)
+
+```python
+import strawberry
+from fastapi import FastAPI
+from strawberry.fastapi import GraphQLRouter
+
+@strawberry.type
+class User:
+    id: int
+    name: str
+
+@strawberry.type
+class Query:
+    @strawberry.field
+    def user(self, id: int) -> User:
+        # recupera utente dal DB
+        return User(id=id, name="Mario")
+
+schema = strawberry.federation.Schema(Query)
+graphql_app = GraphQLRouter(schema)
+
+app = FastAPI()
+app.include_router(graphql_app, prefix="/graphql")
+```
+
+### Passi per la federation
+1. Esponi `/graphql` come subgraph federato.
+2. Registra il subgraph in Apollo Gateway.
+3. Mantieni REST e GraphQL in parallelo per transizione graduale.
+
+Per dettagli architetturali, vedi [docs/architettura.md](architettura.md).
 # Monitoring & Logging
 structlog = "^23.2.0"             # Structured logging
 prometheus-client = "^0.19.0"     # Metrics collection

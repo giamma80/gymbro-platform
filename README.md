@@ -36,6 +36,9 @@
 ### 📚 Documentazione Completa
 La documentazione tecnica è organizzata nella [cartella docs/](docs/):
 
+#### Database Documentation
+- **[🗄️ Database Architecture & Models](docs/database-architecture.md)** - Struttura, ER diagrammi, viste aggregate e datamodel di tutti i microservizi
+
 #### Core Documentation
 - **[📋 Documentazione Generale](docs/Documentazione%20Generale.md)** - Business strategy, ROI analysis, competitive positioning
 - **[🏗️ Architettura Cloud-Native](docs/architettura.md)** - Microservizi, database design, diagrammi Mermaid

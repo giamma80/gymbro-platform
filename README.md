@@ -39,6 +39,7 @@
 La documentazione tecnica è organizzata nella [cartella docs/](docs/):
 
 #### Database Documentation
+- **[🗄️ Calorie Balance Database](docs/databases/calorie-balance-db.md)** - Event-driven schema, 5-level temporal analytics, mobile optimization
 - **[🗄️ Database Architecture & Models](docs/database-architecture.md)** - Struttura, ER diagrammi, viste aggregate e datamodel di tutti i microservizi
 
 #### Core Documentation

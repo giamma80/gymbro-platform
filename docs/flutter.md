@@ -2169,7 +2169,7 @@ flutter pub run build_runner build
 2. **✅ docs/microservizi_python.md** - Completato con Supabase + MCP + N8N patterns  
 3. **✅ docs/flutter.md** - Completato con production strategy
 4. **🔄 docs/Documentazione Generale.md** - Da aggiornare per rimuovere contraddizioni
-5. **🔄 instructions.md** - Da aggiornare come single source of truth finale
+5. **🔄 .github/instructions/instructions.md** - Da aggiornare come single source of truth finale
 6. **📝 Makefile** - Da creare per orchestrazione development locale
 7. **📁 config/** - Da setup per workflow N8N e schema Supabase versionati
 

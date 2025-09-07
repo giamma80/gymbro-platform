@@ -7,7 +7,15 @@ e questo progetto aderisce al [Semantic Versioning](https://semver.org/spec/v2.0
 
 ## [Unreleased]
 
-### 🚀 Added - v1.2.0 Event-Driven Architecture (2025-09-05)
+### � Documentation Cleanup - v1.2.1 (2025-09-07)
+- **Removed redundant instructions.md** - Eliminato file duplicato nella root del progetto
+- **Centralized documentation references** - Tutti i riferimenti ora puntano a `.github/instructions/instructions.md`
+- **User Management Service integration** - Aggiornata tutta la documentazione per includere il 6° microservizio
+- **Fixed circular references** - Risolti link circolari e riferimenti obsoleti nei documenti
+- **Architecture consistency** - Allineamento completo tra README, instructions, e documentazione microservizi
+- **Database documentation complete** - Creata documentazione completa per User Management Service database
+
+### �🚀 Added - v1.2.0 Event-Driven Architecture (2025-09-05)
 - **Event-Driven Database Schema** - Migrazione completa ad architettura event-driven per Calorie Balance Service
 - **5-Level Temporal Analytics** - Sistema completo di aggregazioni temporali (hourly → daily → weekly → monthly → balance)
 - **High-Frequency Event Collection** - Supporto campionamento smartphone ogni 2 minuti via `calorie_events` table
@@ -63,7 +71,7 @@ e questo progetto aderisce al [Semantic Versioning](https://semver.org/spec/v2.0
 - **API Documentation** - Swagger/ReDoc completamente configurato e accessibile
 - **Health Monitoring** - Endpoint di health check con status database e servizi
 - **Development Tools** - Script per setup ambiente, test automation, database creation
-- Struttura documentazione hub-and-spoke con instructions.md centrale
+- Struttura documentazione hub-and-spoke con `.github/instructions/instructions.md` centrale
 - Link organizzati tra README principale e documentazione specializzata
 - **[Development Workflow](docs/DEVELOPMENT_WORKFLOW.md)** - Git flow, coding standards, DDD patterns, testing strategy
 - **[Deployment Guide](docs/DEPLOYMENT.md)** - Render.com deployment, CI/CD, monitoring, security
@@ -82,7 +90,7 @@ e questo progetto aderisce al [Semantic Versioning](https://semver.org/spec/v2.0
 - **Environment Config** - Configurazione .env con Pydantic Settings
 
 ### Documentation
-- Instructions.md aggiornato con collegamenti ipertestuali coerenti
+- GitHub Instructions.md aggiornato con collegamenti ipertestuali coerenti
 - README principale con sezione "Project Management" e link al changelog
 - Eliminata ridondanza di contenuti tra documenti
 

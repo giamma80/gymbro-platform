@@ -1173,7 +1173,7 @@ class TestServiceSpecific:
 
 1. **Aggiornare docs/flutter.md** con strategia mobile production
 2. **Aggiornare docs/Documentazione Generale.md** per rimuovere contraddizioni  
-3. **Aggiornare instructions.md** come single source of truth definitivo
+3. **Aggiornare .github/instructions/instructions.md** come single source of truth definitivo
 4. **Creare Makefile** per orchestrazione local development  
 5. **Setup config/** directory per workflow N8N e schema Supabase versionati
 

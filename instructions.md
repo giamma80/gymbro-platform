@@ -6,8 +6,12 @@ Questa piattaforma è composta da microservizi Python, ciascuno con una propria 
 
 Per ogni microservizio, consulta la documentazione specifica nella relativa cartella:
 
-- **Calorie Balance Service**: [docs/databases/calorie-balance-db.md](docs/databases/calorie-balance-db.md)
-- Altri microservizi avranno una documentazione dedicata nella stessa struttura.
+- **🚨 User Management Service**: [docs/databases/user-management-db.md](docs/databases/user-management-db.md) - **CORE AUTH** - Autenticazione centralizzata, JWT, OAuth
+- **Calorie Balance Service**: [docs/databases/calorie-balance-db.md](docs/databases/calorie-balance-db.md) - Metabolismo energetico, BMR, obiettivi
+- **Meal Tracking Service**: [docs/databases/meal-tracking-db.md](docs/databases/meal-tracking-db.md) - AI food recognition, nutrition data
+- **Health Monitor Service**: [docs/databases/health-monitor-db.md](docs/databases/health-monitor-db.md) - HealthKit sync, wearables integration
+- **Notifications Service**: [docs/databases/notifications-db.md](docs/databases/notifications-db.md) - Multi-channel messaging, FCM
+- **AI Coach Service**: [docs/databases/ai-coach-db.md](docs/databases/ai-coach-db.md) - Conversational AI, RAG, coaching
 
 ## Come aggiungere la documentazione di un nuovo microservizio
 

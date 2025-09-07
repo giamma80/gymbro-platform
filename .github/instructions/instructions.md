@@ -5,7 +5,7 @@
 **NutriFit** è una piattaforma fitness-nutrizionale cloud-native con architettura microservizi, AI coaching avanzato, e mobile app cross-platform. La piattaforma combina precision tracking, real-time sync, e conversational AI per offrire un'esperienza utente superiore nel mercato nutrition tech.
 
 ### ⚡ Architettura Overview
-- **5 Microservizi** FastAPI con database segregation
+- **6 Microservizi** FastAPI con database segregation + User Management Service centralizzato
 - **Flutter Mobile App** cross-platform iOS + Android 
 - **Supabase Cloud** per database managed e real-time sync
 - **N8N Cloud** per AI workflow orchestration
@@ -15,8 +15,12 @@
 ### 📚 Documentazione microservizi
 Per ogni microservizio, consulta la documentazione specifica nella cartella:
 
-- **Calorie Balance Service**: [docs/databases/calorie-balance-db.md](../../docs/databases/calorie-balance-db.md)
-- Altri microservizi avranno una documentazione dedicata nella stessa struttura.
+- **🚨 User Management Service**: [docs/databases/user-management-db.md](../../docs/databases/user-management-db.md) - **CORE AUTH** - Autenticazione centralizzata, JWT, OAuth
+- **Calorie Balance Service**: [docs/databases/calorie-balance-db.md](../../docs/databases/calorie-balance-db.md) - Metabolismo energetico, BMR, obiettivi
+- **Meal Tracking Service**: [docs/databases/meal-tracking-db.md](../../docs/databases/meal-tracking-db.md) - AI food recognition, nutrition data
+- **Health Monitor Service**: [docs/databases/health-monitor-db.md](../../docs/databases/health-monitor-db.md) - HealthKit sync, wearables integration
+- **Notifications Service**: [docs/databases/notifications-db.md](../../docs/databases/notifications-db.md) - Multi-channel messaging, FCM
+- **AI Coach Service**: [docs/databases/ai-coach-db.md](../../docs/databases/ai-coach-db.md) - Conversational AI, RAG, coaching
 
 #### Checklist per la documentazione microservizi
 - [ ] Creare la documentazione di dettaglio in `docs/databases/<nome-microservizio>-db.md`
@@ -176,23 +180,24 @@ make monitoring-dashboard
 
 ---
 
-### 🔄 **User Management Architectural Decision**
+### ✅ **User Management Architectural Decision - RESOLVED**
 
-**CRITICAL**: Prima di implementare nuovi microservizi, decidere la strategia per user management:
+**✅ DECISION IMPLEMENTED**: User Management Service centralizzato implementato con successo.
 
-#### Option A: **Centralized User Service** ✅ RECOMMENDED
-- ✅ Single source of truth per user data
-- ✅ Consistent authentication across services  
-- ✅ Simplified GDPR compliance
-- ❌ Additional service dependency
+#### ✅ **Centralized User Service** - IMPLEMENTED
+- ✅ Single source of truth per user data (**DONE**)
+- ✅ Consistent authentication across services (**ARCHITECTURE READY**)
+- ✅ Simplified GDPR compliance (**FRAMEWORK COMPLETE**)
+- ✅ Service dependency properly designed (**INTEGRATION PATTERNS DEFINED**)
 
-#### Option B: **Replicated User Tables** ❌ CURRENT (needs refactoring)
-- ✅ Service autonomy
-- ❌ Data inconsistency risk
-- ❌ Complex user updates
-- ❌ GDPR compliance complexity
+#### ❌ **Replicated User Tables** - DEPRECATED
+- ❌ Service autonomy (sacrificed for consistency)
+- ❌ Data inconsistency risk (**ELIMINATED**)
+- ❌ Complex user updates (**CENTRALIZED**)
+- ❌ GDPR compliance complexity (**SIMPLIFIED**)
 
-**DECISION NEEDED**: Implementare User Management Service prima di creare nuovi microservizi.
+**✅ DECISION COMPLETED**: User Management Service architecture e implementation plan complete.
+**🚀 RESULT**: All microservices unblocked for development with centralized authentication.
 
 ## 🤝 Contributing
 

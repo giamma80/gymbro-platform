@@ -2,10 +2,10 @@
 
 ## Executive Summary
 
-Implementazione completa dei 5 microservizi Python 3.11 per la piattaforma NutriFit, basata su **Domain-Driven Design** e architettura **cloud-native**. L'approccio utilizza **FastAPI**, **Supabase Cloud** per database segregati e **N8N Cloud** per orchestrazione workflow, garantendo scalabilità, maintainability e deployment automatizzato su **Render.com**.
+Implementazione completa dei **6 microservizi Python 3.11** per la piattaforma NutriFit, basata su **Domain-Driven Design** e architettura **cloud-native**. L'approccio utilizza **FastAPI**, **Supabase Cloud** per database segregati e **N8N Cloud** per orchestrazione workflow, garantendo scalabilità, maintainability e deployment automatizzato su **Render.com**.
 
 **Architettura Confermata:**
-- ✅ **5 Microservizi Python 3.11** atomici e indipendenti
+- ✅ **6 Microservizi Python 3.11** atomici e indipendenti con **User Management Service** centralizzato
 - ✅ **FastAPI + Supabase Cloud + Poetry** stack unificato
 - ✅ **Domain-Driven Design** con Value Objects constraint-aware
 - ✅ **N8N Cloud orchestration** per workflow complessi
@@ -16,7 +16,7 @@ Implementazione completa dei 5 microservizi Python 3.11 per la piattaforma Nutri
 
 ## 1. Architettura Microservizi con Database Segregation
 
-### 5 Microservizi Atomici con Supabase Cloud
+### 6 Microservizi Atomici con Supabase Cloud
 
 ```mermaid
 graph TB
@@ -32,7 +32,11 @@ graph TB
         N8N[N8N Workflows<br/>AI + External APIs]
     end
     
-    subgraph "Microservizi Python 3.11"
+    subgraph "Core Authentication"
+        UM[User Management<br/>Service + JWT Auth]
+    end
+    
+    subgraph "Business Microservizi Python 3.11"
         CB[Calorie Balance<br/>Service + MCP]
         MT[Meal Tracking<br/>Service + MCP]
         HM[Health Monitor<br/>Service]
@@ -41,6 +45,7 @@ graph TB
     end
     
     subgraph "Supabase Cloud Databases"
+        DB0[(nutrifit_user_management)]
         DB1[(nutrifit_calorie_balance)]
         DB2[(nutrifit_meal_tracking)]
         DB3[(nutrifit_health_monitor)]
@@ -50,11 +55,12 @@ graph TB
     end
     
     FLUTTER --> GATEWAY
-    GATEWAY --> CB
-    GATEWAY --> MT
-    GATEWAY --> HM
-    GATEWAY --> NS
-    GATEWAY --> AI
+    GATEWAY --> UM
+    UM --> CB
+    UM --> MT
+    UM --> HM
+    UM --> NS
+    UM --> AI
     
     N8N --> CB
     N8N --> MT
@@ -62,6 +68,7 @@ graph TB
     N8N <--> OPENAI[OpenAI API]
     N8N <--> OFF[OpenFoodFacts]
     
+    UM --> DB0
     CB --> DB1
     MT --> DB2
     HM --> DB3
@@ -72,15 +79,16 @@ graph TB
 
 ### Database Segregation su Supabase
 
-**Principio**: Ogni microservizio ha il proprio database isolato su Supabase Cloud per garantire autonomia completa e evitare coupling.
+**Principio**: Ogni microservizio ha il proprio database isolato su Supabase Cloud per garantire autonomia completa e evitare coupling. **User Management Service** centralizza l'autenticazione per evitare replicazione user tables.
 
-| Microservizio | Database Supabase | Schema Domain | MCP Server |
-|---------------|-------------------|---------------|------------|
-| **calorie-balance** | `nutrifit_calorie_balance` | Energy metabolism, goals, BMR | ✅ Per AI workflows |
-| **meal-tracking** | `nutrifit_meal_tracking` | Food data, nutrition, meals | ✅ Per food analysis |
-| **health-monitor** | `nutrifit_health_monitor` | HealthKit data, metrics | ❌ Solo data sync |
-| **notifications** | `nutrifit_notifications` | Push tokens, templates | ❌ Solo messaging |
-| **ai-coach** | `nutrifit_ai_coach` | Conversations, RAG vectors | ✅ Primary AI service |
+| Microservizio | Database Supabase | Schema Domain | MCP Server | Ruolo |
+|---------------|-------------------|---------------|------------|-------|
+| **user-management** | `nutrifit_user_management` | **AUTH CENTRALIZZATA**: Users, profiles, JWT, OAuth | ❌ Solo auth | **🚨 CORE - Autenticazione centralizzata** |
+| **calorie-balance** | `nutrifit_calorie_balance` | Energy metabolism, goals, BMR | ✅ Per AI workflows | Business logic |
+| **meal-tracking** | `nutrifit_meal_tracking` | Food data, nutrition, meals | ✅ Per food analysis | Business logic |
+| **health-monitor** | `nutrifit_health_monitor` | HealthKit data, metrics | ❌ Solo data sync | Business logic |
+| **notifications** | `nutrifit_notifications` | Push tokens, templates | ❌ Solo messaging | Business logic |
+| **ai-coach** | `nutrifit_ai_coach` | Conversations, RAG vectors | ✅ Primary AI service | Business logic |
 
 ---
 
@@ -4982,6 +4990,45 @@ echo "Tests completed successfully!"
 ```yaml
 # render.yaml - Render.com service configuration
 services:
+  # 🚨 User Management Service - CORE AUTHENTICATION
+  - type: web
+    name: nutrifit-user-management
+    env: docker
+    dockerfilePath: ./services/user-management/docker/Dockerfile
+    dockerContext: ./services/user-management
+    region: oregon
+    plan: starter
+    branch: main
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nutrifit-user-management-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRY
+        value: "3600"
+      - key: REFRESH_TOKEN_EXPIRY
+        value: "2592000"
+      - key: BCRYPT_ROUNDS
+        value: "12"
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: APPLE_CLIENT_ID
+        sync: false
+      - key: FACEBOOK_APP_ID
+        sync: false
+    scaling:
+      minInstances: 2  # Higher availability for auth
+      maxInstances: 5
+      targetCPUPercent: 60
+      targetMemoryPercent: 70
+
   # Calorie Balance Service
   - type: web
     name: nutrifit-calorie-balance
@@ -5949,7 +5996,7 @@ L'analisi tecnica dei microservizi Python per la piattaforma NutriFit presenta u
 
 ### **Investment vs. Value:**
 
-**Total Development Cost:** €101,500 (6 mesi) per 5 microservizi production-ready
+**Total Development Cost:** €120,000 (6 mesi) per 6 microservizi production-ready con User Management Service
 **Infrastructure Scaling:** Da €280/mese (MVP) a €700/mese (1K utenti)
 **ROI Projection:** Break-even al mese 5 con €240K+ ARR potenziale
 

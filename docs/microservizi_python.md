@@ -2,21 +2,68 @@
 
 ## Executive Summary
 
-Implementazione completa dei **6 microservizi Python 3.11** per la piattaforma NutriFit, basata su **Domain-Driven Design** e architettura **cloud-native**. L'approccio utilizza **FastAPI**, **Supabase Cloud** per database segregati e **N8N Cloud** per orchestrazione workflow, garantendo scalabilità, maintainability e deployment automatizzato su **Render.com**.
+Implementazione completa dei **6 microservizi Python 3.11** per la piattaforma NutriFit, basata su **Domain-Driven Design** e architettura **cloud-native** con **strategia database ibrida**. L'approccio utilizza **Supabase Client** per servizi real-time e **PostgreSQL diretto** per analytics, garantendo performance ottimali e scalabilità.
 
 **Architettura Confermata:**
 - ✅ **6 Microservizi Python 3.11** atomici e indipendenti con **User Management Service** centralizzato
-- ✅ **FastAPI + Supabase Cloud + Poetry** stack unificato
+- ✅ **Strategia Database Ibrida**: Supabase Client (real-time) + PostgreSQL Direct (analytics)
 - ✅ **Domain-Driven Design** con Value Objects constraint-aware
 - ✅ **N8N Cloud orchestration** per workflow complessi
 - ✅ **Docker multi-stage** per compatibilità locale/Render
 - ✅ **MCP Server** per microservizi con AI/ML capabilities
 
+**Database Connection Matrix:**
+- 🔄 **Supabase Client**: user-management, meal-tracking, health-monitor, notifications
+- ⚡ **PostgreSQL Direct**: calorie-balance, ai-coach
+
+---
+
+## 🚀 Template di Sviluppo - Guida Rapida per Sviluppatori
+
+### 📁 Cartella Templates
+
+Tutti i template per sviluppare microservizi si trovano in **`templates/microservice-template/`**:
+
+```
+templates/microservice-template/
+├── 📋 DATABASE_CONNECTION_STRATEGY.md    # Strategia ibrida database
+├── 📊 API-roadmap-template.md            # Template roadmap API 
+├── 🔄 supabase-client-template/          # Template per servizi real-time
+│   └── COMPLETE_TEMPLATE.md              # Setup completo Supabase Client
+└── ⚡ postgresql-direct-template/        # Template per servizi analytics  
+    └── COMPLETE_TEMPLATE.md              # Setup completo PostgreSQL Direct
+```
+
+### 🎯 Quale Template Usare?
+
+**Prima di iniziare** un nuovo microservizio, consulta [`DATABASE_CONNECTION_STRATEGY.md`](../templates/microservice-template/DATABASE_CONNECTION_STRATEGY.md) per scegliere l'approccio corretto.
+
+| **Tipo Servizio** | **Template da Usare** | **Quando Usarlo** |
+|-------------------|----------------------|------------------|
+| **Real-time, Auth, Mobile Sync** | [`supabase-client-template/`](../templates/microservice-template/supabase-client-template/COMPLETE_TEMPLATE.md) | user-management, meal-tracking, health-monitor, notifications |
+| **Analytics, AI/ML, Performance** | [`postgresql-direct-template/`](../templates/microservice-template/postgresql-direct-template/COMPLETE_TEMPLATE.md) | calorie-balance, ai-coach |
+
+### 🛠️ Come Utilizzare i Template
+
+1. **Scegli il template** appropriato dalla tabella sopra
+2. **Copia la struttura** del template nel tuo nuovo microservizio
+3. **Sostituisci i placeholder** (es. `{service-name}`) con i valori specifici
+4. **Segui l'API roadmap** per implementare gli endpoint
+5. **Usa il COMPLETE_TEMPLATE.md** per setup completo di pyproject.toml, config, database, ecc.
+
+### 📋 API Roadmap Template
+
+Ogni microservizio deve seguire il template [`API-roadmap-template.md`](../templates/microservice-template/API-roadmap-template.md) per:
+- Tracciare il progresso di sviluppo
+- Definire priorità degli endpoint
+- Configurare il database appropriato  
+- Pianificare testing e deployment
+
 ---
 
 ## 1. Architettura Microservizi con Database Segregation
 
-### 6 Microservizi Atomici con Supabase Cloud
+### 6 Microservizi Atomici con Strategia Database Ibrida
 
 ```mermaid
 graph TB
@@ -33,21 +80,24 @@ graph TB
     end
     
     subgraph "Core Authentication"
-        UM[User Management<br/>Service + JWT Auth]
+        UM[User Management<br/>Service + Supabase Client]
     end
     
-    subgraph "Business Microservizi Python 3.11"
-        CB[Calorie Balance<br/>Service + MCP]
-        MT[Meal Tracking<br/>Service + MCP]
-        HM[Health Monitor<br/>Service]
-        NS[Notifications<br/>Service]
-        AI[AI Nutrition Coach<br/>Service + MCP]
+    subgraph "Real-time Services (Supabase Client)"
+        MT[Meal Tracking<br/>Service + Real-time]
+        HM[Health Monitor<br/>Service + Real-time]
+        NS[Notifications<br/>Service + Real-time]
     end
     
-    subgraph "Supabase Cloud Databases"
-        DB0[(nutrifit_user_management)]
-        DB1[(nutrifit_calorie_balance)]
-        DB2[(nutrifit_meal_tracking)]
+    subgraph "Analytics Services (PostgreSQL Direct)"
+        CB[Calorie Balance<br/>Service + Analytics]
+        AI[AI Nutrition Coach<br/>Service + Vector DB]
+    end
+    
+    subgraph "Supabase Cloud Infrastructure"
+        DB0[(nutrifit_user_management<br/>Supabase Client)]
+        DB1[(nutrifit_calorie_balance<br/>PostgreSQL Direct)]
+        DB2[(nutrifit_meal_tracking<br/>Supabase Client)]
         DB3[(nutrifit_health_monitor)]
         DB4[(nutrifit_notifications)]
         DB5[(nutrifit_ai_coach)]
@@ -93,6 +143,15 @@ graph TB
 ---
 
 ## 2. Python 3.11 Tech Stack Unificato
+
+### ⚡ Template Setup Rapido
+
+**Per sviluppatori:** Invece di copiare il codice da questa documentazione, usa i template completi:
+
+- **Supabase Client Services** → [`templates/microservice-template/supabase-client-template/COMPLETE_TEMPLATE.md`](../templates/microservice-template/supabase-client-template/COMPLETE_TEMPLATE.md)
+- **PostgreSQL Direct Services** → [`templates/microservice-template/postgresql-direct-template/COMPLETE_TEMPLATE.md`](../templates/microservice-template/postgresql-direct-template/COMPLETE_TEMPLATE.md)
+
+I template includono **tutto il codice necessario** già pronto per copy-paste: pyproject.toml, config.py, database.py, main.py, .env.example, migrations, ecc.
 
 ### Core Framework Stack per Tutti i Microservizi
 
@@ -744,7 +803,19 @@ class CalorieBalanceMCPServer(NutriFitMCPServer):
 
 ## 6. FastAPI Application Structure Template
 
-### Main Application Setup
+### ⚡ Setup Rapido con Template
+
+**Per sviluppatori:** Usa direttamente i template completi invece di copiare il codice da qui:
+
+**Supabase Client Service** (user-management, meal-tracking, health-monitor, notifications):
+- **File completo main.py**: [`supabase-client-template/COMPLETE_TEMPLATE.md`](../templates/microservice-template/supabase-client-template/COMPLETE_TEMPLATE.md) - sezione "Main App Template"
+- Include: FastAPI setup, CORS, health checks, auth integration, CRUD endpoints
+
+**PostgreSQL Direct Service** (calorie-balance, ai-coach):  
+- **File completo main.py**: [`postgresql-direct-template/COMPLETE_TEMPLATE.md`](../templates/microservice-template/postgresql-direct-template/COMPLETE_TEMPLATE.md) - sezione "Main App Template"
+- Include: FastAPI setup, analytics endpoints, bulk operations, vector search
+
+### Caratteristiche Comuni di Entrambi i Template
 
 ```python
 # app/main.py - Template standard per ogni microservizio
@@ -776,140 +847,27 @@ structlog.configure(
     logger_factory=structlog.stdlib.LoggerFactory(),
     wrapper_class=structlog.stdlib.BoundLogger,
     cache_logger_on_first_use=True,
-)
+### Caratteristiche Comuni di Entrambi i Template
 
-logger = structlog.get_logger()
+✅ **Structured Logging** con structlog  
+✅ **CORS** configurato per Flutter e deployment  
+✅ **Health Checks** per Kubernetes (ready/live probes)  
+✅ **Middleware** di sicurezza (TrustedHost)  
+✅ **Exception Handling** globale  
+✅ **Lifespan Management** per startup/shutdown  
+✅ **Environment-based Configuration** via Pydantic  
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Application lifespan management"""
-    # Startup
-    logger.info(f"Starting {settings.service_name} service")
-    
-    # Verifica connessioni
-    supabase_ok = await check_supabase_connection()
-    sqlalchemy_ok = await check_sqlalchemy_connection()
-    
-    if not (supabase_ok and sqlalchemy_ok):
-        logger.error("Database connection failed")
-        raise RuntimeError("Cannot connect to database")
-    
-    # Start MCP server se abilitato
-    if settings.mcp_server_enabled:
-        from app.mcp.server import mcp_server
-        await mcp_server.start_server(settings.mcp_server_port)
-    
-    logger.info(f"{settings.service_name} service started successfully")
-    
-    yield
-    
-    # Shutdown
-    logger.info(f"Shutting down {settings.service_name} service")
+### Health Check Standardizzati
 
-app = FastAPI(
-    title=f"NutriFit {settings.service_name.title()} Service",
-    description=f"Microservizio {settings.service_name} per NutriFit Platform",
-    version="1.0.0",
-    lifespan=lifespan,
-    docs_url="/docs" if settings.debug else None,
-    redoc_url="/redoc" if settings.debug else None
-)
+Tutti i microservizi includono i seguenti endpoint:
+- `GET /health` - Basic health check
+- `GET /health/ready` - Kubernetes readiness probe  
+- `GET /health/live` - Kubernetes liveness probe
 
-# Middleware setup
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.allowed_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+**Codice completo health checks**: Vedi template appropriato nel link sopra.
 
-app.add_middleware(
-    TrustedHostMiddleware,
-    allowed_hosts=["*.render.com", "localhost", "127.0.0.1"]
-)
-
-# Include routers
-app.include_router(health.router, prefix="/health", tags=["health"])
-app.include_router(auth.router, prefix="/auth", tags=["authentication"])
-app.include_router(n8n_router)
-
-# Service-specific routers vanno aggiunti qui
-# app.include_router(service_router, prefix="/api/v1", tags=[settings.service_name])
-
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
-    """Global HTTP exception handler"""
-    logger.error(
-        "HTTP exception",
-        status_code=exc.status_code,
-        detail=exc.detail,
-        path=request.url.path
-    )
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.detail, "service": settings.service_name}
-    )
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=settings.debug
-    )
-```
-
-### Health Check Endpoints
-
-```python
-# app/api/health.py - Health check standardizzato
-from fastapi import APIRouter, Depends
-from typing import Dict, Any
-import time
-from app.database import check_supabase_connection, check_sqlalchemy_connection
-from app.core.config import settings
-
-router = APIRouter()
-
-@router.get("/")
-async def health_check() -> Dict[str, Any]:
-    """Basic health check"""
-    return {
-        "service": settings.service_name,
-        "status": "healthy",
-        "timestamp": time.time(),
-        "version": "1.0.0"
-    }
-
-@router.get("/ready")
-async def readiness_check() -> Dict[str, Any]:
-    """Readiness check per Kubernetes/Render"""
-    supabase_ok = await check_supabase_connection()
-    sqlalchemy_ok = await check_sqlalchemy_connection()
-    
-    is_ready = supabase_ok and sqlalchemy_ok
-    
-    return {
-        "service": settings.service_name,
-        "ready": is_ready,
-        "checks": {
-            "supabase": supabase_ok,
-            "sqlalchemy": sqlalchemy_ok
-        },
-        "timestamp": time.time()
-    }
-
-@router.get("/live")
-async def liveness_check() -> Dict[str, Any]:
-    """Liveness check per Kubernetes/Render"""
-    return {
-        "service": settings.service_name,
-        "alive": True,
-        "timestamp": time.time()
-    }
-```
+---
+---
 
 ## 7. Docker Multi-Stage per Local e Production
 
@@ -1158,24 +1116,88 @@ class TestServiceSpecific:
 
 ---
 
+## 📋 Template e Risorsa Completa per Sviluppatori
+
+### 🎯 Cosa Deve Fare Ogni Sviluppatore
+
+Per creare un nuovo microservizio NutriFit, segui questo workflow:
+
+1. **Scegli il template appropriato** dalla tabella qui sotto
+2. **Copia il template completo** nella cartella del nuovo servizio  
+3. **Sostituisci i placeholder** con i valori specifici del servizio
+4. **Segui l'API roadmap** per implementare gli endpoint
+5. **Testa localmente** con Docker Compose
+6. **Fai deploy** su Render/CloudHub
+
+### 📂 Template Disponibili
+
+| Template | Quando Usare | File Completo |
+|----------|-------------|---------------|
+| **Supabase Client** | Servizi real-time, CRUD semplice, notifiche | [`supabase-client-template/COMPLETE_TEMPLATE.md`](../templates/microservice-template/supabase-client-template/COMPLETE_TEMPLATE.md) |
+| **PostgreSQL Direct** | Servizi analytics, aggregazioni complesse, AI/ML | [`postgresql-direct-template/COMPLETE_TEMPLATE.md`](../templates/microservice-template/postgresql-direct-template/COMPLETE_TEMPLATE.md) |
+
+### 📋 Roadmap per Sviluppatori
+
+Ogni servizio deve seguire:
+- [`API-roadmap-template.md`](../templates/microservice-template/API-roadmap-template.md) - Template per tracciare progresso
+- [`DATABASE_CONNECTION_STRATEGY.md`](../templates/microservice-template/DATABASE_CONNECTION_STRATEGY.md) - Strategia database
+
+### 🔧 Setup Rapido
+
+```bash
+# 1. Copia template appropriato
+cp -r templates/microservice-template/supabase-client-template services/my-new-service
+
+# 2. Sostituisci placeholder
+cd services/my-new-service
+find . -type f -name "*.py" -exec sed -i '' 's/{service-name}/my-new-service/g' {} \;
+find . -type f -name "*.toml" -exec sed -i '' 's/{service-name}/my-new-service/g' {} \;
+
+# 3. Avvia development
+docker-compose up -d
+```
+
+### 🏗️ Architettura Microservizi Completa
+
+I template implementano l'architettura definita in questa documentazione con:
+
+✅ **Database Segregation** - Ogni servizio ha il proprio database Supabase  
+✅ **FastAPI + SQLAlchemy** - Stack unificato con async/await  
+✅ **Authentication** - JWT centralizzato via User Management Service  
+✅ **Error Handling** - Exception system completo con retry logic  
+✅ **Monitoring** - Prometheus metrics + structured logging  
+✅ **Testing** - Unit + integration tests con pytest-asyncio  
+✅ **Docker** - Multi-stage per development e production  
+✅ **CI/CD** - GitHub Actions per ogni microservizio  
+
+---
+
 ## 📋 Summary degli Aggiornamenti
 
-### ✅ Cambiamenti Applicati
+### ✅ Documentazione Completata
 
-1. **Cloud-Native Database Strategy**: Migrazione completa da PostgreSQL locale a Supabase Cloud con database segregati per microservizio
-2. **N8N Cloud Integration**: Pattern standardizzato per integrazione con N8N Cloud tramite webhook e API
-3. **MCP Server Implementation**: Template per Model Context Protocol servers per servizi AI-enabled  
-4. **Security Enhancement**: Authentication unificata con Supabase Auth e inter-service communication security
-5. **Docker Multi-Stage**: Configurazione per development locale e production deployment
-6. **Testing Strategy**: Framework di test compatibile con Supabase e cloud services
+1. **Template System**: Template completi per Supabase Client e PostgreSQL Direct services
+2. **Developer Workflow**: Chiara procedura per creare nuovi microservizi  
+3. **Architettura Unificata**: Stack tecnologico standardizzato con FastAPI, SQLAlchemy, Supabase
+4. **Database Strategy**: Segregazione database con strategia ibrida basata sul tipo di servizio
+5. **Testing Framework**: Pattern completi per unit e integration testing
+6. **Monitoring & Observability**: Prometheus metrics e structured logging implementati
+7. **Production Deployment**: Docker multi-stage e script di deployment
+
+### 📂 File di Riferimento Principali
+
+- **Template Completi**: [`templates/microservice-template/`](../templates/microservice-template/) - Template pronti per copy-paste
+- **Strategia Database**: [`DATABASE_CONNECTION_STRATEGY.md`](../templates/microservice-template/DATABASE_CONNECTION_STRATEGY.md) - Quando usare quale approccio
+- **API Roadmap**: [`API-roadmap-template.md`](../templates/microservice-template/API-roadmap-template.md) - Template per tracking progresso
+- **Architettura**: [`docs/architettura.md`](architettura.md) - Overview architetturale generale
 
 ### 🔄 Prossimi Step
 
-1. **Aggiornare docs/flutter.md** con strategia mobile production
-2. **Aggiornare docs/Documentazione Generale.md** per rimuovere contraddizioni  
-3. **Aggiornare .github/instructions/instructions.md** come single source of truth definitivo
-4. **Creare Makefile** per orchestrazione local development  
-5. **Setup config/** directory per workflow N8N e schema Supabase versionati
+1. **Implementazione Template**: Creare i file effettivi nei template directory
+2. **Testing Template**: Validare i template con un microservizio di prova
+3. **Makefile Orchestration**: Script per automatizzare setup e deployment  
+4. **CI/CD Pipeline**: GitHub Actions per ogni microservizio
+5. **Flutter Integration**: Documentare integrazione mobile con i microservizi
 
 # Configuration
 [tool.black]

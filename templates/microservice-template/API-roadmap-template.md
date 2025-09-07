@@ -2,6 +2,8 @@
 
 > **Status del microservizio**: 🔴 **Planning** - Microservizio in fase di pianificazione  
 > **Versione attuale**: v0.1.0  
+> **Database Strategy**: [DATABASE_TYPE] - See [DATABASE_CONNECTION_STRATEGY.md](DATABASE_CONNECTION_STRATEGY.md)  
+> **Template Used**: [TEMPLATE_TYPE] - [supabase-client-template/postgresql-direct-template]  
 > **Ultimo aggiornamento**: [DATE]
 
 ## 📊 Overview dello Stato
@@ -65,6 +67,27 @@
 ---
 
 ## 🎯 Priorità di Sviluppo
+
+## 🗄️ Database Configuration
+
+**Connection Type**: [DATABASE_TYPE]
+- 🔄 **Supabase Client**: Real-time features, auth integration, simplified CRUD
+- ⚡ **PostgreSQL Direct**: High-performance analytics, bulk operations, custom queries
+
+**Template Reference**: 
+- For Supabase Client: [supabase-client-template/COMPLETE_TEMPLATE.md](supabase-client-template/COMPLETE_TEMPLATE.md)
+- For PostgreSQL Direct: [postgresql-direct-template/COMPLETE_TEMPLATE.md](postgresql-direct-template/COMPLETE_TEMPLATE.md)
+
+**Key Features Enabled**:
+- [ ] Connection pooling optimization
+- [ ] Health monitoring
+- [ ] Performance metrics
+- [ ] Backup strategy
+- [ ] Migration management
+
+---
+
+## 🎯 Priority Levels
 
 ### **P0 - Critical (MVP Foundation)**
 Funzionalità minime per microservizio funzionante:

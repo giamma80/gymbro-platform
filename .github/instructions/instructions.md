@@ -104,6 +104,96 @@ make logs-follow SERVICE=calorie-balance
 make monitoring-dashboard
 ```
 
+## 📋 Microservice Development Checklist
+
+### 🏗️ **Architecture & Structure**
+- [ ] **Service Directory**: Creare cartella `services/{service-name}/`
+- [ ] **Domain Definition**: Definire bounded context e responsabilità del servizio
+- [ ] **Clean Architecture**: Struttura `app/{core,domain,application,infrastructure,api}/`
+- [ ] **Dependency Injection**: Container per IoC pattern
+- [ ] **Error Handling**: Exception hierarchy specifica del dominio
+
+### 📊 **Database & Persistence**
+- [ ] **Database Schema**: Progettare schema dedicato (`docs/databases/{service-name}-db.md`)
+- [ ] **Entity Models**: Domain entities con business logic
+- [ ] **Repository Pattern**: Astrazioni per data access
+- [ ] **Migrations**: Script di creazione tabelle (`create_tables_direct.py`)
+- [ ] **Performance Indexes**: Indici ottimizzati per query patterns
+- [ ] **Constraints & Validation**: Business rules a livello database
+- [ ] **Event Sourcing**: Se applicabile, progettare event store
+
+### 🔌 **API Design**
+- [ ] **REST Endpoints**: Design consistente con HTTP semantics
+- [ ] **Request/Response Models**: Pydantic schemas per validation
+- [ ] **OpenAPI Documentation**: Auto-generated docs con esempi
+- [ ] **Error Responses**: Standard error format con status codes
+- [ ] **Authentication**: JWT integration con Supabase Auth
+- [ ] **Rate Limiting**: Protection da abuse
+- [ ] **API Versioning**: Strategy per backward compatibility
+
+### 📱 **Mobile & Integration**
+- [ ] **High-Frequency Support**: Design per raccolta dati mobile
+- [ ] **Batch APIs**: Endpoints per sincronizzazione offline
+- [ ] **Real-time Updates**: WebSocket o Server-Sent Events
+- [ ] **External Service Integration**: Mapping con altri microservizi
+- [ ] **Event Publishing**: Integration con message broker (N8N workflows)
+
+### 🧪 **Testing Strategy**
+- [ ] **Unit Tests**: ≥ 80% coverage su business logic
+- [ ] **Integration Tests**: Database e external services
+- [ ] **API Tests**: Contract testing per tutti gli endpoints
+- [ ] **Performance Tests**: Load testing per scenari critici
+- [ ] **Mock Services**: Test isolation con dependency mocking
+
+### 📚 **Documentation**
+- [ ] **README.md**: Overview, setup, API reference
+- [ ] **API Roadmap**: Development status tracking (`API-roadmap.md`)
+- [ ] **Database Documentation**: Schema, queries, performance (`docs/databases/`)
+- [ ] **Architecture Diagrams**: Mermaid diagrams per data flow
+- [ ] **Integration Guide**: Como altri servizi usano questo microservizio
+
+### 🚀 **Deployment & Operations**
+- [ ] **Docker Support**: Dockerfile e docker-compose configuration
+- [ ] **Health Checks**: `/health`, `/health/ready`, `/health/live` endpoints  
+- [ ] **Monitoring**: Structured logging con correlation IDs
+- [ ] **Environment Config**: 12-factor app principles
+- [ ] **CI/CD Pipeline**: GitHub Actions per testing e deployment
+- [ ] **Production Readiness**: Render.com deployment configuration
+
+### 🔒 **Security & Compliance**
+- [ ] **Input Validation**: Sanitization di tutti gli input
+- [ ] **Row Level Security**: Supabase RLS policies
+- [ ] **Data Privacy**: GDPR compliance per dati sensibili
+- [ ] **Secret Management**: Environment variables per API keys
+- [ ] **Audit Logging**: Tracciabilità delle operazioni critiche
+
+### 🎯 **Domain-Specific Patterns**
+- [ ] **Event-Driven Architecture**: Se il servizio genera eventi
+- [ ] **CQRS Pattern**: Separazione command/query se necessario
+- [ ] **Temporal Analytics**: Views aggregate per timeline analysis
+- [ ] **Mobile Optimization**: Design per network efficiency
+- [ ] **AI Integration Points**: Preparazione per machine learning features
+
+---
+
+### 🔄 **User Management Architectural Decision**
+
+**CRITICAL**: Prima di implementare nuovi microservizi, decidere la strategia per user management:
+
+#### Option A: **Centralized User Service** ✅ RECOMMENDED
+- ✅ Single source of truth per user data
+- ✅ Consistent authentication across services  
+- ✅ Simplified GDPR compliance
+- ❌ Additional service dependency
+
+#### Option B: **Replicated User Tables** ❌ CURRENT (needs refactoring)
+- ✅ Service autonomy
+- ❌ Data inconsistency risk
+- ❌ Complex user updates
+- ❌ GDPR compliance complexity
+
+**DECISION NEEDED**: Implementare User Management Service prima di creare nuovi microservizi.
+
 ## 🤝 Contributing
 
 ### Pull Request Process

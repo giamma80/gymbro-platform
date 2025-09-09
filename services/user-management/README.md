@@ -1,74 +1,159 @@
-# NutriFit User Management Service
+# GymBro User Management Service
 
 ## Overview
 
-Il **User Management Service** è il servizio centralizzato per **autenticazione**, **autorizzazione** e **gestione profili utente** dell'intera piattaforma NutriFit, implementando **Single Sign-On (SSO)** e **centralized user data management**.
+Il **User Management Service** è il servizio di **gestione utenti** per la piattaforma GymBro, implementando **GraphQL Federation** per user data centralizzato.
 
-### Core Responsibilities
-- 🔐 **Authentication & Authorization**: JWT + Supabase Auth integration
-- 👤 **User Profile Management**: Centralized user data e preferences
-- 🔑 **Session Management**: Cross-service session handling
-- 📱 **Social Login**: Google, Apple, Facebook integration
-- 🏥 **GDPR Compliance**: User data privacy e deletion workflows
-- 🔄 **Service Integration**: User context provider per tutti i microservizi
-
-> **🚨 CRITICAL ARCHITECTURAL SERVICE**: Tutti gli altri microservizi dipendono da questo per user management  
-> **📋 [API Development Roadmap](API-roadmap.md)** - Foundation per architettura centralizzata  
-> **Status**: 🚧 **CRITICAL PRIORITY** | **v0.1.0** | **Foundation Blocker**
-
-## 🏗️ Architectural Decision Impact
-
-### **BEFORE: Distributed User Tables**
-```
-❌ calorie-balance/users
-❌ meal-tracking/users  
-❌ health-monitor/users
-❌ notifications/users
-❌ ai-coach/users
-```
-**Problems:**
-- User data inconsistency
-- Complex user updates across services
-- GDPR compliance nightmare
-- Authentication scattered
-
-### **AFTER: Centralized User Service**
-```
-✅ user-management/users (SINGLE SOURCE OF TRUTH)
-✅ calorie-balance/user_profiles (domain-specific data)
-✅ meal-tracking/user_preferences (service-specific data)
-✅ health-monitor/user_settings (health-specific data)
-✅ notifications/user_preferences (notification settings)
-✅ ai-coach/user_context (coaching personalization)
-```
-
-**Benefits:**
-- ✅ Single source of truth per user data
-- ✅ Consistent authentication across services
-- ✅ Simplified GDPR compliance
-- ✅ Clean service boundaries
-- ✅ Easy user migration e data portability
-
-## Architecture
-
-Centralized Authentication + Domain-Specific Profiles:
-
-```
-app/
-├── core/              # Auth configuration, JWT handling, Supabase integration
-├── domain/            # User entities, profile models, auth workflows
-├── application/       # Auth use cases, profile management, GDPR workflows
-├── infrastructure/    # Supabase Auth client, social providers, external services
-└── api/              # Auth endpoints, profile management, service integration
-```
-
-## Domain Model
+### Current Implementation
+- 🔧 **Basic User CRUD**: Create, Read, Update user operations
+- � **GraphQL Federation**: Apollo Federation v2.3 support
+- �️ **Supabase Integration**: Database operations via Supabase client
+- � **REST API**: Basic CRUD endpoints for testing
+- ⚡ **Health Checks**: Service monitoring endpoints
 
 ### Core Entities
-- **User**: Core user identity con authentication credentials
-- **UserProfile**: Extended profile information (demographics, preferences)
-- **AuthSession**: Active sessions con device tracking
-- **ServicePermissions**: Granular permissions per microservice access
+- 👤 **User**: id, email, username, full_name, is_active
+- 📝 **User Operations**: CRUD via GraphQL and REST
+
+> **📋 Status**: ✅ **Basic Implementation** | **v0.1.0** | **MVP Ready**  
+> **🎯 Next**: Authentication, profiles, preferences implementation
+
+## 🏗️ Architecture
+
+### **Current Service Structure**
+
+```
+user-management/
+├── app/
+│   ├── api/v1/
+│   │   └── endpoints/
+│   │       ├── health.py      # Health checks
+│   │       └── items.py       # ⚠️ Template placeholder (TO REMOVE)
+│   ├── core/
+│   │   ├── config.py          # Service configuration
+│   │   ├── database.py        # Supabase client + repository
+│   │   └── exceptions.py      # Custom exceptions
+│   ├── graphql/
+│   │   ├── schema.py          # Apollo Federation schema
+│   │   ├── types.py           # UserType + Input types
+│   │   ├── queries.py         # User queries (get, list)
+│   │   └── mutations.py       # User mutations (create, update)
+│   └── main.py                # FastAPI app + GraphQL router
+```
+
+### **Database Schema**
+
+```sql
+-- Supabase users table (managed by Supabase Auth)
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email VARCHAR UNIQUE NOT NULL,
+  username VARCHAR UNIQUE,
+  full_name VARCHAR,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+### **GraphQL Federation Integration**
+
+```graphql
+# This service owns the User entity
+type User @key(fields: "id") {
+  id: ID!
+  email: String!
+  username: String
+  fullName: String
+  isActive: Boolean!
+  createdAt: String!
+  updatedAt: String
+}
+
+# Other services can reference users
+type Meal {  # In meal-tracking service
+  id: ID!
+  userId: ID!
+  user: User  # Resolved by user-management
+}
+```
+
+## 🚀 Getting Started
+
+### **Prerequisites**
+- Python 3.11+
+- Poetry
+- Supabase account + project
+
+### **Setup**
+```bash
+# Clone and setup
+cd services/user-management
+poetry install
+
+# Environment configuration
+cp .env.template .env
+# Edit .env with your Supabase credentials
+
+# Start development server
+poetry run uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+```
+
+### **Endpoints**
+
+**REST API** (Testing/Debug)
+- `GET /health` - Health check
+- `GET /api/v1/items` - List items ⚠️ (template placeholder)
+
+**GraphQL** (Production)
+- `POST /graphql` - GraphQL endpoint
+- `GET /graphql` - GraphiQL interface
+
+### **Example Queries**
+
+```graphql
+# Get user by ID
+query {
+  getUser(id: "123") {
+    id
+    email
+    username
+    fullName
+    isActive
+  }
+}
+
+# List users
+query {
+  listUsers(limit: 10) {
+    success
+    data {
+      id
+      email
+      username
+    }
+    total
+  }
+}
+
+# Create user
+mutation {
+  createUser(input: {
+    email: "test@example.com"
+    username: "testuser"
+    fullName: "Test User"
+    password: "secure123"
+  }) {
+    success
+    message
+    data {
+      id
+      email
+      username
+    }
+  }
+}
+```
 - **DataPrivacySettings**: GDPR consent e privacy preferences
 
 ### Authentication Models

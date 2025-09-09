@@ -1,23 +1,242 @@
 #!/bin/bash
 
-# 🚀 GymBro Platform - Microservice Generator
-# Genera automaticamente la struttura base per un nuovo microservizio
-# Usage: ./scripts/generate-microservice.sh <service-name> <runtime>
-# Example: ./scripts/generate-microservice.sh data-ingestion python
+# 🚀 GymBro Platform - Microservice Generator with GraphQL Federation
+# Genera automaticamente microservizi da template con GraphQL Federation
+# Usage: ./scripts/generate-microservice.sh <service-name> <template-type>
+# Example: ./scripts/generate-microservice.sh meal-tracking supabase
 
 set -e
 
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKSPACE_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 SERVICE_NAME=$1
-RUNTIME=$2
+TEMPLATE_TYPE=$2
 
-if [ -z "$SERVICE_NAME" ] || [ -z "$RUNTIME" ]; then
-    echo "❌ Usage: ./scripts/generate-microservice.sh <service-name> <runtime>"
-    echo "📝 Available runtimes: python, node, go"
-    echo "📝 Example: ./scripts/generate-microservice.sh data-ingestion python"
-    exit 1
-fi
+# Functions
+print_usage() {
+    echo -e "${YELLOW}📋 Usage:${NC}"
+    echo "  ./scripts/generate-microservice.sh <service-name> <template-type>"
+    echo ""
+    echo -e "${YELLOW}📝 Available templates:${NC}"
+    echo "  • supabase     - For real-time services (auth, notifications, real-time data)"
+    echo "  • postgresql   - For analytics services (complex queries, ML, high performance)"
+    echo ""
+    echo -e "${YELLOW}📝 Examples:${NC}"
+    echo "  ./scripts/generate-microservice.sh meal-tracking supabase"
+    echo "  ./scripts/generate-microservice.sh analytics-engine postgresql"
+    echo "  ./scripts/generate-microservice.sh notifications supabase"
+}
 
-SERVICE_DIR="services/${SERVICE_NAME}"
+validate_inputs() {
+    if [ -z "$SERVICE_NAME" ] || [ -z "$TEMPLATE_TYPE" ]; then
+        echo -e "${RED}❌ Error: Missing required arguments${NC}"
+        print_usage
+        exit 1
+    fi
+
+    # Validate service name format
+    if [[ ! "$SERVICE_NAME" =~ ^[a-z0-9-]+$ ]]; then
+        echo -e "${RED}❌ Error: Service name must contain only lowercase letters, numbers, and hyphens${NC}"
+        exit 1
+    fi
+
+    # Validate template type
+    if [[ "$TEMPLATE_TYPE" != "supabase" && "$TEMPLATE_TYPE" != "postgresql" ]]; then
+        echo -e "${RED}❌ Error: Template type must be 'supabase' or 'postgresql'${NC}"
+        print_usage
+        exit 1
+    fi
+}
+
+check_prerequisites() {
+    # Check if templates exist
+    local template_dir="$WORKSPACE_ROOT/templates/microservice-template"
+    local supabase_template="$template_dir/supabase-client-template"
+    local postgresql_template="$template_dir/postgresql-direct-template"
+
+    if [[ "$TEMPLATE_TYPE" == "supabase" && ! -d "$supabase_template" ]]; then
+        echo -e "${RED}❌ Error: Supabase template not found at $supabase_template${NC}"
+        exit 1
+    fi
+
+    if [[ "$TEMPLATE_TYPE" == "postgresql" && ! -d "$postgresql_template" ]]; then
+        echo -e "${RED}❌ Error: PostgreSQL template not found at $postgresql_template${NC}"
+        exit 1
+    fi
+
+    # Check if service already exists
+    local service_dir="$WORKSPACE_ROOT/services/$SERVICE_NAME"
+    if [ -d "$service_dir" ]; then
+        echo -e "${RED}❌ Error: Service '$SERVICE_NAME' already exists at $service_dir${NC}"
+        exit 1
+    fi
+
+    # Check for poetry
+    if ! command -v poetry &> /dev/null; then
+        echo -e "${RED}❌ Error: Poetry is required but not installed${NC}"
+        echo "Install it from: https://python-poetry.org/docs/#installation"
+        exit 1
+    fi
+}
+
+get_template_source() {
+    local template_dir="$WORKSPACE_ROOT/templates/microservice-template"
+    if [[ "$TEMPLATE_TYPE" == "supabase" ]]; then
+        echo "$template_dir/supabase-client-template"
+    else
+        echo "$template_dir/postgresql-direct-template"
+    fi
+}
+
+generate_service_name_variants() {
+    # Convert service-name to different formats
+    # service-name -> ServiceName (PascalCase)
+    SERVICE_NAME_PASCAL=$(echo "$SERVICE_NAME" | sed -E 's/(^|-)([a-z])/\U\2/g')
+    
+    # service-name -> service_name (snake_case)
+    SERVICE_NAME_SNAKE=$(echo "$SERVICE_NAME" | tr '-' '_')
+    
+    # service-name -> Service Name (Title Case)
+    SERVICE_NAME_TITLE=$(echo "$SERVICE_NAME" | sed -E 's/(^|-)([a-z])/\U\2/g' | sed 's/\([A-Z]\)/ \1/g' | sed 's/^ //')
+}
+
+copy_and_process_template() {
+    local template_source="$1"
+    local service_dir="$WORKSPACE_ROOT/services/$SERVICE_NAME"
+    
+    echo -e "${BLUE}📁 Creating service directory: $service_dir${NC}"
+    mkdir -p "$service_dir"
+    
+    echo -e "${BLUE}📋 Copying template files...${NC}"
+    cp -r "$template_source"/* "$service_dir/"
+    
+    # Process placeholder substitutions
+    echo -e "${BLUE}� Processing template placeholders...${NC}"
+    
+    # Find all files and process placeholders
+    find "$service_dir" -type f \( -name "*.py" -o -name "*.toml" -o -name "*.md" -o -name "*.yaml" -o -name "*.yml" -o -name "*.json" \) -exec sed -i '' \
+        -e "s/{service-name}/$SERVICE_NAME/g" \
+        -e "s/{ServiceName}/$SERVICE_NAME_PASCAL/g" \
+        -e "s/{service_name}/$SERVICE_NAME_SNAKE/g" \
+        -e "s/{Service Name}/$SERVICE_NAME_TITLE/g" \
+        -e "s/nutrifit-template/gymbro-$SERVICE_NAME/g" \
+        -e "s/NutriFit Template/GymBro $SERVICE_NAME_TITLE/g" \
+        {} \;
+    
+    echo -e "${GREEN}✅ Template files processed successfully${NC}"
+}
+
+setup_poetry_environment() {
+    local service_dir="$WORKSPACE_ROOT/services/$SERVICE_NAME"
+    
+    echo -e "${BLUE}📦 Setting up Poetry environment...${NC}"
+    cd "$service_dir"
+    
+    # Check poetry.toml validity
+    if ! poetry check; then
+        echo -e "${RED}❌ Error: Invalid pyproject.toml generated${NC}"
+        exit 1
+    fi
+    
+    # Install dependencies
+    echo -e "${BLUE}📥 Installing dependencies with Poetry...${NC}"
+    if ! poetry install; then
+        echo -e "${RED}❌ Error: Failed to install dependencies${NC}"
+        exit 1
+    fi
+    
+    echo -e "${GREEN}✅ Poetry environment setup complete${NC}"
+}
+
+run_validation_tests() {
+    local service_dir="$WORKSPACE_ROOT/services/$SERVICE_NAME"
+    
+    echo -e "${BLUE}🧪 Running validation tests...${NC}"
+    cd "$service_dir"
+    
+    # Test Python imports
+    echo -e "${BLUE}  • Testing Python imports...${NC}"
+    if ! poetry run python -c "
+import app.main
+import app.graphql.schema
+print('✅ All imports successful')
+"; then
+        echo -e "${RED}❌ Error: Python import validation failed${NC}"
+        exit 1
+    fi
+    
+    # Test FastAPI app creation
+    echo -e "${BLUE}  • Testing FastAPI app creation...${NC}"
+    if ! poetry run python -c "
+from app.main import app
+print(f'✅ FastAPI app created: {app.title}')
+"; then
+        echo -e "${RED}❌ Error: FastAPI app creation failed${NC}"
+        exit 1
+    fi
+    
+    echo -e "${GREEN}✅ All validation tests passed${NC}"
+}
+
+print_success_summary() {
+    echo ""
+    echo -e "${GREEN}🎉 SUCCESS! Microservice '$SERVICE_NAME' generated successfully!${NC}"
+    echo ""
+    echo -e "${YELLOW}📍 Service Location:${NC}"
+    echo "  $WORKSPACE_ROOT/services/$SERVICE_NAME"
+    echo ""
+    echo -e "${YELLOW}🚀 Next Steps:${NC}"
+    echo "  1. cd services/$SERVICE_NAME"
+    echo "  2. cp .env.example .env"
+    echo "  3. Edit .env with your configuration"
+    echo "  4. poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    echo ""
+    echo -e "${YELLOW}🌐 Endpoints:${NC}"
+    echo "  • Health:    http://localhost:8000/health"
+    echo "  • API Docs:  http://localhost:8000/docs"
+    echo "  • GraphQL:   http://localhost:8000/graphql"
+    echo ""
+    echo -e "${YELLOW}🔗 GraphQL Federation:${NC}"
+    echo "  • Schema SDL: curl -X POST http://localhost:8000/graphql -H 'Content-Type: application/json' -d '{\"query\": \"{ _service { sdl } }\"}'"
+    echo ""
+    echo -e "${GREEN}Happy coding! 🚀${NC}"
+}
+
+# Main execution
+main() {
+    echo -e "${BLUE}🚀 GymBro Platform - Microservice Generator${NC}"
+    echo -e "${BLUE}============================================${NC}"
+    
+    validate_inputs
+    check_prerequisites
+    generate_service_name_variants
+    
+    local template_source=$(get_template_source)
+    
+    echo -e "${BLUE}📋 Generation Summary:${NC}"
+    echo "  • Service Name: $SERVICE_NAME"
+    echo "  • Template Type: $TEMPLATE_TYPE"
+    echo "  • Template Source: $template_source"
+    echo "  • Target Directory: $WORKSPACE_ROOT/services/$SERVICE_NAME"
+    echo ""
+    
+    copy_and_process_template "$template_source"
+    setup_poetry_environment
+    run_validation_tests
+    print_success_summary
+}
+
+# Run main function
+main "$@"
 GYMBRO_SERVICE_NAME="gymbro-${SERVICE_NAME}"
 
 echo "🚀 Generating microservice: ${SERVICE_NAME} (${RUNTIME})"

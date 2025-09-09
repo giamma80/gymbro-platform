@@ -200,7 +200,30 @@ DATABASE_URL=postgresql://postgres:[password]@db.[project-id].supabase.co:5432/p
 
 ---
 
-## 📚 Template Files Updated
+## � Known Issues & Solutions
+
+### **HTTPX Version Conflict (RESOLVED)**
+
+**Issue:** `httpx` dependency declared twice in `pyproject.toml`:
+- Main dependencies: `httpx = "^0.25.0"`
+- Dev dependencies: `httpx = "^0.25.0"` (duplicate)
+- Incompatible with `postgrest ^0.10.8` which requires `httpx <0.25.0`
+
+**Solution Applied (9 Sep 2025):**
+- ✅ **Fixed in supabase-client-template**: `httpx = "^0.24.0"` (single declaration)
+- ✅ **Fixed in user-management service**: Removed duplicate, aligned version
+- ✅ **Compatibility verified**: Works with `postgrest ^0.10.8`
+
+**Command to verify:**
+```bash
+cd templates/microservice-template/supabase-client-template
+poetry check
+poetry install  # Should work without conflicts
+```
+
+---
+
+## �📚 Template Files Updated
 
 - `templates/microservice-template/supabase-client-template/` - For real-time services
 - `templates/microservice-template/postgresql-direct-template/` - For analytics services

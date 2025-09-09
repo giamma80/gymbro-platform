@@ -1,4 +1,17 @@
-# 📝 NutriFit Platform - Changelog
+# 📝 Nu## [Unreleased]
+
+### 🚀 GraphQL Implementation Complete - v1.3.0 (2025-09-09)
+- **Full GraphQL API Layer** - Implementazione completa layer GraphQL per User Management Service
+- **Apollo Federation 2.0 Ready** - Schema federato con @key directives per architettura microservizi
+- **Dual API Architecture** - Supporto simultaneo REST (13 endpoints) + GraphQL (4+ queries)
+- **Interactive GraphiQL Playground** - Interfaccia interattiva disponibile su `/graphql` endpoint
+- **Comprehensive Testing** - Suite test completa per entrambe le API con 100% pass rate
+- **Repository Pattern Integration** - GraphQL resolvers integrati con pattern repository esistente
+- **Federation Features** - Entity resolution, service SDL, cross-service query capabilities
+- **Template Updates Complete** - Template microservice aggiornato con struttura GraphQL completa
+- **Production Ready** - Type safety, error handling, performance validation completati
+
+### 📚 Documentation Cleanup - v1.2.1 (2025-09-07)Fit Platform - Changelog
 
 Questo file documenta tutti i cambiamenti significativi al progetto NutriFit Platform.
 

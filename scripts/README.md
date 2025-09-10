@@ -11,7 +11,9 @@ scripts/
 │   ├── README.md               # Documentazione dettagliata
 │   ├── docker-cleanup.sh       # Pulizia intelligente
 │   └── docker-nuclear-cleanup.sh # Pulizia aggressiva
-├── health-check.sh             # 🏥 Health check servizi
+├── QA/                         # 🔍 Script Quality Assurance
+│   ├── health-check.sh         # 🏥 Health check servizi
+│   └── quality-check.sh        # 📊 Controlli qualità codice
 └── test-api.py                 # 🧪 Test API endpoints
 ```
 
@@ -32,13 +34,24 @@ make clean-docker   # Pulizia intelligente
 make clean-nuclear  # Pulizia aggressiva
 ```
 
-### 🏥 Health Check
-Script per il monitoraggio della salute dei servizi:
+### 🔍 Quality Assurance
+Script per controlli di qualità e health monitoring:
+- **Health Check**: Monitora la salute di tutti i servizi
+- **Quality Check**: Controlli qualità codice (linting, formatting, security)
+- **Automazione**: Integrazione con workflow CI/CD
+
+📂 **Percorso**: `QA/`
 
 ```bash
-./scripts/health-check.sh
+# Health check
+./scripts/QA/health-check.sh
 # oppure
-make health-check
+make health
+
+# Quality check
+./scripts/QA/quality-check.sh  
+# oppure
+make quality-check
 ```
 
 ### 🧪 API Testing

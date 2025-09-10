@@ -99,7 +99,10 @@ make deploy-staging
 ### Monitoring & Health
 ```bash
 # Health check all services
-./scripts/health-check.sh
+## Verifica Servizi
+
+```bash
+./scripts/QA/health-check.sh
 
 # View logs
 make logs-follow SERVICE=calorie-balance

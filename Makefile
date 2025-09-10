@@ -33,8 +33,8 @@ services-start: ## Start all microservices with infrastructure
 	@docker-compose -f docker-compose.dev.yml up -d
 	@echo "⏳ Waiting for services to be ready..."
 	@sleep 10
-	@chmod +x scripts/health-check.sh
-	@./scripts/health-check.sh
+	@chmod +x scripts/QA/health-check.sh
+	@./scripts/QA/health-check.sh
 	@echo "✅ All services running!"
 
 services-stop: ## Stop all services
@@ -79,8 +79,8 @@ test-integration: ## Run integration tests
 # Code Quality
 quality-check: ## Run code quality checks (linting, formatting, security)
 	@echo "🔍 Running quality checks..."
-	@chmod +x scripts/quality-check.sh
-	@./scripts/quality-check.sh
+	@chmod +x scripts/QA/quality-check.sh
+	@./scripts/QA/quality-check.sh
 	@echo "📱 Checking Flutter code quality..."
 	@cd mobile && flutter analyze
 	@cd mobile && flutter format --set-exit-if-changed .
@@ -148,8 +148,8 @@ nuclear-clean: ## Nuclear cleanup (removes everything)
 # Health Checks
 health: ## Check health of all services
 	@echo "🏥 Checking service health..."
-	@chmod +x scripts/health-check.sh
-	@./scripts/health-check.sh
+	@chmod +x scripts/QA/health-check.sh
+	@./scripts/QA/health-check.sh
 
 status: ## Show status of all services
 	@echo "📊 Service Status:"

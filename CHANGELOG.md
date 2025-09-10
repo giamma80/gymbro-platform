@@ -1,4 +1,90 @@
-# 📝 Nu## [Unreleased]
+# 📝 NutriFit Platform - Changelog
+
+Questo file documenta tutti i cambiamenti significativi al progetto NutriFit Platform.
+
+Il formato è basato su [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+e questo progetto aderisce al [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [v1.4.0] - 2025-09-10 - User Management Service Production Ready
+
+### 🎯 Major Achievements - Complete Service Lifecycle
+- **100% Test Success Rate** - All 22 comprehensive tests now pass (upgraded from 86% to 100%)
+- **Service Lifecycle Management** - Complete start/stop/status/restart functionality with PID management
+- **Production-Ready API** - All CRUD operations working with proper database permissions
+- **SQL Grants System** - Reusable template system for all future microservices database permissions
+- **Data Reset Automation** - Robust test suite with automatic data cleanup between test runs
+
+### 🔧 Critical Fixes
+- **start-dev.sh Complete Rewrite** - Fixed corrupted script with proper shell syntax and health check patterns
+- **Supabase Permission Issues Resolved** - Fixed 403/42501 permission denied errors for write operations
+- **Health Check Pattern Matching** - Corrected 'healthy' vs 'ok' pattern matching for Uvicorn responses
+- **Service-Role Key Separation** - Implemented secure dual-key strategy (service-role for startup, anon for runtime)
+- **Database Write Permissions** - Added INSERT, UPDATE, DELETE grants for anon/authenticated roles
+
+### 📁 New Infrastructure Files
+- **config/supabase/grants_template.sql** - Universal SQL grants template for all microservices
+- **scripts/generate-grants-script.sh** - Automated grants generation with schema name substitution
+- **services/user-management/start-dev.sh** - Production-quality service lifecycle management script
+- **services/user-management/stop-dev.sh** - Clean service shutdown with PID cleanup
+- **services/user-management/sql/004_grants.sql** - Working database grants (replaces previous versions)
+- **services/user-management/sql/check_current_permissions.sql** - Database permissions verification queries
+
+### 🧪 Enhanced Testing Infrastructure
+- **test_comprehensive.py Enhanced** - Added automatic test data reset functionality
+- **ORIGINAL_DATA Constants** - Defined baseline test data values for consistent reset
+- **Reset Function** - `reset_test_data()` method ensures clean state between test runs
+- **Complete API Coverage** - All 22 endpoints tested including repositories, health checks, and validation
+
+### 🚀 Production Readiness Features
+- **Health Check Endpoints** - `/health`, `/health/ready`, `/health/live` fully operational
+- **Service Discovery** - Proper service status detection and health monitoring
+- **Error Handling** - Comprehensive error logging and correlation ID tracking
+- **Database Connection Management** - Dual Supabase client strategy for security and functionality
+- **API Endpoint Coverage** - Complete CRUD operations for users, profiles, privacy, contexts, and actions
+
+### 🗂️ File Organization Cleanup
+- **Removed Duplicate Files** - Eliminated `003_public_schema_fix.sql` (empty refuso file)
+- **SQL File Sequencing** - Clean numbered sequence: 000→001→002→003→004 grants progression
+- **Template Integration** - All SQL grants now generated from central template system
+
+### 🔄 Template System for Future Microservices
+- **Versionable SQL Grants** - Template with {{SCHEMA_NAME}} placeholder for any microservice
+- **Automation Script** - One-command generation: `./scripts/generate-grants-script.sh service-name`
+- **Manual Execution Workflow** - Clear instructions for Supabase Dashboard SQL Editor execution
+- **Reusable Pattern** - Established pattern for future microservice database permission management
+
+### 📊 Test Results Improvement
+**Before**: 19/22 tests passing (86% success rate)  
+**After**: 22/22 tests passing (100% success rate)
+
+**Fixed Tests**:
+- ✅ User Profile Repository - Get by User ID
+- ✅ Get User Profile API
+- ✅ Update User Profile
+- ✅ Update Privacy Settings  
+- ✅ Record User Login
+
+### 💡 Technical Innovations
+- **Health Check Pattern Detection** - Smart pattern matching for Uvicorn JSON health responses
+- **Service Role Separation** - Security-first approach with minimal privilege principle
+- **Test Data Lifecycle** - Automated reset ensures test reliability and repeatability
+- **SQL Template Engine** - Simple but effective placeholder substitution for schema-agnostic SQL
+- **Error Correlation** - Complete request tracking with correlation IDs for debugging
+
+### 🔧 Breaking Changes
+- **start-dev.sh Completely Rewritten** - Previous version was corrupted, new version has different API
+- **SQL Grants Numbering** - New 004_grants.sql supersedes previous grant files
+- **Test Execution** - Now requires Poetry environment: `poetry run python test_comprehensive.py`
+
+### 🎯 Service Status
+**User Management Service**: ✅ Production Ready
+- All API endpoints operational
+- Database permissions correctly configured  
+- Service lifecycle management working
+- 100% test coverage with automated data reset
+- Health monitoring and error tracking implemented
 
 ### 🚀 GraphQL Implementation Complete - v1.3.0 (2025-09-09)
 - **Full GraphQL API Layer** - Implementazione completa layer GraphQL per User Management Service
@@ -11,16 +97,7 @@
 - **Template Updates Complete** - Template microservice aggiornato con struttura GraphQL completa
 - **Production Ready** - Type safety, error handling, performance validation completati
 
-### 📚 Documentation Cleanup - v1.2.1 (2025-09-07)Fit Platform - Changelog
-
-Questo file documenta tutti i cambiamenti significativi al progetto NutriFit Platform.
-
-Il formato è basato su [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-e questo progetto aderisce al [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [Unreleased]
-
-### � Documentation Cleanup - v1.2.1 (2025-09-07)
+### 📚 Documentation Cleanup - v1.2.1 (2025-09-07)
 - **Removed redundant instructions.md** - Eliminato file duplicato nella root del progetto
 - **Centralized documentation references** - Tutti i riferimenti ora puntano a `.github/instructions/instructions.md`
 - **User Management Service integration** - Aggiornata tutta la documentazione per includere il 6° microservizio
@@ -28,7 +105,7 @@ e questo progetto aderisce al [Semantic Versioning](https://semver.org/spec/v2.0
 - **Architecture consistency** - Allineamento completo tra README, instructions, e documentazione microservizi
 - **Database documentation complete** - Creata documentazione completa per User Management Service database
 
-### �🚀 Added - v1.2.0 Event-Driven Architecture (2025-09-05)
+### 🚀 Added - v1.2.0 Event-Driven Architecture (2025-09-05)
 - **Event-Driven Database Schema** - Migrazione completa ad architettura event-driven per Calorie Balance Service
 - **5-Level Temporal Analytics** - Sistema completo di aggregazioni temporali (hourly → daily → weekly → monthly → balance)
 - **High-Frequency Event Collection** - Supporto campionamento smartphone ogni 2 minuti via `calorie_events` table

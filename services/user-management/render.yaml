@@ -1,0 +1,183 @@
+# ===============================================
+# NutriFit Platform - Render.com Configuration
+# ===============================================
+# Production deployment configuration for Render.com
+
+services:
+  # ====================================
+  # User Management Service
+  # ====================================
+  - type: web
+    name: nutrifit-user-management
+    runtime: docker
+    repo: https://github.com/USERNAME/gymbro-platform.git # Replace with actual repo
+    rootDir: services/user-management
+    dockerfilePath: ./Dockerfile
+    
+    # Build Configuration
+    buildCommand: ""  # Docker build handled by Dockerfile
+    
+    # Runtime Configuration
+    plan: starter  # or standard/pro based on needs
+    region: oregon  # or closest to your users
+    branch: main
+    
+    # Environment Variables
+    envVars:
+      # Application Configuration
+      - key: ENVIRONMENT
+        value: production
+      
+      - key: DEBUG
+        value: "false"
+      
+      - key: LOG_LEVEL
+        value: INFO
+      
+      - key: PORT
+        value: "8001"
+      
+      - key: DATABASE_SCHEMA
+        value: user_management
+      
+      # Supabase Configuration (set in Render dashboard)
+      - key: SUPABASE_URL
+        sync: false  # Set manually in dashboard
+      
+      - key: SUPABASE_ANON_KEY
+        sync: false  # Set manually in dashboard
+      
+      - key: SUPABASE_SERVICE_KEY
+        sync: false  # Set manually in dashboard
+      
+      # Security (set in Render dashboard)
+      - key: SECRET_KEY
+        generateValue: true  # Auto-generate secure key
+      
+      - key: JWT_SECRET_KEY
+        generateValue: true  # Auto-generate secure key
+      
+      - key: JWT_ALGORITHM
+        value: HS256
+      
+      - key: JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "60"
+      
+      - key: JWT_REFRESH_TOKEN_EXPIRE_DAYS
+        value: "30"
+      
+      # CORS Configuration
+      - key: ALLOWED_ORIGINS
+        value: https://nutrifit.app,https://app.nutrifit.app,https://www.nutrifit.app
+      
+      # Features
+      - key: ENABLE_REAL_TIME
+        value: "true"
+      
+      - key: ENABLE_AUTH
+        value: "true"
+      
+      - key: ENABLE_STORAGE
+        value: "false"
+      
+      # Performance
+      - key: RATE_LIMIT_REQUESTS_PER_MINUTE
+        value: "100"
+      
+      - key: REQUEST_TIMEOUT_SECONDS
+        value: "30"
+      
+      - key: MAX_CONNECTIONS
+        value: "200"
+      
+      # Monitoring
+      - key: SENTRY_DSN
+        sync: false  # Set manually if using Sentry
+      
+      - key: STRUCTURED_LOGGING
+        value: "true"
+      
+      # Production Optimizations
+      - key: WORKERS
+        value: "2"
+      
+      - key: WORKER_CONNECTIONS
+        value: "1000"
+      
+      - key: KEEPALIVE
+        value: "2"
+      
+      - key: MAX_REQUESTS
+        value: "1000"
+      
+      - key: MAX_REQUESTS_JITTER
+        value: "50"
+    
+    # Health Check
+    healthCheckPath: /health
+    
+    # Auto-deploy
+    autoDeploy: true
+    
+    # Notifications
+    buildFilter:
+      paths:
+        - services/user-management/**
+    
+    # Scaling
+    numInstances: 1  # Start with 1, scale as needed
+
+  # ====================================
+  # Redis Cache Service
+  # ====================================
+  - type: redis
+    name: nutrifit-redis
+    plan: starter  # or paid plan for production
+    region: oregon
+    ipAllowList: []  # Allow all for now, restrict in production
+    
+    # Configuration
+    maxmemoryPolicy: allkeys-lru
+
+# ====================================
+# Database Configuration
+# ====================================
+# Note: Using Supabase Cloud for PostgreSQL
+# No additional database service needed
+
+# ====================================
+# Deployment Notes
+# ====================================
+# 
+# 1. Setup Instructions:
+#    - Create Render account and connect GitHub
+#    - Set environment variables in Render dashboard
+#    - Configure custom domain if needed
+#    - Set up monitoring and alerts
+#
+# 2. Required Environment Variables (set in dashboard):
+#    - SUPABASE_URL
+#    - SUPABASE_ANON_KEY  
+#    - SUPABASE_SERVICE_KEY
+#    - SENTRY_DSN (optional)
+#
+# 3. Security Checklist:
+#    - JWT_SECRET_KEY and SECRET_KEY are auto-generated
+#    - CORS origins are restricted to your domains
+#    - Rate limiting is enabled
+#    - Environment is set to production
+#
+# 4. Monitoring:
+#    - Health checks on /health endpoint
+#    - Structured logging enabled
+#    - Optional Sentry integration
+#
+# 5. Scaling:
+#    - Start with 1 instance
+#    - Monitor CPU/memory usage
+#    - Scale horizontally as needed
+#
+# 6. Cost Optimization:
+#    - Starter plan for initial deployment
+#    - Upgrade to Standard/Pro based on traffic
+#    - Monitor resource usage in Render dashboard

@@ -5,7 +5,7 @@ JWT token management, password hashing, and verification
 """
 
 import bcrypt
-import jwt
+from jose import jwt
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 import structlog

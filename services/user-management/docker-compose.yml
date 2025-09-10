@@ -1,0 +1,152 @@
+# ===============================================
+# User Management Service - Docker Compose
+# ===============================================
+# Development environment with local dependencies
+
+version: '3.8'
+
+services:
+  # ====================================
+  # User Management Service
+  # ====================================
+  user-management:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: nutrifit-user-management-dev
+    ports:
+      - "8001:8001"
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+      - DATABASE_SCHEMA=user_management
+      
+      # Supabase Configuration (from .env)
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      
+      # Security
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-production}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-dev-jwt-secret}
+      - JWT_ALGORITHM=HS256
+      - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=60
+      - JWT_REFRESH_TOKEN_EXPIRE_DAYS=30
+      
+      # CORS
+      - ALLOWED_ORIGINS=http://localhost:3000,capacitor://localhost,https://localhost,http://localhost:8080
+      
+      # Features
+      - ENABLE_REAL_TIME=true
+      - ENABLE_AUTH=true
+      - ENABLE_STORAGE=false
+      
+      # Performance
+      - RATE_LIMIT_REQUESTS_PER_MINUTE=60
+      - REQUEST_TIMEOUT_SECONDS=30
+      - MAX_CONNECTIONS=100
+      
+      # Monitoring (optional for development)
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - STRUCTURED_LOGGING=true
+      
+    volumes:
+      - ./:/app
+      - /app/.venv  # Exclude venv from volume mount
+    networks:
+      - nutrifit-network
+    depends_on:
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ====================================
+  # Redis Cache (for development)
+  # ====================================
+  redis:
+    image: redis:7-alpine
+    container_name: nutrifit-redis-dev
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - nutrifit-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ====================================
+  # PostgreSQL Local (optional fallback)
+  # ====================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: nutrifit-postgres-dev
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=user_management
+      - POSTGRES_USER=nutrifit_user
+      - POSTGRES_PASSWORD=dev_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d
+    networks:
+      - nutrifit-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nutrifit_user -d user_management"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# ====================================
+# Networks
+# ====================================
+networks:
+  nutrifit-network:
+    driver: bridge
+    name: nutrifit-platform
+
+# ====================================
+# Volumes
+# ====================================
+volumes:
+  redis_data:
+    driver: local
+  postgres_data:
+    driver: local
+
+# ====================================
+# Development Commands
+# ====================================
+# Usage examples:
+#
+# Start development environment:
+#   docker-compose up -d
+#
+# View logs:
+#   docker-compose logs -f user-management
+#
+# Run tests:
+#   docker-compose exec user-management poetry run pytest
+#
+# Access shell:
+#   docker-compose exec user-management bash
+#
+# Rebuild after changes:
+#   docker-compose up --build
+#
+# Stop and clean:
+#   docker-compose down -v

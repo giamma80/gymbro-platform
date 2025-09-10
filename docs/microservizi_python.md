@@ -146,7 +146,7 @@ graph TB
 
 | Microservizio | Schema SQL | Connection Type | MCP Server | Ruolo |
 |---------------|------------|----------------|------------|-------|
-| **user-management** | `user_management` | **Supabase Client**: Auth, real-time | ❌ Solo auth | **🚨 CORE - Autenticazione centralizzata** |
+| **user-management** | `user_management` | **Supabase Client**: Auth, real-time | ✅ Production Ready | **🚨 CORE - ✅ PHASE 1 COMPLETE** |
 | **calorie-balance** | `calorie_balance` | **PostgreSQL Direct**: Analytics, performance | ✅ Per AI workflows | Business logic |
 | **meal-tracking** | `meal_tracking` | **Supabase Client**: Real-time food sync | ✅ Per food analysis | Business logic |
 | **health-monitor** | `health_monitor` | **Supabase Client**: HealthKit real-time | ❌ Solo data sync | Business logic |
@@ -395,51 +395,106 @@ build-backend = "poetry.core.masonry.api"
 ### Configurazione Standard per Supabase Cloud
 
 ```python
-# app/core/config.py - Template per ogni microservizio
-from pydantic_settings import BaseSettings
+# app/core/config.py - Template Production-Ready per ogni microservizio
+from functools import lru_cache
 from typing import List, Optional
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    """Configuration per microservizio NutriFit"""
+    """Production-ready configuration per microservizio NutriFit"""
+    
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore"
+    )
     
     # Service Identity
-    service_name: str = "{service-name}"
-    environment: str = "development"
-    debug: bool = False
+    service_name: str = Field(default="{service-name}", description="Service name")
+    environment: str = Field(default="development", description="Environment")
+    debug: bool = Field(default=False, description="Debug mode")
     
     # Supabase Cloud Configuration (REQUIRED)
-    supabase_url: str                      # Supabase project URL
-    supabase_anon_key: str                 # Public anon key
-    supabase_service_key: str              # Service role key (backend only)
+    supabase_url: str = Field(..., description="Supabase project URL")
+    supabase_anon_key: str = Field(..., description="Supabase anon key for client operations")
+    supabase_service_key: str = Field(..., description="Supabase service key for server operations")
     
-    # Database specifico per servizio
-    database_name: str = "nutrifit_{service_name}"
+    # Database Schema Configuration
+    database_schema: str = Field(default="{service-name}", description="Database schema name")
+    
+    # JWT Security (Production-Ready)
+    secret_key: str = Field(..., description="Secret key for JWT signing")
+    JWT_SECRET_KEY: str = Field(default="", description="JWT secret key")
+    JWT_ALGORITHM: str = Field(default="HS256", description="JWT algorithm")
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=60, description="Access token expiration")
+    JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = Field(default=30, description="Refresh token expiration")
+    
+    def __post_init__(self):
+        """Set JWT_SECRET_KEY from secret_key if not provided."""
+        if not self.JWT_SECRET_KEY:
+            self.JWT_SECRET_KEY = self.secret_key
+    
+    # CORS Configuration (Mobile + Web)
+    allowed_origins: str = Field(
+        default=(
+            "http://localhost:3000,capacitor://localhost,"
+            "https://localhost,http://localhost:8080"
+        ),
+        description="Comma-separated list of allowed CORS origins"
+    )
+    
+    @property
+    def allowed_origins_list(self) -> List[str]:
+        """Parse allowed origins from comma-separated string."""
+        return [
+            origin.strip()
+            for origin in self.allowed_origins.split(",")
+            if origin.strip()
+        ]
+    
+    # Supabase Feature Flags
+    enable_real_time: bool = Field(default=True, description="Enable Supabase real-time")
+    enable_auth: bool = Field(default=True, description="Enable Supabase auth")
+    enable_storage: bool = Field(default=False, description="Enable Supabase storage")
+    
+    # Rate Limiting & Performance
+    rate_limit_requests_per_minute: int = Field(default=60, description="Rate limit per user")
+    request_timeout_seconds: int = Field(default=30, description="Request timeout")
+    max_connections: int = Field(default=100, description="Max concurrent connections")
     
     # N8N Cloud Integration
-    n8n_webhook_url: Optional[str] = None  # N8N webhook per questo servizio
-    n8n_api_key: Optional[str] = None      # N8N API key
+    n8n_webhook_url: Optional[str] = Field(default=None, description="N8N webhook URL")
+    n8n_api_key: Optional[str] = Field(default=None, description="N8N API key")
     
-    # Security
-    secret_key: str                        # JWT secret
-    algorithm: str = "HS256"
-    access_token_expire_minutes: int = 30
+    # External Services
+    openai_api_key: Optional[str] = Field(default=None, description="OpenAI API key")
     
-    # CORS per mobile app
-    allowed_origins: List[str] = [
-        "http://localhost:3000",           # Flutter web debug
-        "capacitor://localhost",           # Capacitor iOS
-        "https://localhost",               # Capacitor Android
-    ]
+    # Monitoring & Observability
+    sentry_dsn: Optional[str] = Field(default=None, description="Sentry DSN")
+    log_level: str = Field(default="INFO", description="Logging level")
+    structured_logging: bool = Field(default=True, description="Use structured logging")
     
-    # MCP Server Configuration (se applicable)
-    mcp_server_enabled: bool = False
-    mcp_server_port: Optional[int] = None
+    # MCP Server Configuration (se applicabile)
+    mcp_server_enabled: bool = Field(default=False, description="Enable MCP server")
+    mcp_server_port: Optional[int] = Field(default=None, description="MCP server port")
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+    # Environment Detection Helper Properties
+    @property
+    def is_development(self) -> bool:
+        """Check if running in development mode."""
+        return self.environment.lower() == "development"
+    
+    @property
+    def is_production(self) -> bool:
+        """Check if running in production mode."""
+        return self.environment.lower() == "production"
 
-settings = Settings()
+@lru_cache()
+def get_settings() -> Settings:
+    """Get cached settings instance."""
+    return Settings()
 ```
 
 ### Struttura Database Segregata per Microservizio
@@ -793,6 +848,209 @@ class N8NIntegration:
             )
 
 n8n = N8NIntegration()
+
+# Router per webhook N8N
+n8n_router = APIRouter(prefix="/webhooks/n8n", tags=["n8n"])
+
+@n8n_router.post("/receive")
+async def receive_n8n_webhook(request: Request) -> Dict[str, Any]:
+    """Endpoint per ricevere webhook da N8N"""
+    return await n8n.receive_webhook(request)
+```
+
+### Production-Ready Security Module
+
+Basato sui pattern del template production-ready, implementiamo sicurezza avanzata:
+
+```python
+# app/core/security.py - Advanced security utilities dal template
+import bcrypt
+import jwt
+from datetime import datetime, timedelta
+from typing import Dict, Any, Optional
+import structlog
+
+from app.core.config import get_settings
+
+settings = get_settings()
+logger = structlog.get_logger()
+
+class SecurityManager:
+    """Production-ready security utilities"""
+    
+    @staticmethod
+    def hash_password(password: str, salt: bytes) -> str:
+        """Hash password with salt using bcrypt."""
+        return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+    
+    @staticmethod
+    def get_password_hash(password: str) -> str:
+        """Generate password hash with random salt."""
+        salt = bcrypt.gensalt()
+        return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+    
+    @staticmethod
+    def verify_password(password: str, password_hash: str, salt: str = None) -> bool:
+        """Verify password against hash (supports legacy salt method)."""
+        try:
+            if salt:
+                # Legacy method with separate salt
+                return bcrypt.checkpw(
+                    password.encode('utf-8'),
+                    password_hash.encode('utf-8')
+                )
+            else:
+                # Modern method with salt included in hash
+                return bcrypt.checkpw(
+                    password.encode('utf-8'),
+                    password_hash.encode('utf-8')
+                )
+        except Exception:
+            return False
+    
+    @staticmethod
+    def create_jwt_token(
+        data: Dict[str, Any],
+        expires_delta: Optional[timedelta] = None
+    ) -> str:
+        """Create JWT token with payload."""
+        if expires_delta:
+            expire = datetime.utcnow() + expires_delta
+        else:
+            expire = datetime.utcnow() + timedelta(
+                minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+            )
+        
+        to_encode = data.copy()
+        to_encode.update({"exp": expire})
+        
+        return jwt.encode(
+            to_encode,
+            settings.JWT_SECRET_KEY,
+            algorithm=settings.JWT_ALGORITHM
+        )
+    
+    @staticmethod
+    def create_access_token(
+        data: Dict[str, Any],
+        expires_delta: Optional[timedelta] = None
+    ) -> str:
+        """Create access token (alias for create_jwt_token)."""
+        return SecurityManager.create_jwt_token(data, expires_delta)
+    
+    @staticmethod
+    def create_refresh_token(data: Dict[str, Any]) -> str:
+        """Create refresh token with longer expiration."""
+        expires_delta = timedelta(days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS)
+        return SecurityManager.create_jwt_token(data, expires_delta)
+    
+    @staticmethod
+    def verify_jwt_token(token: str) -> Dict[str, Any]:
+        """Verify and decode JWT token."""
+        try:
+            payload = jwt.decode(
+                token,
+                settings.JWT_SECRET_KEY,
+                algorithms=[settings.JWT_ALGORITHM]
+            )
+            return payload
+        except jwt.ExpiredSignatureError:
+            raise ValueError("Token has expired")
+        except jwt.InvalidTokenError:
+            raise ValueError("Invalid token")
+    
+    @staticmethod
+    def decode_access_token(token: str) -> Dict[str, Any]:
+        """Decode access token (alias for verify_jwt_token)."""
+        return SecurityManager.verify_jwt_token(token)
+
+# Global security manager instance
+security_manager = SecurityManager()
+```
+
+### CORS & Rate Limiting Configuration
+
+Pattern avanzati per produzione basati sul template:
+
+```python
+# app/core/middleware.py - CORS e Rate Limiting production-ready
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+import time
+import redis
+from typing import Dict, Any
+from app.core.config import get_settings
+
+settings = get_settings()
+
+def setup_cors(app: FastAPI) -> None:
+    """Setup CORS middleware with production settings."""
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.allowed_origins_list,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["*"],
+        expose_headers=["X-Request-ID", "X-Rate-Limit-Remaining"]
+    )
+
+class RateLimitMiddleware:
+    """Advanced rate limiting middleware"""
+    
+    def __init__(self, redis_client=None):
+        self.redis = redis_client or redis.Redis(
+            host='localhost', 
+            port=6379, 
+            decode_responses=True
+        )
+        self.requests_per_minute = settings.rate_limit_requests_per_minute
+    
+    async def __call__(self, request: Request, call_next):
+        """Rate limiting logic"""
+        client_ip = request.client.host
+        user_id = getattr(request.state, 'user_id', None)
+        
+        # Use user_id if authenticated, otherwise use IP
+        rate_limit_key = f"rate_limit:{user_id or client_ip}"
+        
+        current_requests = self.redis.get(rate_limit_key)
+        
+        if current_requests is None:
+            # First request in this minute
+            self.redis.setex(rate_limit_key, 60, 1)
+            remaining = self.requests_per_minute - 1
+        else:
+            current_requests = int(current_requests)
+            if current_requests >= self.requests_per_minute:
+                return JSONResponse(
+                    status_code=429,
+                    content={
+                        "error": "Rate limit exceeded",
+                        "retry_after": 60
+                    },
+                    headers={"Retry-After": "60"}
+                )
+            
+            # Increment counter
+            self.redis.incr(rate_limit_key)
+            remaining = self.requests_per_minute - (current_requests + 1)
+        
+        # Process request
+        response = await call_next(request)
+        
+        # Add rate limit headers
+        response.headers["X-Rate-Limit-Limit"] = str(self.requests_per_minute)
+        response.headers["X-Rate-Limit-Remaining"] = str(remaining)
+        
+        return response
+
+def setup_middleware(app: FastAPI) -> None:
+    """Setup all production middleware"""
+    setup_cors(app)
+    
+    if not settings.is_development:
+        app.add_middleware(RateLimitMiddleware)
 
 # Router per webhook N8N
 n8n_router = APIRouter(prefix="/webhooks/n8n", tags=["n8n"])

@@ -316,3 +316,39 @@ SUPABASE_ANON_KEY=[prod_anon_key]
 **Blockers**: None - highest priority  
 **Dependencies**: Supabase account access, service environment variables  
 **Risk Level**: Medium (careful migration required)
+
+## 📝 Environment Variables Template
+
+Per configurare rapidamente tutti i microservizi con Supabase:
+
+```bash
+# User Management Service - Supabase Client
+SUPABASE_USER_MANAGEMENT_URL=https://[project-id].supabase.co
+SUPABASE_USER_MANAGEMENT_ANON_KEY=eyJ...
+SUPABASE_USER_MANAGEMENT_SERVICE_KEY=eyJ...
+
+# Calorie Balance Service - PostgreSQL Direct  
+SUPABASE_CALORIE_BALANCE_URL=https://[project-id].supabase.co
+SUPABASE_CALORIE_BALANCE_DB_URL=postgresql://postgres:[password]@db.[project-id].supabase.co:5432/postgres
+SUPABASE_CALORIE_BALANCE_SERVICE_KEY=eyJ...
+
+# Meal Tracking Service - Supabase Client
+SUPABASE_MEAL_TRACKING_URL=https://[project-id].supabase.co
+SUPABASE_MEAL_TRACKING_ANON_KEY=eyJ...
+SUPABASE_MEAL_TRACKING_SERVICE_KEY=eyJ...
+
+# Health Monitor Service - Supabase Client
+SUPABASE_HEALTH_MONITOR_URL=https://[project-id].supabase.co
+SUPABASE_HEALTH_MONITOR_ANON_KEY=eyJ...
+SUPABASE_HEALTH_MONITOR_SERVICE_KEY=eyJ...
+
+# Notifications Service - Supabase Client
+SUPABASE_NOTIFICATIONS_URL=https://[project-id].supabase.co
+SUPABASE_NOTIFICATIONS_ANON_KEY=eyJ...
+SUPABASE_NOTIFICATIONS_SERVICE_KEY=eyJ...
+
+# AI Coach Service - PostgreSQL Direct
+SUPABASE_AI_COACH_URL=https://[project-id].supabase.co
+SUPABASE_AI_COACH_DB_URL=postgresql://postgres:[password]@db.[project-id].supabase.co:5432/postgres
+SUPABASE_AI_COACH_SERVICE_KEY=eyJ...
+```

@@ -6,7 +6,7 @@ Schema: user_management
 Phase: 1.0 - Foundation Setup
 """
 
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from typing import Optional, Dict, Any
 from enum import Enum
 from dataclasses import dataclass
@@ -29,6 +29,7 @@ class GenderType(Enum):
     PREFER_NOT_TO_SAY = "prefer_not_to_say"
 
 
+@dataclass
 @dataclass
 class User:
     """Core user entity - represents identity and authentication."""
@@ -294,6 +295,305 @@ class UserProfileUpdatedEvent:
     """Event fired when user profile is updated."""
     user_id: UUID
     updated_fields: Dict[str, Any]
+    timestamp: datetime = None
+    
+    def __post_init__(self):
+        if self.timestamp is None:
+            self.timestamp = datetime.utcnow()
+
+
+# =============================================================================
+# AUTHENTICATION ENTITIES - Phase 1
+# =============================================================================
+
+class CredentialStatus(Enum):
+    """Authentication credential status enumeration."""
+    ACTIVE = "active"
+    EXPIRED = "expired"
+    DISABLED = "disabled"
+
+
+class SessionStatus(Enum):
+    """Session status enumeration."""
+    ACTIVE = "active"
+    EXPIRED = "expired"
+    REVOKED = "revoked"
+
+
+class DeviceType(Enum):
+    """Device type enumeration."""
+    MOBILE = "mobile"
+    WEB = "web"
+    DESKTOP = "desktop"
+
+
+class AuthProvider(Enum):
+    """Authentication provider enumeration."""
+    GOOGLE = "google"
+    APPLE = "apple"
+    FACEBOOK = "facebook"
+
+
+class SocialAuthStatus(Enum):
+    """Social authentication status enumeration."""
+    ACTIVE = "active"
+    REVOKED = "revoked"
+    EXPIRED = "expired"
+
+
+@dataclass
+@dataclass
+class AuthCredentials:
+    """Authentication credentials entity."""
+    
+    id: UUID
+    user_id: UUID
+    password_hash: str
+    salt: str
+    status: CredentialStatus
+    password_changed_at: datetime
+    failed_attempts: int = 0
+    locked_until: Optional[datetime] = None
+    last_login: Optional[datetime] = None
+    requires_password_change: bool = False
+    created_at: datetime = None
+    updated_at: datetime = None
+    
+    def __post_init__(self):
+        if self.created_at is None:
+            self.created_at = datetime.utcnow()
+        if self.updated_at is None:
+            self.updated_at = datetime.utcnow()
+    
+    @property
+    def is_locked(self) -> bool:
+        """Check if credentials are locked."""
+        return (self.locked_until is not None and
+                self.locked_until > datetime.utcnow())
+    
+    @property
+    def is_active(self) -> bool:
+        """Check if credentials are active."""
+        return self.status == CredentialStatus.ACTIVE and not self.is_locked
+    
+    def increment_failed_attempts(self):
+        """Increment failed login attempts."""
+        self.failed_attempts += 1
+        self.updated_at = datetime.utcnow()
+        
+        # Lock account after 5 failed attempts for 30 minutes
+        if self.failed_attempts >= 5:
+            self.locked_until = datetime.utcnow() + timedelta(minutes=30)
+    
+    def reset_failed_attempts(self):
+        """Reset failed login attempts after successful login."""
+        self.failed_attempts = 0
+        self.locked_until = None
+        self.updated_at = datetime.utcnow()
+
+
+@dataclass
+class AuthSession:
+    """Authentication session entity."""
+    
+    id: UUID
+    user_id: UUID
+    session_token: str
+    refresh_token: str
+    device_id: Optional[str]
+    device_type: Optional[DeviceType]
+    user_agent: Optional[str]
+    ip_address: Optional[str]
+    location: Optional[str]
+    status: SessionStatus
+    expires_at: datetime
+    last_activity_at: datetime
+    created_at: datetime = None
+    
+    def __post_init__(self):
+        if self.created_at is None:
+            self.created_at = datetime.utcnow()
+    
+    @property
+    def is_active(self) -> bool:
+        """Check if session is active and not expired."""
+        return (self.status == SessionStatus.ACTIVE and
+                self.expires_at > datetime.utcnow())
+    
+    @property
+    def is_expired(self) -> bool:
+        """Check if session is expired."""
+        return self.expires_at <= datetime.utcnow()
+    
+    def update_activity(self):
+        """Update last activity timestamp."""
+        self.last_activity_at = datetime.utcnow()
+    
+    def revoke(self):
+        """Revoke the session."""
+        self.status = SessionStatus.REVOKED
+
+
+@dataclass
+class SocialAuthProfile:
+    """Social authentication profile entity."""
+    
+    id: UUID
+    user_id: UUID
+    provider: AuthProvider
+    provider_user_id: str
+    provider_email: Optional[str]
+    provider_data: Dict[str, Any]
+    status: SocialAuthStatus
+    connected_at: datetime
+    last_used_at: Optional[datetime] = None
+    updated_at: datetime = None
+    
+    def __post_init__(self):
+        if self.updated_at is None:
+            self.updated_at = datetime.utcnow()
+    
+    @property
+    def is_active(self) -> bool:
+        """Check if social auth profile is active."""
+        return self.status == SocialAuthStatus.ACTIVE
+    
+    def update_last_used(self):
+        """Update last used timestamp."""
+        self.last_used_at = datetime.utcnow()
+        self.updated_at = datetime.utcnow()
+
+
+@dataclass
+class AuditLog:
+    """Audit log entry for security and compliance."""
+    
+    id: UUID
+    user_id: Optional[UUID]
+    action: str
+    resource: str
+    data: Dict[str, Any]
+    ip_address: Optional[str]
+    user_agent: Optional[str]
+    created_at: datetime = None
+    
+    def __post_init__(self):
+        if self.created_at is None:
+            self.created_at = datetime.utcnow()
+
+
+@dataclass
+class PasswordResetToken:
+    """Password reset token entity."""
+    
+    id: UUID
+    user_id: UUID
+    token: str
+    expires_at: datetime
+    used_at: Optional[datetime] = None
+    created_at: datetime = None
+    
+    def __post_init__(self):
+        if self.created_at is None:
+            self.created_at = datetime.utcnow()
+    
+    @property
+    def is_valid(self) -> bool:
+        """Check if token is valid (not expired and not used)."""
+        return (self.used_at is None and
+                self.expires_at > datetime.utcnow())
+    
+    def use(self):
+        """Mark token as used."""
+        self.used_at = datetime.utcnow()
+
+
+@dataclass
+class EmailVerificationToken:
+    """Email verification token entity."""
+    
+    id: UUID
+    user_id: UUID
+    token: str
+    expires_at: datetime
+    verified_at: Optional[datetime] = None
+    created_at: datetime = None
+    
+    def __post_init__(self):
+        if self.created_at is None:
+            self.created_at = datetime.utcnow()
+    
+    @property
+    def is_valid(self) -> bool:
+        """Check if token is valid (not expired and not verified)."""
+        return (self.verified_at is None and
+                self.expires_at > datetime.utcnow())
+    
+    def verify(self):
+        """Mark token as verified."""
+        self.verified_at = datetime.utcnow()
+
+
+# =============================================================================
+# AUTHENTICATION EVENTS - Phase 1
+# =============================================================================
+
+@dataclass
+class UserRegisteredEvent:
+    """Event fired when user registers."""
+    user_id: UUID
+    email: str
+    username: str
+    timestamp: datetime = None
+    
+    def __post_init__(self):
+        if self.timestamp is None:
+            self.timestamp = datetime.utcnow()
+
+
+@dataclass
+class UserLoggedInEvent:
+    """Event fired when user logs in."""
+    user_id: UUID
+    session_id: UUID
+    ip_address: Optional[str]
+    user_agent: Optional[str]
+    timestamp: datetime = None
+    
+    def __post_init__(self):
+        if self.timestamp is None:
+            self.timestamp = datetime.utcnow()
+
+
+@dataclass
+class UserLoggedOutEvent:
+    """Event fired when user logs out."""
+    user_id: UUID
+    session_id: UUID
+    timestamp: datetime = None
+    
+    def __post_init__(self):
+        if self.timestamp is None:
+            self.timestamp = datetime.utcnow()
+
+
+@dataclass
+class PasswordChangedEvent:
+    """Event fired when user changes password."""
+    user_id: UUID
+    timestamp: datetime = None
+    
+    def __post_init__(self):
+        if self.timestamp is None:
+            self.timestamp = datetime.utcnow()
+
+
+@dataclass
+class PasswordResetRequestedEvent:
+    """Event fired when user requests password reset."""
+    user_id: UUID
+    email: str
+    token: str
     timestamp: datetime = None
     
     def __post_init__(self):

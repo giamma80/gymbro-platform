@@ -12,7 +12,7 @@ from uuid import UUID
 import requests
 
 # Test Configuration
-BASE_URL = "http://localhost:8000"
+BASE_URL = "http://localhost:8001"
 TEST_USER_ID = "00000000-0000-0000-0000-000000000001"
 TEST_EMAIL = "test@nutrifit.com"
 

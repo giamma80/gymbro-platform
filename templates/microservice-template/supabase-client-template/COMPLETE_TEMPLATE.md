@@ -59,6 +59,7 @@ asyncio_mode = "auto"
 
 ```python
 from pydantic_settings import BaseSettings
+from pydantic import Field
 from typing import Optional
 import os
 
@@ -69,6 +70,13 @@ class Settings(BaseSettings):
     supabase_url: str
     supabase_anon_key: str
     supabase_service_key: str
+    
+    # 🎯 Schema Management Configuration
+    database_schema: str = Field(
+        default="public", 
+        env="DATABASE_SCHEMA",
+        description="Schema SQL dedicato per questo microservizio"
+    )
     
     # 🚀 FastAPI Configuration
     app_name: str = "NutriFit {Service Name} Service"
@@ -100,6 +108,11 @@ class Settings(BaseSettings):
 
 # Global settings instance
 settings = Settings()
+
+# Settings getter for schema management
+def get_settings() -> Settings:
+    """Ritorna istanza configurazione per SchemaManager"""
+    return settings
 ```
 
 # 🗄️ Database Client Template - database.py
@@ -252,6 +265,92 @@ class SupabaseClient:
 
 # Global database client instance
 db = SupabaseClient()
+```
+
+# 🎯 Schema Management Template - schema_tables.py
+
+```python
+"""
+Schema Management Pattern per {SERVICE_NAME}
+Gestisce l'accesso alle tabelle tramite schema configurabile via environment.
+
+IMPORTANTE: Sostituire {SERVICE_NAME} e le tabelle example con le tabelle reali del tuo microservizio.
+"""
+
+from config import get_settings
+
+class SchemaManager:
+    """
+    Gestisce l'accesso alle tabelle tramite schema configurabile.
+    Ogni microservizio utilizza uno schema SQL dedicato per isolamento dati.
+    """
+    
+    def __init__(self):
+        self.schema = get_settings().database_schema
+    
+    # ===============================================
+    # SOSTITUIRE CON LE TABELLE DEL TUO MICROSERVIZIO
+    # ===============================================
+    
+    @property
+    def users(self):
+        """Tabella users principale"""
+        return f"{self.schema}.users"
+    
+    @property 
+    def profiles(self):
+        """Tabella profiles utente"""
+        return f"{self.schema}.profiles"
+    
+    @property
+    def sessions(self):
+        """Tabelle sessioni attive"""
+        return f"{self.schema}.sessions"
+    
+    # ===============================================
+    # AGGIUNGI QUI LE PROPRIETÀ PER LE TUE TABELLE
+    # ===============================================
+    
+    # @property
+    # def your_table_name(self):
+    #     """Descrizione della tabella"""
+    #     return f"{self.schema}.your_table_name"
+
+# Istanza globale riutilizzabile in tutto il microservizio
+schema_manager = SchemaManager()
+
+# ===============================================
+# HELPER FUNCTIONS PER BACKWARD COMPATIBILITY
+# ===============================================
+
+def get_users_table(supabase_client):
+    """
+    Ottiene la tabella users con schema configurato.
+    Utilizzare nei repository invece di supabase_client.table("users")
+    """
+    return supabase_client.get_client().table(schema_manager.users)
+
+def get_profiles_table(supabase_client):
+    """
+    Ottiene la tabella profiles con schema configurato.
+    Utilizzare nei repository invece di supabase_client.table("profiles")
+    """
+    return supabase_client.get_client().table(schema_manager.profiles)
+
+def get_sessions_table(supabase_client):
+    """
+    Ottiene la tabella sessions con schema configurato.
+    Utilizzare nei repository invece di supabase_client.table("sessions")
+    """
+    return supabase_client.get_client().table(schema_manager.sessions)
+
+# ===============================================
+# AGGIUNGI QUI LE HELPER FUNCTIONS PER LE TUE TABELLE  
+# ===============================================
+
+# def get_your_table_name_table(supabase_client):
+#     """Ottiene la tabella your_table_name con schema configurato"""
+#     return supabase_client.get_client().table(schema_manager.your_table_name)
 ```
 
 # 🔐 Authentication Template - auth.py
@@ -437,6 +536,9 @@ if __name__ == "__main__":
 SUPABASE_URL=https://your-project-id.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_KEY=your-service-role-key
+
+# 🎯 Schema Management Configuration
+DATABASE_SCHEMA=your_service_schema_name    # es. user_management, meal_tracking, etc.
 
 # 🔐 Security
 SECRET_KEY=your-super-secret-key-here

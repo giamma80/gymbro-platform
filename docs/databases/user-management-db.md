@@ -1,22 +1,26 @@
 # User Management Service Database Schema
 
 **Service:** user-management  
-**Database:** `nutrifit_user_management`  
-**Version:** v1.0.0  
-**Last Updated:** 7 settembre 2025  
+**Database:** Shared Supabase Database  
+**Schema:** `user_management`  
+**Version:** v1.1.0  
+**Last Updated:** 10 settembre 2025  
+**Scripts:** `001_initial_schema.sql` + `002_auth_tables_fix.sql`
 
 ## 🎯 Database Purpose
 
-**CRITICAL INFRASTRUCTURE**: User Management Service database fornisce l'autenticazione centralizzata per tutta la piattaforma NutriFit, eliminando l'anti-pattern delle tabelle users distribuite nei microservizi.
+**CRITICAL INFRASTRUCTURE**: User Management Service fornisce l'autenticazione centralizzata per tutta la piattaforma NutriFit, implementato con schema dedicato `user_management` in database Supabase condiviso per ottimizzazione costi.
 
 **Core Responsibilities:**
-- 🔐 **Autenticazione centralizzata** con JWT tokens
-- 👤 **Gestione profili utente** unificata
-- 🔑 **Social authentication** (Google, Apple, Facebook)
-- 📱 **Session management** cross-device
-- 🛡️ **Multi-factor authentication** e security
-- 📋 **GDPR compliance** con data export/deletion
-- 🔗 **Service integration** tramite user context API
+- 🔐 **Autenticazione centralizzata** con JWT tokens e session management
+- 👤 **Gestione profili utente** unificata con privacy settings GDPR
+- 🔑 **Social authentication** (Google, Apple, Facebook) 
+- 📱 **Cross-device session management** e device tracking
+- 🛡️ **Security features**: password reset, email verification, audit logging
+- 📋 **GDPR compliance** con consent management e data export
+- 🔗 **Service integration** tramite view `user_service_context`
+
+**Architecture**: Schema-based multi-tenancy con database condiviso Supabase
 
 ---
 
@@ -32,6 +36,8 @@ erDiagram
     users ||--o{ auth_sessions : has
     users ||--|| privacy_settings : has
     users ||--o{ audit_logs : generates
+    users ||--o{ password_reset_tokens : has
+    users ||--o{ email_verification_tokens : has
     
     users {
         uuid id PK "Primary key"
@@ -69,8 +75,28 @@ erDiagram
         timestamp password_changed_at "Last password change"
         int failed_attempts "Failed login count"
         timestamp locked_until "Account lock expiry"
+        timestamp last_login "Last login timestamp"
+        boolean requires_password_change "Force password change"
         timestamp created_at "Credential creation"
         timestamp updated_at "Credential update"
+    }
+    
+    password_reset_tokens {
+        uuid id PK "Primary key"
+        uuid user_id FK "User reference"
+        string token UK "Reset token"
+        timestamp expires_at "Token expiry"
+        timestamp used_at "Usage timestamp"
+        timestamp created_at "Token creation"
+    }
+    
+    email_verification_tokens {
+        uuid id PK "Primary key"
+        uuid user_id FK "User reference"
+        string token UK "Verification token"
+        timestamp expires_at "Token expiry"
+        timestamp verified_at "Verification timestamp"
+        timestamp created_at "Token creation"
     }
     
     social_auth_profiles {
@@ -92,9 +118,9 @@ erDiagram
         string session_token "JWT session token"
         string refresh_token "JWT refresh token"
         string device_id "Device identifier"
-        string device_type "mobile|web|desktop"
+        enum device_type "mobile|web|desktop"
         string user_agent "Browser/app info"
-        string ip_address "Client IP"
+        inet ip_address "Client IP"
         string location "Geographic location"
         enum status "active|expired|revoked"
         timestamp expires_at "Session expiry"
@@ -199,15 +225,17 @@ CREATE INDEX idx_user_profiles_display_name ON user_profiles(display_name);
 **Purpose:** Secure password storage and authentication attempt tracking.
 
 ```sql
-CREATE TABLE auth_credentials (
+CREATE TABLE user_management.auth_credentials (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES user_management.users(id) ON DELETE CASCADE,
     password_hash VARCHAR(255) NOT NULL,
     salt VARCHAR(255) NOT NULL,
-    status credential_status DEFAULT 'active',
+    status user_management.credential_status DEFAULT 'active',
     password_changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     failed_attempts INTEGER DEFAULT 0,
     locked_until TIMESTAMP,
+    last_login TIMESTAMP,
+    requires_password_change BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
@@ -217,26 +245,73 @@ CREATE TABLE auth_credentials (
 );
 
 -- Custom enum for credential status
-CREATE TYPE credential_status AS ENUM ('active', 'expired', 'disabled');
+CREATE TYPE user_management.credential_status AS ENUM ('active', 'expired', 'disabled');
 
 -- Indexes
-CREATE UNIQUE INDEX idx_auth_credentials_user_id ON auth_credentials(user_id);
-CREATE INDEX idx_auth_credentials_status ON auth_credentials(status);
+CREATE UNIQUE INDEX idx_auth_credentials_user_id ON user_management.auth_credentials(user_id);
+CREATE INDEX idx_auth_credentials_status ON user_management.auth_credentials(status);
+CREATE INDEX idx_auth_credentials_last_login ON user_management.auth_credentials(last_login);
 ```
 
-### 4. social_auth_profiles - OAuth Integration
+### 4. password_reset_tokens - Password Reset Management
+
+**Purpose:** Secure password reset token management with expiration.
+
+```sql
+CREATE TABLE user_management.password_reset_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES user_management.users(id) ON DELETE CASCADE,
+    token VARCHAR(255) UNIQUE NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    used_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    -- Constraints
+    CONSTRAINT token_not_expired CHECK (expires_at > created_at)
+);
+
+-- Indexes
+CREATE INDEX idx_password_reset_user_id ON user_management.password_reset_tokens(user_id);
+CREATE INDEX idx_password_reset_expires ON user_management.password_reset_tokens(expires_at);
+CREATE UNIQUE INDEX idx_password_reset_token ON user_management.password_reset_tokens(token);
+```
+
+### 5. email_verification_tokens - Email Verification Management
+
+**Purpose:** Email verification token management for account activation.
+
+```sql
+CREATE TABLE user_management.email_verification_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES user_management.users(id) ON DELETE CASCADE,
+    token VARCHAR(255) UNIQUE NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    verified_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    -- Constraints
+    CONSTRAINT verification_token_not_expired CHECK (expires_at > created_at)
+);
+
+-- Indexes
+CREATE INDEX idx_email_verification_user_id ON user_management.email_verification_tokens(user_id);
+CREATE INDEX idx_email_verification_expires ON user_management.email_verification_tokens(expires_at);
+CREATE UNIQUE INDEX idx_email_verification_token ON user_management.email_verification_tokens(token);
+```
+
+### 6. social_auth_profiles - OAuth Integration
 
 **Purpose:** Social media authentication integration (Google, Apple, Facebook).
 
 ```sql
-CREATE TABLE social_auth_profiles (
+CREATE TABLE user_management.social_auth_profiles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    provider auth_provider NOT NULL,
+    user_id UUID NOT NULL REFERENCES user_management.users(id) ON DELETE CASCADE,
+    provider user_management.auth_provider NOT NULL,
     provider_user_id VARCHAR(255) NOT NULL,
     provider_email VARCHAR(255),
     provider_data JSONB DEFAULT '{}',
-    status social_auth_status DEFAULT 'active',
+    status user_management.social_auth_status DEFAULT 'active',
     connected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_used_at TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -247,31 +322,31 @@ CREATE TABLE social_auth_profiles (
 );
 
 -- Custom enums
-CREATE TYPE auth_provider AS ENUM ('google', 'apple', 'facebook');
-CREATE TYPE social_auth_status AS ENUM ('active', 'revoked', 'expired');
+CREATE TYPE user_management.auth_provider AS ENUM ('google', 'apple', 'facebook');
+CREATE TYPE user_management.social_auth_status AS ENUM ('active', 'revoked', 'expired');
 
 -- Indexes
-CREATE INDEX idx_social_auth_user_id ON social_auth_profiles(user_id);
-CREATE INDEX idx_social_auth_provider ON social_auth_profiles(provider);
-CREATE UNIQUE INDEX idx_social_auth_provider_user ON social_auth_profiles(provider, provider_user_id);
+CREATE INDEX idx_social_auth_user_id ON user_management.social_auth_profiles(user_id);
+CREATE INDEX idx_social_auth_provider ON user_management.social_auth_profiles(provider);
+CREATE UNIQUE INDEX idx_social_auth_provider_user ON user_management.social_auth_profiles(provider, provider_user_id);
 ```
 
-### 5. auth_sessions - Session Management
+### 7. auth_sessions - Session Management
 
 **Purpose:** JWT session tracking and device management for security.
 
 ```sql
-CREATE TABLE auth_sessions (
+CREATE TABLE user_management.auth_sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES user_management.users(id) ON DELETE CASCADE,
     session_token VARCHAR(500) NOT NULL,
     refresh_token VARCHAR(500) NOT NULL,
     device_id VARCHAR(255),
-    device_type device_type_enum,
+    device_type user_management.device_type,
     user_agent TEXT,
     ip_address INET,
     location VARCHAR(255),
-    status session_status DEFAULT 'active',
+    status user_management.session_status DEFAULT 'active',
     expires_at TIMESTAMP NOT NULL,
     last_activity_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -283,24 +358,25 @@ CREATE TABLE auth_sessions (
 );
 
 -- Custom enums
-CREATE TYPE device_type_enum AS ENUM ('mobile', 'web', 'desktop');
-CREATE TYPE session_status AS ENUM ('active', 'expired', 'revoked');
+CREATE TYPE user_management.device_type AS ENUM ('mobile', 'web', 'desktop');
+CREATE TYPE user_management.session_status AS ENUM ('active', 'expired', 'revoked');
 
 -- Indexes
-CREATE INDEX idx_auth_sessions_user_id ON auth_sessions(user_id);
-CREATE INDEX idx_auth_sessions_status ON auth_sessions(status);
-CREATE INDEX idx_auth_sessions_expires ON auth_sessions(expires_at);
-CREATE UNIQUE INDEX idx_auth_sessions_token ON auth_sessions(session_token);
+CREATE INDEX idx_auth_sessions_user_id ON user_management.auth_sessions(user_id);
+CREATE INDEX idx_auth_sessions_status ON user_management.auth_sessions(status);
+CREATE INDEX idx_auth_sessions_expires ON user_management.auth_sessions(expires_at);
+CREATE UNIQUE INDEX idx_auth_sessions_token ON user_management.auth_sessions(session_token);
+CREATE UNIQUE INDEX idx_auth_sessions_refresh ON user_management.auth_sessions(refresh_token);
 ```
 
-### 6. privacy_settings - GDPR Compliance
+### 8. privacy_settings - GDPR Compliance
 
 **Purpose:** User privacy preferences and GDPR compliance tracking.
 
 ```sql
-CREATE TABLE privacy_settings (
+CREATE TABLE user_management.privacy_settings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES user_management.users(id) ON DELETE CASCADE,
     data_processing_consent BOOLEAN DEFAULT false,
     marketing_consent BOOLEAN DEFAULT false,
     analytics_consent BOOLEAN DEFAULT false,
@@ -315,33 +391,65 @@ CREATE TABLE privacy_settings (
 );
 
 -- Indexes
-CREATE UNIQUE INDEX idx_privacy_settings_user_id ON privacy_settings(user_id);
-CREATE INDEX idx_privacy_consent_given ON privacy_settings(consent_given_at);
+CREATE UNIQUE INDEX idx_privacy_settings_user_id ON user_management.privacy_settings(user_id);
+CREATE INDEX idx_privacy_consent_given ON user_management.privacy_settings(consent_given_at);
 ```
 
-### 7. audit_logs - Security Audit Trail
+### 9. audit_logs - Security Audit Trail
 
 **Purpose:** Complete audit trail of user actions for security and compliance.
 
 ```sql
-CREATE TABLE audit_logs (
+CREATE TABLE user_management.audit_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    user_id UUID REFERENCES user_management.users(id) ON DELETE SET NULL,
     action VARCHAR(100) NOT NULL,
-    resource VARCHAR(100),
+    resource VARCHAR(100) NOT NULL,
     data JSONB DEFAULT '{}',
     ip_address INET,
     user_agent TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Partitioning preparation
-    PARTITION BY RANGE (created_at)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Indexes
-CREATE INDEX idx_audit_logs_user_id ON audit_logs(user_id);
-CREATE INDEX idx_audit_logs_action ON audit_logs(action);
-CREATE INDEX idx_audit_logs_created_at ON audit_logs(created_at);
+CREATE INDEX idx_audit_logs_user_id ON user_management.audit_logs(user_id);
+CREATE INDEX idx_audit_logs_action ON user_management.audit_logs(action);
+CREATE INDEX idx_audit_logs_resource ON user_management.audit_logs(resource);
+CREATE INDEX idx_audit_logs_created_at ON user_management.audit_logs(created_at);
+```
+
+---
+
+## 🗄️ Database Implementation Details
+
+### SQL Scripts Overview
+
+The user-management database is implemented through two complementary SQL scripts:
+
+1. **`001_initial_schema.sql`** - Foundation setup with core tables and basic authentication structure
+2. **`002_auth_tables_fix.sql`** - Authentication tables enhancement with all required fields
+
+### Schema Deployment Process
+
+```sql
+-- Step 1: Execute foundation schema
+\i sql/001_initial_schema.sql
+
+-- Step 2: Apply authentication enhancements  
+\i sql/002_auth_tables_fix.sql
+```
+
+### Trigger Functions
+
+```sql
+-- Schema-specific trigger function for updated_at fields
+CREATE OR REPLACE FUNCTION user_management.update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
 ```
 
 ---
@@ -353,8 +461,8 @@ CREATE INDEX idx_audit_logs_created_at ON audit_logs(created_at);
 **Purpose:** Provide user context to other microservices without exposing sensitive data.
 
 ```sql
--- View for service integration
-CREATE VIEW user_service_context AS
+-- View for service integration (schema-specific)
+CREATE VIEW user_management.user_service_context AS
 SELECT 
     u.id as user_id,
     u.username,
@@ -364,30 +472,30 @@ SELECT
     up.locale,
     up.preferences,
     ps.health_data_sharing,
-    ps.analytics_consent
-FROM users u
-LEFT JOIN user_profiles up ON u.id = up.user_id
-LEFT JOIN privacy_settings ps ON u.id = ps.user_id
+    ps.analytics_consent,
+    u.updated_at
+FROM user_management.users u
+LEFT JOIN user_management.user_profiles up ON u.id = up.user_id
+LEFT JOIN user_management.privacy_settings ps ON u.id = ps.user_id
 WHERE u.status = 'active';
 ```
 
-### Migration from Distributed User Tables
-
-**Purpose:** Migrate existing user data from calorie-balance service to centralized user management.
+### Cross-Schema Integration Pattern
 
 ```sql
--- Migration script template
--- 1. Export existing users from calorie-balance
--- 2. Import to user-management with proper UUID mapping
--- 3. Update calorie-balance to reference centralized users
--- 4. Remove old users table from calorie-balance
-
--- Example migration mapping
-CREATE TABLE migration_user_mapping (
-    old_calorie_balance_user_id UUID,
-    new_user_management_user_id UUID,
-    migrated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- Example: How other microservices reference users
+-- From calorie_balance schema:
+CREATE TABLE calorie_balance.daily_goals (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL, -- References user_management.users(id)
+    target_calories INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Cross-schema constraint (if needed)
+ALTER TABLE calorie_balance.daily_goals 
+ADD CONSTRAINT fk_user_management_user 
+FOREIGN KEY (user_id) REFERENCES user_management.users(id);
 ```
 
 ---
@@ -397,14 +505,14 @@ CREATE TABLE migration_user_mapping (
 ### Database Indexes Strategy
 
 ```sql
--- Core performance indexes
-CREATE INDEX CONCURRENTLY idx_users_composite ON users(status, email_verified_at);
-CREATE INDEX CONCURRENTLY idx_sessions_active ON auth_sessions(user_id, status, expires_at);
-CREATE INDEX CONCURRENTLY idx_audit_logs_time_user ON audit_logs(created_at, user_id);
+-- Core performance indexes (schema-specific)
+CREATE INDEX CONCURRENTLY idx_users_composite ON user_management.users(status, email_verified_at);
+CREATE INDEX CONCURRENTLY idx_sessions_active ON user_management.auth_sessions(user_id, status, expires_at);
+CREATE INDEX CONCURRENTLY idx_audit_logs_time_user ON user_management.audit_logs(created_at, user_id);
 
 -- Partial indexes for common queries
-CREATE INDEX CONCURRENTLY idx_users_active ON users(id) WHERE status = 'active';
-CREATE INDEX CONCURRENTLY idx_sessions_valid ON auth_sessions(user_id) WHERE status = 'active' AND expires_at > NOW();
+CREATE INDEX CONCURRENTLY idx_users_active ON user_management.users(id) WHERE status = 'active';
+CREATE INDEX CONCURRENTLY idx_sessions_valid ON user_management.auth_sessions(user_id) WHERE status = 'active' AND expires_at > NOW();
 ```
 
 ### Connection Pool Configuration
@@ -428,20 +536,23 @@ DATABASE_CONFIG = {
 
 ```sql
 -- Enable RLS on sensitive tables
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE auth_credentials ENABLE ROW LEVEL SECURITY;
-ALTER TABLE privacy_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_management.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_management.user_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_management.auth_credentials ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_management.privacy_settings ENABLE ROW LEVEL SECURITY;
 
--- RLS policies for user data access
-CREATE POLICY user_access_own_data ON users
-    USING (id = auth.uid());
+-- RLS policies for user data access (Supabase-compatible)
+CREATE POLICY "Service role full access" ON user_management.users
+    FOR ALL TO service_role USING (true) WITH CHECK (true);
 
-CREATE POLICY user_profile_access ON user_profiles
-    USING (user_id = auth.uid());
+CREATE POLICY "Service role full access" ON user_management.user_profiles
+    FOR ALL TO service_role USING (true) WITH CHECK (true);
 
-CREATE POLICY auth_credentials_access ON auth_credentials
-    USING (user_id = auth.uid());
+CREATE POLICY "Service role full access" ON user_management.auth_credentials
+    FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+CREATE POLICY "Service role full access" ON user_management.privacy_settings
+    FOR ALL TO service_role USING (true) WITH CHECK (true);
 ```
 
 ### Data Encryption
@@ -470,24 +581,24 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 ### Key Metrics Tables
 
 ```sql
--- User metrics view
-CREATE VIEW user_metrics AS
+-- User metrics view (schema-specific)
+CREATE VIEW user_management.user_metrics AS
 SELECT 
     DATE_TRUNC('day', created_at) as date,
     COUNT(*) as new_users,
     COUNT(*) FILTER (WHERE email_verified_at IS NOT NULL) as verified_users,
     COUNT(*) FILTER (WHERE last_login_at >= NOW() - INTERVAL '30 days') as active_users
-FROM users
+FROM user_management.users
 GROUP BY DATE_TRUNC('day', created_at);
 
 -- Authentication metrics
-CREATE VIEW auth_metrics AS
+CREATE VIEW user_management.auth_metrics AS
 SELECT 
     DATE_TRUNC('hour', created_at) as hour,
     COUNT(*) as total_sessions,
     COUNT(DISTINCT user_id) as unique_users,
     AVG(EXTRACT(EPOCH FROM (COALESCE(last_activity_at, created_at) - created_at))) as avg_session_duration
-FROM auth_sessions
+FROM user_management.auth_sessions
 GROUP BY DATE_TRUNC('hour', created_at);
 ```
 
@@ -498,59 +609,67 @@ GROUP BY DATE_TRUNC('hour', created_at);
 ### Automated Cleanup Jobs
 
 ```sql
--- Clean up expired sessions
-DELETE FROM auth_sessions 
+-- Clean up expired sessions (schema-specific)
+DELETE FROM user_management.auth_sessions 
 WHERE status = 'expired' 
    OR expires_at < NOW() - INTERVAL '7 days';
 
 -- Archive old audit logs (keep 1 year)
-DELETE FROM audit_logs 
+DELETE FROM user_management.audit_logs 
 WHERE created_at < NOW() - INTERVAL '1 year';
 
 -- Clean up deleted users (after 30 days grace period)
-DELETE FROM users 
+DELETE FROM user_management.users 
 WHERE status = 'deleted' 
   AND updated_at < NOW() - INTERVAL '30 days';
+
+-- Clean up expired tokens
+DELETE FROM user_management.password_reset_tokens 
+WHERE expires_at < NOW() - INTERVAL '1 day';
+
+DELETE FROM user_management.email_verification_tokens 
+WHERE expires_at < NOW() - INTERVAL '1 day';
 ```
 
 ### Backup Strategy
 
 ```bash
-# Daily backup with rotation
-pg_dump nutrifit_user_management > backup_$(date +%Y%m%d).sql
+# Schema-specific backup
+pg_dump --schema=user_management -h your-supabase-host.supabase.co -U postgres database_name > user_management_backup_$(date +%Y%m%d).sql
 
-# Weekly full backup to S3
-aws s3 cp backup_$(date +%Y%m%d).sql s3://nutrifit-backups/user-management/
+# Full database backup (all schemas)
+pg_dump -h your-supabase-host.supabase.co -U postgres database_name > full_backup_$(date +%Y%m%d).sql
 ```
 
 ---
 
 ## 🚀 Deployment Configuration
 
-### Supabase Setup
+### Supabase Schema Setup
 
 ```sql
--- Initial database setup for Supabase
--- Run via Supabase SQL editor or migration files
+-- Supabase setup for user-management schema
+-- Run via Supabase SQL editor
 
--- Enable required extensions
+-- Enable required extensions (global)
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-CREATE EXTENSION IF NOT EXISTS "citext";
 
--- Set up database
-\i 001_enums.sql
-\i 002_tables.sql
-\i 003_indexes.sql
-\i 004_views.sql
-\i 005_rls_policies.sql
+-- Create user_management schema
+CREATE SCHEMA IF NOT EXISTS user_management;
+
+-- Execute schema scripts in order
+\i sql/001_initial_schema.sql
+\i sql/002_auth_tables_fix.sql
 ```
 
 ### Environment Variables
 
 ```bash
-# User Management Service configuration
-DATABASE_URL=postgresql://user:pass@db.supabase.co:5432/nutrifit_user_management
+# User Management Service configuration (schema-based)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+DATABASE_SCHEMA=user_management
 JWT_SECRET=your-super-secret-jwt-key
 JWT_EXPIRY=3600
 REFRESH_TOKEN_EXPIRY=2592000
@@ -565,7 +684,10 @@ FACEBOOK_APP_ID=your-facebook-app-id
 
 ---
 
-**Database Status:** 🚨 **FOUNDATION COMPLETE** - Ready for implementation  
-**Next Steps:** Phase 1 implementation (Basic Auth + JWT)  
-**Critical Priority:** UNBLOCKS all other microservice development  
-**Dependencies:** Supabase project setup, JWT secrets, OAuth credentials
+**Database Status:** ✅ **PRODUCTION READY** - Schema implemented with 001 + 002 scripts  
+**Current Version:** v1.1.0 (002_auth_tables_fix.sql)  
+**Architecture:** Schema-based multi-tenancy on Supabase  
+**Tables:** 9 core tables with complete authentication system  
+**Critical Features:** JWT sessions, password reset, email verification, audit logging, GDPR compliance
+
+**Next Steps:** Integration testing, GraphQL federation setup, mobile app authentication flow

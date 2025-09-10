@@ -14,7 +14,7 @@ La piattaforma NutriFit adotta un'**architettura a microservizi cloud-native** b
 - **Deployment**: Render.com + GitHub Actions CI/CD
 - **AI Integration**: MCP Server per microservizi con logica AI/ML
 
-## 🏛️ Architettura dei Componenti
+## �️ Architettura dei Componenti
 
 ### Gateway Pattern per Mobile Communication
 
@@ -33,6 +33,7 @@ graph TB
     end
     
     subgraph "Microservices Layer"
+        UM[User Management<br/>Service]
         CB[Calorie Balance<br/>Service]
         MT[Meal Tracking<br/>Service] 
         HM[Health Monitor<br/>Service]
@@ -41,11 +42,13 @@ graph TB
     end
     
     subgraph "Data Layer"
-        DB1[(Supabase DB<br/>calorie_balance)]
-        DB2[(Supabase DB<br/>meal_tracking)]
-        DB3[(Supabase DB<br/>health_monitor)]
-        DB4[(Supabase DB<br/>notifications)]
-        DB5[(Supabase DB<br/>ai_coach)]
+        DBS[(Supabase Shared DB<br/>Schema-based)]
+        DB_UM[user_management schema]
+        DB_CB[calorie_balance schema]
+        DB_MT[meal_tracking schema]
+        DB_HM[health_monitor schema]
+        DB_NS[notifications schema]
+        DB_AI[ai_coach schema]
         PUSH[Supabase<br/>Push Notifications]
     end
     
@@ -57,12 +60,14 @@ graph TB
     
     FLUTTER --> GATEWAY
     FLUTTER <--> PUSH
+    GATEWAY --> UM
     GATEWAY --> CB
     GATEWAY --> MT
     GATEWAY --> HM
     GATEWAY --> NS
     GATEWAY --> AI
     
+    N8N --> UM
     N8N --> CB
     N8N --> MT
     N8N --> HM
@@ -71,25 +76,41 @@ graph TB
     N8N --> OFF
     N8N --> HEALTHKIT
     
-    CB --> DB1
-    MT --> DB2
-    HM --> DB3
-    NS --> DB4
-    AI --> DB5
+    UM --> DBS
+    CB --> DBS
+    MT --> DBS
+    HM --> DBS
+    NS --> DBS
+    AI --> DBS
     NS --> PUSH
+    
+    DBS --> DB_UM
+    DBS --> DB_CB
+    DBS --> DB_MT
+    DBS --> DB_HM
+    DBS --> DB_NS
+    DBS --> DB_AI
 ```
 
-### Database Segregation Strategy
+### Database Schema-based Strategy
 
-Ogni microservizio gestisce il proprio database isolato su Supabase Cloud:
+Architettura ottimizzata con database Supabase condiviso e schema dedicati per microservizio:
 
-| Microservizio | Database Supabase | Responsabilità |
-|---------------|-------------------|----------------|
-| **calorie-balance** | `nutrifit_calorie_balance` | Energy balance, goals, BMR calculations |
-| **meal-tracking** | `nutrifit_meal_tracking` | Food data, nutrition facts, meal logs |
-| **health-monitor** | `nutrifit_health_monitor` | HealthKit data, metrics, trends |
-| **notifications** | `nutrifit_notifications` | Push tokens, preferences, templates |
-| **ai-coach** | `nutrifit_ai_coach` | AI conversations, knowledge base, RAG vectors |
+| Microservizio | Schema Supabase | Responsabilità |
+|---------------|------------------|----------------|
+| **user-management** | `user_management` | Authentication, user profiles, sessions, GDPR compliance |
+| **calorie-balance** | `calorie_balance` | Energy balance, goals, BMR calculations |
+| **meal-tracking** | `meal_tracking` | Food data, nutrition facts, meal logs |
+| **health-monitor** | `health_monitor` | HealthKit data, metrics, trends |
+| **notifications** | `notifications` | Push tokens, preferences, templates |
+| **ai-coach** | `ai_coach` | AI conversations, knowledge base, RAG vectors |
+
+**Vantaggi Schema-based Architecture:**
+- ✅ **Cost-effective**: Database Supabase condiviso riduce costi
+- ✅ **Data isolation**: Schema dedicati mantengono separazione logica
+- ✅ **Centralized auth**: user_management schema fornisce autenticazione unificata
+- ✅ **Cross-service queries**: Possibili join cross-schema quando necessari
+- ✅ **Simplified deployment**: Un solo database da configurare e monitorare
 
 In sintesi, l'adozione dei microservizi apporta **maggiore agilità** e
 **manutenibilità**[\[4\]](https://www.atlassian.com/it/microservices/cloud-computing/advantages-of-microservices#:~:text=1)[\[1\]](https://learn.microsoft.com/it-it/azure/architecture/guide/architecture-styles/microservices#:~:text=I%20microservizi%20sono%20componenti%20di,le%20implementazioni%20interne%20nascoste%20da).

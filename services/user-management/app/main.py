@@ -2,6 +2,7 @@
 FastAPI Application Template - Supabase Client
 Service: user-management
 Connection Type: Supabase Client (Real-time, CRUD operations)
+Port: 8001 (as per documentation specification)
 """
 
 from contextlib import asynccontextmanager
@@ -19,6 +20,7 @@ from app.core.config import get_settings
 from app.core.database import create_supabase_client, check_supabase_connection
 from app.core.logging import configure_logging
 from app.api.v1.router import api_router
+from app.api.v1.auth import router as auth_router
 from app.graphql import graphql_router
 from app.core.exceptions import setup_exception_handlers
 
@@ -113,6 +115,7 @@ def create_application() -> FastAPI:
     
     # Routes
     app.include_router(api_router, prefix="/api/v1")
+    app.include_router(auth_router, prefix="/api/v1")
     
     # GraphQL endpoint
     app.include_router(graphql_router, prefix="", tags=["GraphQL"])
@@ -174,7 +177,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
-        port=8000,
+        port=8001,  # Corrected port as per documentation
         reload=settings.environment == "development",
         access_log=False,  # We handle logging in middleware
     )

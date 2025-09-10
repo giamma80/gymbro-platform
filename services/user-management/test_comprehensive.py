@@ -21,9 +21,25 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Test Configuration
-BASE_URL = "http://localhost:8000"
+BASE_URL = "http://localhost:8001"
 TEST_USER_ID = "00000000-0000-0000-0000-000000000001"
 TEST_EMAIL = "test@nutrifit.com"
+
+# Original test data values (for reset)
+ORIGINAL_DATA = {
+    "user_profile": {
+        "display_name": "Test User",
+        "first_name": "Test",
+        "last_name": "User",
+        "timezone": "Europe/Rome",
+        "locale": "it-IT"
+    },
+    "privacy_settings": {
+        "marketing_consent": False,
+        "analytics_consent": False,
+        "consent_level": "minimal"
+    }
+}
 
 
 class TestColors:
@@ -47,6 +63,30 @@ class UserManagementTests:
         self.failed = 0
         self.total = 0
         self.start_time = time.time()
+    
+    async def reset_test_data(self):
+        """Reset test user data to original values."""
+        self.log_info("🔄 Resetting test data to original values...")
+        
+        try:
+            # Reset user profile to original values
+            profile_data = ORIGINAL_DATA["user_profile"]
+            result = self.put(f"/api/v1/users/{TEST_USER_ID}/profile", profile_data)
+            
+            if result["status_code"] != 200:
+                self.log_info(f"⚠️  Could not reset profile: {result.get('error', 'Unknown error')}")
+            
+            # Reset privacy settings to original values  
+            privacy_data = ORIGINAL_DATA["privacy_settings"]
+            result = self.put(f"/api/v1/users/{TEST_USER_ID}/privacy", privacy_data)
+            
+            if result["status_code"] != 200:
+                self.log_info(f"⚠️  Could not reset privacy: {result.get('error', 'Unknown error')}")
+                
+            self.log_info("✅ Test data reset completed")
+            
+        except Exception as e:
+            self.log_info(f"❌ Error resetting test data: {str(e)}")
     
     def log_test(self, test_name: str, passed: bool, details: str = ""):
         """Log test result with colors."""
@@ -404,6 +444,9 @@ class UserManagementTests:
         # Wait for service to be ready
         self.log_info("Waiting for service to be ready...")
         time.sleep(2)
+        
+        # Reset test data to ensure clean state
+        await self.reset_test_data()
         
         # Run database tests
         await self.test_database_repositories()

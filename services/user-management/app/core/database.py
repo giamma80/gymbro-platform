@@ -1,7 +1,7 @@
 """
-Database Configuration - Supabase Client with user_management schema
+Database Configuration - Supabase Client with configurable schema
 Service: user-management
-Schema: user_management (dedicated for cost optimization)
+Schema: configurable via DATABASE_SCHEMA env var (default: user_management)
 """
 
 from typing import Optional, Dict, Any
@@ -14,88 +14,131 @@ from app.core.config import get_settings
 logger = structlog.get_logger()
 settings = get_settings()
 
-# Global Supabase client
+# Global Supabase client (uses anon key for runtime safety)
 _supabase_client: Optional[Client] = None
 
-def create_supabase_client() -> Client:
-    """Create and configure Supabase client."""
+
+def create_supabase_client(use_service_role: bool = False) -> Client:
+    """Create and configure a Supabase client.
+
+    By default this function returns/creates a global client that uses the
+    anon key (safer for runtime). When `use_service_role=True` a new client
+    backed by the service_role key will be created — this is intended for
+    administrative checks (startup readiness) and is NOT stored globally.
+    """
     global _supabase_client
-    
-    if _supabase_client is None:
+
+    if use_service_role:
+        # Create a transient client with the service role key for privileged checks
         try:
-            # Create Supabase client with standard configuration
-            _supabase_client = create_client(
+            svc_client = create_client(
                 settings.supabase_url,
-                settings.supabase_service_key
+                settings.supabase_service_key,
             )
-            
             logger.info(
-                "Supabase client created successfully",
-                service=settings.service_name,
-                url=settings.supabase_url
+                "Supabase service-role client created for admin check",
+                url=settings.supabase_url,
             )
-            
+            return svc_client
         except Exception as e:
             logger.error(
-                "Failed to create Supabase client",
+                "Failed to create service-role supabase client",
                 error=str(e),
-                service=settings.service_name
             )
             raise
-    
+
+    # Use anon client as the global default for day-to-day operations
+    if _supabase_client is None:
+        try:
+            _supabase_client = create_client(
+                settings.supabase_url,
+                settings.supabase_anon_key,
+            )
+            logger.info(
+                "Supabase anon client created successfully",
+                service=settings.service_name,
+                url=settings.supabase_url,
+            )
+        except Exception as e:
+            logger.error(
+                "Failed to create Supabase anon client",
+                error=str(e),
+                service=settings.service_name,
+            )
+            raise
+
     return _supabase_client
 
+
 def get_supabase_client() -> Client:
-    """Get existing Supabase client."""
+    """Get existing Supabase client (anon)."""
     if _supabase_client is None:
         return create_supabase_client()
     return _supabase_client
 
 
-# Schema-aware table access functions for user_management
+# Schema-aware table access functions (deprecated - use SchemaManager)
 def get_users_table():
-    """Get users table from user_management schema."""
-    client = get_supabase_client()
-    return client.table('users')
+    """Get users table from configured schema."""
+    from app.core.schema_tables import get_schema_manager
+    return get_schema_manager().users
 
 
 def get_user_profiles_table():
-    """Get user_profiles table from user_management schema."""
-    client = get_supabase_client()
-    return client.table('user_profiles')
+    """Get user_profiles table from configured schema."""
+    from app.core.schema_tables import get_schema_manager
+    return get_schema_manager().user_profiles
 
 
 def get_privacy_settings_table():
-    """Get privacy_settings table from user_management schema."""
-    client = get_supabase_client()
-    return client.table('privacy_settings')
+    """Get privacy_settings table from configured schema."""
+    from app.core.schema_tables import get_schema_manager
+    return get_schema_manager().privacy_settings
 
 
 def get_user_service_context_view():
-    """Get user_service_context view from user_management schema."""
-    client = get_supabase_client()
-    return client.table('user_service_context')
+    """Get user_service_context view from configured schema."""
+    from app.core.schema_tables import get_schema_manager
+    return get_schema_manager().user_service_context
 
+ 
 async def check_supabase_connection() -> bool:
-    """Check Supabase connectivity using users table."""
+    """Check Supabase connectivity using a temporary service-role client.
+
+    We use the service_role key only for this privileged startup check so
+    the application (which uses the anon client) doesn't fail due to
+    permission issues when the database/schema exists but table privileges
+    haven't been granted to anon yet.
+    """
     try:
-        client = get_supabase_client()
-        
-        # Try a simple query on our users table to test connection
-        result = client.table("users").select("id").limit(1).execute()
-        
-        logger.info("Supabase connection check passed", schema="user_management")
+        # Create a transient, privileged client for the check
+        svc_client = create_supabase_client(use_service_role=True)
+
+        # Use a SchemaManager bound to the service client so we don't
+        # replace the global schema manager / client used by runtime code.
+        from app.core.schema_tables import SchemaManager
+        schema_manager = SchemaManager(svc_client)
+
+        # Try a simple query on our users table to test access to schema/tables
+        _ = schema_manager.users.select("id").limit(1).execute()
+
+        logger.info(
+            "Supabase connection check passed",
+            schema=schema_manager.schema_name,
+        )
         return True
-        
+
     except APIError as e:
-        # If it's just a schema issue but connection works, that's OK
+        # If it's just a schema cache/info message we still consider it OK
         if "schema cache" in str(e):
-            logger.info("Supabase connection check passed (schema cache message is OK)")
+            logger.info(
+                "Supabase connection check passed (schema cache message is OK)"
+            )
             return True
-        
+
         logger.error("Supabase connection check failed", error=str(e))
         return False
-        
+
     except Exception as e:
         logger.error("Supabase connection check failed", error=str(e))
         return False

@@ -77,6 +77,7 @@ sqlalchemy.url = "postgresql+asyncpg://postgres:password@localhost:5432/test_db"
 
 ```python
 from pydantic_settings import BaseSettings
+from pydantic import Field
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from typing import Optional
@@ -92,6 +93,13 @@ class Settings(BaseSettings):
     database_pool_timeout: int = 30
     database_pool_recycle: int = 3600
     database_pool_pre_ping: bool = True
+    
+    # 🎯 Schema Management Configuration
+    database_schema: str = Field(
+        default="public", 
+        env="DATABASE_SCHEMA",
+        description="Schema SQL dedicato per questo microservizio"
+    )
     
     # 🚀 FastAPI Configuration
     app_name: str = "NutriFit {Service Name} Service"
@@ -134,6 +142,11 @@ class Settings(BaseSettings):
 
 # Global settings instance
 settings = Settings()
+
+# Settings getter for schema management
+def get_settings() -> Settings:
+    """Ritorna istanza configurazione per SchemaManager"""
+    return settings
 ```
 
 # 🗄️ Database Client Template - database.py
@@ -343,6 +356,134 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Database dependency for FastAPI endpoints"""
     async for session in db_service.get_session():
         yield session
+```
+
+# 🎯 Schema Management Template - schema_tables.py
+
+```python
+"""
+Schema Management Pattern per {SERVICE_NAME} - PostgreSQL Direct
+Gestisce l'accesso alle tabelle tramite schema configurabile via environment.
+Utilizzato per microservizi con connessione PostgreSQL diretta.
+
+IMPORTANTE: Sostituire {SERVICE_NAME} e le tabelle example con le tabelle reali del tuo microservizio.
+"""
+
+from config import get_settings
+from sqlalchemy import MetaData, Table
+from typing import Dict, Any
+
+class SchemaManager:
+    """
+    Gestisce l'accesso alle tabelle tramite schema configurabile.
+    Ogni microservizio utilizza uno schema SQL dedicato per isolamento dati.
+    Versione per PostgreSQL Direct con SQLAlchemy.
+    """
+    
+    def __init__(self):
+        self.schema = get_settings().database_schema
+        self.metadata = MetaData(schema=self.schema)
+    
+    # ===============================================
+    # SOSTITUIRE CON LE TABELLE DEL TUO MICROSERVIZIO
+    # ===============================================
+    
+    @property
+    def main_table(self):
+        """Tabella principale del microservizio"""
+        return f"{self.schema}.main_table"
+    
+    @property 
+    def analytics_data(self):
+        """Tabella per dati analytics"""
+        return f"{self.schema}.analytics_data"
+    
+    @property
+    def calculations(self):
+        """Tabelle per calcoli e metriche"""
+        return f"{self.schema}.calculations"
+    
+    @property
+    def vector_embeddings(self):
+        """Tabella per vector embeddings (AI services)"""
+        return f"{self.schema}.vector_embeddings"
+    
+    # ===============================================
+    # AGGIUNGI QUI LE PROPRIETÀ PER LE TUE TABELLE
+    # ===============================================
+    
+    # @property
+    # def your_table_name(self):
+    #     """Descrizione della tabella"""
+    #     return f"{self.schema}.your_table_name"
+    
+    def get_qualified_table_name(self, table_name: str) -> str:
+        """Ritorna nome tabella qualificato con schema"""
+        return f"{self.schema}.{table_name}"
+    
+    def get_query_with_schema(self, base_query: str) -> str:
+        """Sostituisce placeholder {schema} nella query"""
+        return base_query.replace("{schema}", self.schema)
+
+# Istanza globale riutilizzabile in tutto il microservizio
+schema_manager = SchemaManager()
+
+# ===============================================
+# HELPER FUNCTIONS PER BACKWARD COMPATIBILITY
+# ===============================================
+
+def get_main_table_name() -> str:
+    """
+    Ottiene nome qualificato tabella principale.
+    Utilizzare nelle query SQLAlchemy: text(f"SELECT * FROM {get_main_table_name()}")
+    """
+    return schema_manager.main_table
+
+def get_analytics_data_table_name() -> str:
+    """
+    Ottiene nome qualificato tabella analytics_data.
+    Utilizzare nelle query SQLAlchemy invece di hardcoded table name.
+    """
+    return schema_manager.analytics_data
+
+def get_calculations_table_name() -> str:
+    """
+    Ottiene nome qualificato tabella calculations.
+    Utilizzare nelle query SQLAlchemy invece di hardcoded table name.
+    """
+    return schema_manager.calculations
+
+def get_vector_embeddings_table_name() -> str:
+    """
+    Ottiene nome qualificato tabella vector_embeddings.
+    Utilizzare nelle query SQLAlchemy per servizi AI.
+    """
+    return schema_manager.vector_embeddings
+
+def execute_schema_query(base_query: str, params: Dict[str, Any] = None) -> str:
+    """
+    Helper per eseguire query con sostituzione schema automatica.
+    
+    Args:
+        base_query: Query con placeholder {schema}
+        params: Parametri aggiuntivi per la query
+    
+    Returns:
+        Query con schema sostituito
+        
+    Example:
+        query = "SELECT * FROM {schema}.users WHERE active = :active"
+        final_query = execute_schema_query(query, {"active": True})
+    """
+    return schema_manager.get_query_with_schema(base_query)
+
+# ===============================================
+# AGGIUNGI QUI LE HELPER FUNCTIONS PER LE TUE TABELLE  
+# ===============================================
+
+# def get_your_table_name_table() -> str:
+#     """Ottiene nome qualificato per your_table_name"""
+#     return schema_manager.your_table_name
 ```
 
 # 🔧 Models Template - models.py
@@ -559,6 +700,9 @@ DATABASE_MAX_OVERFLOW=30
 DATABASE_POOL_TIMEOUT=30
 DATABASE_POOL_RECYCLE=3600
 DATABASE_POOL_PRE_PING=true
+
+# 🎯 Schema Management Configuration
+DATABASE_SCHEMA=your_service_schema_name    # es. calorie_balance, ai_coach, etc.
 
 # 🔐 Security
 SECRET_KEY=your-super-secret-key-here

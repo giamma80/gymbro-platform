@@ -16,6 +16,12 @@ Implementazione completa dei **6 microservizi Python 3.11** per la piattaforma N
 - 🔄 **Supabase Client**: user-management, meal-tracking, health-monitor, notifications
 - ⚡ **PostgreSQL Direct**: calorie-balance, ai-coach
 
+**Schema Management Pattern:**
+- 🎯 **Schema SQL Dedicato**: Ogni microservizio opera su schema isolato
+- ⚙️ **Configurazione via .env**: `DATABASE_SCHEMA=nome_schema_microservizio`
+- 🏗️ **SchemaManager Class**: Centralizza accesso a tabelle con type-safety
+- 🔄 **Backward Compatibility**: Helper functions per codice esistente
+
 ---
 
 ## 🚀 Template di Sviluppo - Guida Rapida per Sviluppatori
@@ -27,6 +33,7 @@ Tutti i template per sviluppare microservizi si trovano in **`templates/microser
 ```
 templates/microservice-template/
 ├── 📋 DATABASE_CONNECTION_STRATEGY.md    # Strategia ibrida database
+├── 🎯 SCHEMA_MANAGEMENT_PATTERN.md       # Pattern gestione schema SQL dedicato
 ├── 📊 API-roadmap-template.md            # Template roadmap API 
 ├── 🔄 supabase-client-template/          # Template per servizi real-time
 │   └── COMPLETE_TEMPLATE.md              # Setup completo Supabase Client
@@ -129,16 +136,22 @@ graph TB
 
 ### Database Segregation su Supabase
 
-**Principio**: Ogni microservizio ha il proprio database isolato su Supabase Cloud per garantire autonomia completa e evitare coupling. **User Management Service** centralizza l'autenticazione per evitare replicazione user tables.
+**Principio**: Ogni microservizio ha il proprio schema SQL isolato su Supabase per garantire autonomia completa e evitare coupling. **User Management Service** centralizza l'autenticazione per evitare replicazione user tables.
 
-| Microservizio | Database Supabase | Schema Domain | MCP Server | Ruolo |
-|---------------|-------------------|---------------|------------|-------|
-| **user-management** | `nutrifit_user_management` | **AUTH CENTRALIZZATA**: Users, profiles, JWT, OAuth | ❌ Solo auth | **🚨 CORE - Autenticazione centralizzata** |
-| **calorie-balance** | `nutrifit_calorie_balance` | Energy metabolism, goals, BMR | ✅ Per AI workflows | Business logic |
-| **meal-tracking** | `nutrifit_meal_tracking` | Food data, nutrition, meals | ✅ Per food analysis | Business logic |
-| **health-monitor** | `nutrifit_health_monitor` | HealthKit data, metrics | ❌ Solo data sync | Business logic |
-| **notifications** | `nutrifit_notifications` | Push tokens, templates | ❌ Solo messaging | Business logic |
-| **ai-coach** | `nutrifit_ai_coach` | Conversations, RAG vectors | ✅ Primary AI service | Business logic |
+**🎯 Schema Management Pattern Implementato:**
+- **Schema SQL Dedicato**: Ogni microservizio utilizza uno schema specifico (es. `user_management`, `calorie_balance`)
+- **Configurazione via Environment**: `DATABASE_SCHEMA=nome_schema` nel file `.env`
+- **SchemaManager Class**: Centralizza accesso tabelle con type-safety e backward compatibility
+- **Helper Functions**: Mantengono compatibilità con codice esistente
+
+| Microservizio | Schema SQL | Connection Type | MCP Server | Ruolo |
+|---------------|------------|----------------|------------|-------|
+| **user-management** | `user_management` | **Supabase Client**: Auth, real-time | ❌ Solo auth | **🚨 CORE - Autenticazione centralizzata** |
+| **calorie-balance** | `calorie_balance` | **PostgreSQL Direct**: Analytics, performance | ✅ Per AI workflows | Business logic |
+| **meal-tracking** | `meal_tracking` | **Supabase Client**: Real-time food sync | ✅ Per food analysis | Business logic |
+| **health-monitor** | `health_monitor` | **Supabase Client**: HealthKit real-time | ❌ Solo data sync | Business logic |
+| **notifications** | `notifications` | **Supabase Client**: Push real-time | ❌ Solo messaging | Business logic |
+| **ai-coach** | `ai_coach` | **PostgreSQL Direct**: Vector operations | ✅ Primary AI service | Business logic |
 
 ---
 
@@ -185,6 +198,141 @@ aiofiles = "^23.2.1"              # Async file operations
 mcp = "^1.0.0"                    # MCP server implementation
 openai = "^1.3.0"                 # OpenAI API client (se needed)
 strawberry-graphql = "^0.211.0"   # GraphQL per FastAPI, supporto federation
+```
+
+---
+
+## 🎯 Schema Management Pattern - Implementazione Dettagliata
+
+La **gestione degli schema SQL dedicati** per microservizio è implementata tramite un pattern centralizzato che garantisce isolamento dei dati e configurabilità tramite environment.
+
+### Struttura File Core
+
+```
+app/
+├── core/
+│   ├── config.py              # Configurazione con database_schema
+│   ├── database.py            # Connessione database
+│   └── schema_tables.py       # SchemaManager e helper functions
+├── infrastructure/
+│   └── repositories/          # Repository che usano schema_tables
+└── api/
+    └── routers/              # Router che usano repository
+```
+
+### 1. SchemaManager Class (`app/core/schema_tables.py`)
+
+```python
+from app.core.config import get_settings
+
+class SchemaManager:
+    """Gestisce l'accesso alle tabelle tramite schema configurabile"""
+    
+    def __init__(self):
+        self.schema = get_settings().database_schema
+    
+    # Proprietà per ogni tabella del microservizio
+    @property
+    def auth_profiles(self):
+        return f"{self.schema}.auth_profiles"
+    
+    @property
+    def auth_sessions(self):
+        return f"{self.schema}.auth_sessions"
+    
+    @property
+    def auth_permissions(self):
+        return f"{self.schema}.auth_permissions"
+    
+    # Aggiungi proprietà per tutte le tabelle specifiche
+
+# Istanza globale riutilizzabile
+schema_manager = SchemaManager()
+
+# Helper functions per backward compatibility
+def get_auth_profiles_table(supabase_client):
+    """Ottiene tabella auth_profiles con schema configurato"""
+    return supabase_client.table(schema_manager.auth_profiles)
+
+def get_auth_sessions_table(supabase_client):
+    """Ottiene tabella auth_sessions con schema configurato"""
+    return supabase_client.table(schema_manager.auth_sessions)
+
+def get_auth_permissions_table(supabase_client):
+    """Ottiene tabella auth_permissions con schema configurato"""
+    return supabase_client.table(schema_manager.auth_permissions)
+```
+
+### 2. Configurazione Schema (`app/core/config.py`)
+
+```python
+from pydantic import Field
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    # ... altre configurazioni
+    database_schema: str = Field(default="public", env="DATABASE_SCHEMA")
+    
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
+        case_sensitive = False
+```
+
+### 3. File Environment `.env`
+
+```bash
+# Database Schema Configuration
+DATABASE_SCHEMA=user_management    # Schema dedicato del microservizio
+SUPABASE_URL=your_supabase_url
+SUPABASE_KEY=your_supabase_key
+```
+
+### 4. Implementazione Repository
+
+```python
+from app.core.schema_tables import get_auth_profiles_table, get_auth_sessions_table
+
+class AuthRepository:
+    """Repository per operazioni di autenticazione"""
+    
+    def __init__(self, supabase_client):
+        self.supabase = supabase_client
+        # Utilizza helper function per ottenere tabella con schema
+        self.profiles_table = get_auth_profiles_table(supabase_client)
+        self.sessions_table = get_auth_sessions_table(supabase_client)
+    
+    async def create_profile(self, profile_data):
+        """Crea nuovo profilo utente"""
+        result = self.profiles_table.insert(profile_data).execute()
+        return result.data[0] if result.data else None
+    
+    async def get_user_session(self, session_id: str):
+        """Recupera sessione utente attiva"""
+        result = self.sessions_table.select("*").eq("id", session_id).execute()
+        return result.data[0] if result.data else None
+```
+
+### 5. Vantaggi della Soluzione
+
+- **🎯 Isolamento Dati**: Ogni microservizio opera su schema dedicato
+- **⚙️ Configurabilità**: Schema definito tramite variabile environment
+- **🔄 Backward Compatibility**: Helper functions mantengono compatibilità codice esistente
+- **🏗️ Centralizzazione**: Unico punto di controllo per nomi tabelle
+- **🛡️ Type Safety**: Proprietà Python per accesso type-safe alle tabelle
+- **🧪 Testabilità**: Facile switch tra schema test/dev/prod
+
+### 6. Best Practices per Nuovi Microservizi
+
+1. **Definire schema specifico**: `DATABASE_SCHEMA=nome_microservizio`
+2. **Estendere SchemaManager**: Aggiungere proprietà per tabelle del microservizio  
+3. **Creare helper functions**: Per ogni tabella utilizzata
+4. **Aggiornare repository**: Utilizzare sempre helper functions, mai hardcoded table names
+5. **Testare con schema dedicato**: Prima del deploy in produzione
+
+Questa architettura garantisce **scalabilità**, **manutenibilità** e **isolamento dei dati** per l'intera piattaforma a microservizi.
+
+---
 
 ## GraphQL Federation con Strawberry
 

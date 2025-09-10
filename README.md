@@ -18,11 +18,12 @@
 ### 🏗️ Architettura Tecnica
 
 **Backend Microservizi (Python 3.11 + FastAPI)**:
-1. **Calorie Balance Service** - Metabolismo energetico e bilanciamento
-2. **Meal Tracking Service** - Tracking pasti e riconoscimento food  
-3. **Health Monitor Service** - Sync HealthKit e quality scoring
-4. **Notifications Service** - Notifiche smart e coaching prompts
-5. **AI Nutrition Coach Service** - Sistema RAG e AI conversazionale
+1. **User Management Service** - Autenticazione centralizzata, profili utente, GDPR compliance
+2. **Calorie Balance Service** - Metabolismo energetico e bilanciamento
+3. **Meal Tracking Service** - Tracking pasti e riconoscimento food  
+4. **Health Monitor Service** - Sync HealthKit e quality scoring
+5. **Notifications Service** - Notifiche smart e coaching prompts
+6. **AI Nutrition Coach Service** - Sistema RAG e AI conversazionale
 
 - **API Gateway GraphQL Federation** - Aggregazione microservizi tramite Apollo Federation e Strawberry GraphQL ([vedi dettagli](docs/architettura.md#api-gateway-e-graphql-federation))
 
@@ -39,6 +40,7 @@
 La documentazione tecnica è organizzata nella [cartella docs/](docs/):
 
 #### Database Documentation
+- **[🗄️ User Management Database](docs/databases/user-management-db.md)** - Authentication schema, user profiles, sessions, GDPR compliance
 - **[🗄️ Calorie Balance Database](docs/databases/calorie-balance-db.md)** - Event-driven schema, 5-level temporal analytics, mobile optimization
 - **[🗄️ Database Architecture & Models](docs/database-architecture.md)** - Struttura, ER diagrammi, viste aggregate e datamodel di tutti i microservizi
 

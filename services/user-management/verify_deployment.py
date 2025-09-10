@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 """
-Verify User Management Database Deployment
-==========================================
-
-This script verifies that the user_management schema has been properly
-deployed to Supabase and all components are working correctly.
+User Management Service - Deployment Verification Script
+Verifies database schema setup using configurable schema name.
 """
 
 import os
 import sys
-from dotenv import load_dotenv
 from supabase import create_client, Client
+from dotenv import load_dotenv
+
+# Add the app directory to sys.path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'app'))
+
+from app.core.config import get_settings
+from app.core.schema_tables import get_schema_manager
+
 
 def main():
     """Main verification function"""
@@ -19,6 +23,13 @@ def main():
     
     # Load environment
     load_dotenv()
+    
+    # Get settings to check schema configuration
+    try:
+        settings = get_settings()
+        print(f"📋 Schema configured: {settings.database_schema}")
+    except Exception as e:
+        print(f"⚠️ Could not load settings: {e}")
     
     # Initialize Supabase client
     try:
@@ -39,28 +50,36 @@ def main():
     # Test 1: Check if users table exists and has data
     try:
         print("\n📊 Testing users table...")
-        result = supabase.table('users').select('id,email,username,status').execute()
+        schema_manager = get_schema_manager(supabase)
+        result = schema_manager.users.select(
+            'id,email,username,status'
+        ).execute()
         print(f"✅ Users table: {len(result.data)} records found")
         
         if result.data:
             print("   Sample users:")
             for user in result.data[:3]:  # Show first 3
-                print(f"   - {user.get('email')} ({user.get('status')})")
+                email = user.get('email')
+                status = user.get('status')
+                print(f"   - {email} ({status})")
                 
     except Exception as e:
         print(f"❌ Users table test failed: {e}")
-        print("   Note: If schema uses 'user_management.users', manual verification needed")
     
     # Test 2: Check user profiles
     try:
         print("\n👤 Testing user_profiles table...")
-        result = supabase.table('user_profiles').select('user_id,display_name,first_name').execute()
+        result = schema_manager.user_profiles.select(
+            'user_id,display_name,first_name'
+        ).execute()
         print(f"✅ User profiles table: {len(result.data)} records found")
         
         if result.data:
             print("   Sample profiles:")
             for profile in result.data[:3]:
-                print(f"   - {profile.get('display_name')} ({profile.get('first_name')})")
+                display = profile.get('display_name')
+                first = profile.get('first_name')
+                print(f"   - {display} ({first})")
                 
     except Exception as e:
         print(f"❌ User profiles table test failed: {e}")
@@ -68,11 +87,16 @@ def main():
     # Test 3: Check privacy settings
     try:
         print("\n🔒 Testing privacy_settings table...")
-        result = supabase.table('privacy_settings').select('user_id,data_processing_consent,analytics_consent').execute()
+        result = schema_manager.privacy_settings.select(
+            'user_id,data_processing_consent,analytics_consent'
+        ).execute()
         print(f"✅ Privacy settings table: {len(result.data)} records found")
         
         if result.data:
-            consent_count = sum(1 for p in result.data if p.get('data_processing_consent'))
+            consent_count = sum(
+                1 for p in result.data 
+                if p.get('data_processing_consent')
+            )
             print(f"   - {consent_count} users with data processing consent")
             
     except Exception as e:
@@ -81,11 +105,15 @@ def main():
     # Test 4: Check sample data
     try:
         print("\n🧪 Testing sample data...")
-        result = supabase.table('users').select('*').eq('email', 'test@nutrifit.com').execute()
+        result = schema_manager.users.select('*').eq(
+            'email', 'test@nutrifit.com'
+        ).execute()
         
         if result.data:
             user = result.data[0]
-            print(f"✅ Test user found: {user.get('username')} ({user.get('status')})")
+            username = user.get('username')
+            status = user.get('status')
+            print(f"✅ Test user found: {username} ({status})")
         else:
             print("⚠️  No test user found - may need manual schema deployment")
             
@@ -99,6 +127,7 @@ def main():
     print("\nSee DEPLOYMENT_GUIDE.md for detailed instructions.")
     
     return True
+
 
 if __name__ == "__main__":
     success = main()

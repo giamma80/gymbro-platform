@@ -2322,4 +2322,4 @@ background = ["celery", "redis"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "6b9eb45d4b33062ea40a93b07f1ce64e2e12f6e1c979cd95746f38aecfd947a5"
+content-hash = "62dc80141a3af0419eff9c63078c0157e2bebeb8d04aec0b29a6327a4526d8b8"

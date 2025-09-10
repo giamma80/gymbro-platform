@@ -15,9 +15,9 @@ fi
 
 # Check if the service is running
 echo "🔍 Checking if service is running..."
-if ! curl -s http://localhost:8000/health > /dev/null; then
-    echo "❌ Error: Service not running on localhost:8000"
-    echo "💡 Start the service with: poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+if ! curl -s http://localhost:8001/health > /dev/null; then
+    echo "❌ Error: Service not running on localhost:8001"
+    echo "💡 Start the service with: ./start-dev.sh"
     exit 1
 fi
 

@@ -5,7 +5,7 @@ import requests
 import json
 import time
 
-BASE_URL = "http://localhost:8000"
+BASE_URL = "http://localhost:8001"
 GRAPHQL_ENDPOINT = f"{BASE_URL}/graphql"
 TEST_USER_ID = "00000000-0000-0000-0000-000000000001"
 

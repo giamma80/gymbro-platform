@@ -10,7 +10,7 @@ from uuid import UUID
 import structlog
 from datetime import datetime
 
-from app.core.database import get_users_table, get_user_profiles_table, get_privacy_settings_table, get_user_service_context_view
+from app.core.schema_tables import get_schema_manager
 from app.domain.entities import User, UserProfile, PrivacySettings, UserServiceContext, UserStatus, GenderType
 
 logger = structlog.get_logger()
@@ -20,7 +20,8 @@ class UserRepository:
     """Repository for User entity operations."""
     
     def __init__(self):
-        self.table = get_users_table()
+        self.schema_manager = get_schema_manager()
+        self.table = self.schema_manager.users
     
     async def create(self, user: User) -> User:
         """Create a new user."""
@@ -177,7 +178,8 @@ class UserProfileRepository:
     """Repository for UserProfile entity operations."""
     
     def __init__(self):
-        self.table = get_user_profiles_table()
+        self.schema_manager = get_schema_manager()
+        self.table = self.schema_manager.user_profiles
     
     async def create(self, profile: UserProfile) -> UserProfile:
         """Create a new user profile."""
@@ -274,7 +276,8 @@ class PrivacySettingsRepository:
     """Repository for PrivacySettings entity operations."""
     
     def __init__(self):
-        self.table = get_privacy_settings_table()
+        self.schema_manager = get_schema_manager()
+        self.table = self.schema_manager.privacy_settings
     
     async def create(self, settings: PrivacySettings) -> PrivacySettings:
         """Create new privacy settings."""
@@ -363,7 +366,8 @@ class UserServiceContextRepository:
     """Repository for UserServiceContext view operations."""
     
     def __init__(self):
-        self.view = get_user_service_context_view()
+        self.schema_manager = get_schema_manager()
+        self.view = self.schema_manager.user_service_context
     
     async def get_by_user_id(self, user_id: UUID) -> Optional[UserServiceContext]:
         """Get complete user service context by user ID."""

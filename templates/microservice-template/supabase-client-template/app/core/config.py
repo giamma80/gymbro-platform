@@ -28,21 +28,31 @@ class Settings(BaseSettings):
     supabase_anon_key: str = Field(..., description="Supabase anon key for client operations")
     supabase_service_key: str = Field(..., description="Supabase service key for server operations")
     
+    # Database schema configuration
+    database_schema: str = Field(default="{service-name}", description="Database schema name")
+    
     # Security
     secret_key: str = Field(..., description="Secret key for JWT signing")
     jwt_algorithm: str = Field(default="HS256", description="JWT algorithm")
     jwt_expiration_hours: int = Field(default=24, description="JWT token expiration")
     
     # CORS configuration
-    allowed_origins: List[str] = Field(
-        default=[
-            "http://localhost:3000",     # Flutter web debug
-            "capacitor://localhost",     # Capacitor iOS
-            "https://localhost",         # Capacitor Android
-            "http://localhost:8080",     # Local development
-        ],
-        description="Allowed CORS origins"
+    allowed_origins: str = Field(
+        default=(
+            "http://localhost:3000,capacitor://localhost,"
+            "https://localhost,http://localhost:8080"
+        ),
+        description="Comma-separated list of allowed CORS origins"
     )
+    
+    @property
+    def allowed_origins_list(self) -> List[str]:
+        """Parse allowed origins from comma-separated string."""
+        return [
+            origin.strip()
+            for origin in self.allowed_origins.split(",")
+            if origin.strip()
+        ]
     
     # Rate limiting
     rate_limit_requests_per_minute: int = Field(default=60, description="Rate limit per user")

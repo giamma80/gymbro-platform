@@ -86,6 +86,38 @@ quality-check: ## Run code quality checks (linting, formatting, security)
 	@cd mobile && flutter format --set-exit-if-changed .
 	@echo "✅ Quality checks passed!"
 
+# Microservice Generation
+new-service: ## Generate new microservice (usage: make new-service SERVICE=name TEMPLATE=supabase|postgresql)
+	@if [ -z "$(SERVICE)" ] || [ -z "$(TEMPLATE)" ]; then \
+		echo "❌ Usage: make new-service SERVICE=my-service TEMPLATE=supabase"; \
+		echo "📋 Available templates: supabase, postgresql"; \
+		exit 1; \
+	fi
+	@echo "🚀 Generating new microservice: $(SERVICE) with $(TEMPLATE) template..."
+	@chmod +x scripts/generate-microservice.sh
+	@./scripts/generate-microservice.sh $(SERVICE) $(TEMPLATE)
+	@echo "✅ Microservice $(SERVICE) generated successfully!"
+	@echo "📍 Next steps:"
+	@echo "  1. cd services/$(SERVICE)"
+	@echo "  2. cp .env.example .env"
+	@echo "  3. Edit .env with your configuration"
+	@echo "  4. Start developing!"
+
+new-service-help: ## Show help for microservice generation
+	@echo "🚀 Microservice Generator Help"
+	@echo ""
+	@echo "📋 Usage:"
+	@echo "  make new-service SERVICE=my-service TEMPLATE=supabase"
+	@echo ""
+	@echo "📝 Available templates:"
+	@echo "  • supabase     - For real-time services (auth, notifications, real-time data)"
+	@echo "  • postgresql   - For analytics services (complex queries, ML, high performance)"
+	@echo ""
+	@echo "📝 Examples:"
+	@echo "  make new-service SERVICE=meal-tracking TEMPLATE=supabase"
+	@echo "  make new-service SERVICE=analytics-engine TEMPLATE=postgresql"
+	@echo "  make new-service SERVICE=notifications TEMPLATE=supabase"
+
 # Database Management
 db-migrate: ## Run database migrations for all services
 	@echo "🗃️ Running database migrations..."

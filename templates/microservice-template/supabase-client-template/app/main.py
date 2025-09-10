@@ -19,6 +19,7 @@ from app.core.config import get_settings
 from app.core.database import create_supabase_client, check_supabase_connection
 from app.core.logging import configure_logging
 from app.api.v1.router import api_router
+# from app.api.v1.auth import router as auth_router  # Uncomment if auth is needed
 from app.graphql import graphql_router
 from app.core.exceptions import setup_exception_handlers
 

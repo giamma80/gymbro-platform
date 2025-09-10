@@ -7,6 +7,7 @@ Questa cartella contiene tutti gli script di utilità per la gestione e manutenz
 ```
 scripts/
 ├── README.md                    # Questo file
+├── generate-microservice.sh     # 🚀 Generatore microservizi automatico
 ├── docker-cleanup/              # 🧹 Script pulizia Docker
 │   ├── README.md               # Documentazione dettagliata
 │   ├── docker-cleanup.sh       # Pulizia intelligente
@@ -18,6 +19,27 @@ scripts/
 ```
 
 ## 🚀 Script Disponibili
+
+### 🚀 Generatore Microservizi
+Script automatico per creare nuovi microservizi da template:
+- **Template Supabase**: Per servizi real-time (auth, notifiche, dati live)
+- **Template PostgreSQL**: Per servizi analytics (query complesse, ML, performance)
+- **Configurazione automatica**: .env, Poetry, GraphQL Federation
+- **Validazione**: Test automatici post-generazione
+
+```bash
+# Creazione nuovo microservizio
+./scripts/generate-microservice.sh <service-name> <template-type>
+
+# Esempi
+./scripts/generate-microservice.sh meal-tracking supabase
+./scripts/generate-microservice.sh analytics-engine postgresql
+./scripts/generate-microservice.sh notifications supabase
+```
+
+📋 **Template disponibili**:
+- `supabase` - Servizi real-time (auth, notifiche, dati live)
+- `postgresql` - Servizi analytics (query complesse, ML, performance)
 
 ### 🧹 Docker Cleanup
 Utilities per la pulizia e ottimizzazione di Docker:

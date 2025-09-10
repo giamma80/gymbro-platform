@@ -36,6 +36,29 @@ class Settings(BaseSettings):
     jwt_algorithm: str = Field(default="HS256", description="JWT algorithm")
     jwt_expiration_hours: int = Field(default=24, description="JWT token expiration")
     
+    # JWT specific settings
+    JWT_SECRET_KEY: str = Field(
+        default="",
+        description="JWT secret key"
+    )
+    JWT_ALGORITHM: str = Field(
+        default="HS256",
+        description="JWT algorithm"
+    )
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(
+        default=60,
+        description="Access token expiration in minutes"
+    )
+    JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = Field(
+        default=30,
+        description="Refresh token expiration in days"
+    )
+    
+    def __post_init__(self):
+        """Set JWT_SECRET_KEY from secret_key if not provided."""
+        if not self.JWT_SECRET_KEY:
+            self.JWT_SECRET_KEY = self.secret_key
+    
     # CORS configuration
     allowed_origins: str = Field(
         default=(

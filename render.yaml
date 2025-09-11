@@ -32,32 +32,13 @@ services:
         - services/user-management/**
         - render.yaml
     
-    # Environment Variables (da configurare nel dashboard)
+    # Environment Variables - Caricato come Secret File
     envVars:
+      # Solo variabili non sensibili in chiaro
       - key: ENVIRONMENT
         value: production
-      - key: DEBUG
-        value: "false"
-      - key: LOG_LEVEL  
-        value: INFO
       - key: PORT
         value: "8000"
-      
-      # Supabase (configurare nel dashboard Render)
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_ANON_KEY
-        sync: false  
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      
-      # JWT
-      - key: JWT_SECRET
-        generateValue: true
-      - key: JWT_ALGORITHM
-        value: HS256
-      
-      # Python optimizations
       - key: PYTHONDONTWRITEBYTECODE
         value: "1"
       - key: PYTHONUNBUFFERED

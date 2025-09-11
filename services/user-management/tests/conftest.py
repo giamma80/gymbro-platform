@@ -1,8 +1,9 @@
 """Pytest configuration and fixtures for user-management service."""
 
 import os
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -17,7 +18,7 @@ def mock_env_vars():
         "ENVIRONMENT": "test",
         "DEBUG": "true",
     }
-    
+
     with patch.dict(os.environ, test_env):
         yield
 
@@ -26,4 +27,5 @@ def mock_env_vars():
 def test_settings():
     """Provide test settings instance."""
     from app.core.config import Settings
+
     return Settings()

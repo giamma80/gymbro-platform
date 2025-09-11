@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y \
 RUN groupadd --gid 1000 appuser \
     && useradd --uid 1000 --gid appuser --shell /bin/bash --create-home appuser
 
-# Install Poetry
+# Install Poetry version 1.6.1
 ENV POETRY_VERSION=1.6.1
 RUN pip install poetry==$POETRY_VERSION
 

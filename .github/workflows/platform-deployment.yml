@@ -204,16 +204,8 @@ jobs:
     steps:
       - name: Deploy to Render (Staging)
         run: |
-          echo "🚀 Deploying to Render Staging..."
-          echo "Using API Key: ${RENDER_API_KEY:0:10}..." # Debug: mostra primi 10 caratteri
-          response=$(curl -X POST \
-            "https://api.render.com/v1/services/${{ secrets.RENDER_STAGING_SERVICE_ID }}/deploys" \
-            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d '{}')
-          echo "Deploy triggered: $response"
-        env:
-          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          echo "🚀 Triggering Render Staging Deploy via Webhook..."
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}"
 
   # ====================================
   # Deploy to Production
@@ -230,16 +222,8 @@ jobs:
     steps:
       - name: Deploy to Render (Production)
         run: |
-          echo "🚀 Deploying to Render Production..."
-          echo "Using API Key: ${RENDER_API_KEY:0:10}..." # Debug: mostra primi 10 caratteri
-          response=$(curl -X POST \
-            "https://api.render.com/v1/services/${{ secrets.RENDER_PRODUCTION_SERVICE_ID }}/deploys" \
-            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d '{}')
-          echo "Deploy triggered: $response"
-        env:
-          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          echo "🚀 Triggering Render Deploy via Webhook..."
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
       
       - name: Create GitHub Release
         if: github.ref == 'refs/heads/main'

@@ -1,0 +1,224 @@
+# ===============================================
+# NutriFit Platform - Render.com Configuration
+# ===============================================
+# Complete platform deployment for all microservices
+
+services:
+  # ====================================
+  # User Management Service
+  # ====================================
+  - type: web
+    name: nutrifit-user-management
+    runtime: docker
+    repo: https://github.com/giamma80/gymbro-platform.git
+    rootDir: services/user-management
+    dockerfilePath: ./Dockerfile
+    
+    # Build Configuration
+    buildCommand: ""  # Docker handles the build
+    
+    # Runtime Configuration
+    plan: starter
+    region: oregon
+    branch: main
+    
+    # Health Check
+    healthCheckPath: /health
+    autoDeploy: true
+    
+    # Build Filter - Only deploy when this service changes
+    buildFilter:
+      paths:
+        - services/user-management/**
+        - render.yaml
+    
+    # Environment Variables
+    envVars:
+      # Application
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: LOG_LEVEL
+        value: INFO
+      - key: PORT
+        value: "8000"
+      - key: DATABASE_SCHEMA
+        value: user_management
+      
+      # Supabase (set in Render dashboard)
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      
+      # Security
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "60"
+      - key: JWT_REFRESH_TOKEN_EXPIRE_DAYS
+        value: "30"
+      
+      # CORS
+      - key: ALLOWED_ORIGINS
+        value: https://nutrifit.app,https://app.nutrifit.app
+      
+      # Features
+      - key: ENABLE_REAL_TIME
+        value: "true"
+      - key: ENABLE_AUTH
+        value: "true"
+      - key: ENABLE_STORAGE
+        value: "false"
+      
+      # Performance
+      - key: RATE_LIMIT_REQUESTS_PER_MINUTE
+        value: "100"
+      - key: REQUEST_TIMEOUT_SECONDS
+        value: "30"
+      - key: MAX_CONNECTIONS
+        value: "200"
+      - key: WORKERS
+        value: "2"
+
+  # ====================================
+  # Calorie Balance Service
+  # ====================================
+  - type: web
+    name: nutrifit-calorie-balance
+    runtime: docker
+    repo: https://github.com/giamma80/gymbro-platform.git
+    rootDir: services/calorie-balance
+    dockerfilePath: ./Dockerfile
+    
+    # Build Configuration
+    plan: starter
+    region: oregon
+    branch: main
+    
+    # Health Check
+    healthCheckPath: /health
+    autoDeploy: true
+    
+    # Build Filter
+    buildFilter:
+      paths:
+        - services/calorie-balance/**
+        - render.yaml
+    
+    # Environment Variables
+    envVars:
+      # Application
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: LOG_LEVEL
+        value: INFO
+      - key: PORT
+        value: "8000"
+      - key: DATABASE_SCHEMA
+        value: calorie_balance
+      
+      # Supabase
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      
+      # Security
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      
+      # Inter-service Communication
+      - key: USER_MANAGEMENT_URL
+        value: https://nutrifit-user-management.onrender.com
+
+  # ====================================
+  # Future Microservices
+  # ====================================
+  # Add new services here following the same pattern:
+  # - workout-tracking
+  # - nutrition-planning  
+  # - progress-analytics
+  # - notification-service
+
+  # ====================================
+  # Shared Infrastructure
+  # ====================================
+  
+  # Redis Cache (shared by all services)
+  - type: redis
+    name: nutrifit-redis
+    plan: starter
+    region: oregon
+    ipAllowList: []
+    maxmemoryPolicy: allkeys-lru
+
+# ====================================
+# API Gateway Configuration
+# ====================================
+# Note: Consider using a reverse proxy service for:
+# - Centralized routing (/api/users/* → user-management)
+# - Rate limiting across services
+# - Authentication middleware
+# - Request/response logging
+
+# Potential Gateway Service:
+# - type: web
+#   name: nutrifit-gateway
+#   runtime: docker
+#   rootDir: services/api-gateway
+#   envVars:
+#     - key: USER_MANAGEMENT_URL
+#       value: https://nutrifit-user-management.onrender.com
+#     - key: CALORIE_BALANCE_URL  
+#       value: https://nutrifit-calorie-balance.onrender.com
+
+# ====================================
+# Database Configuration
+# ====================================
+# Using Supabase Cloud PostgreSQL
+# - Single database with multiple schemas
+# - user_management schema for user service
+# - calorie_balance schema for calorie service
+# - Shared via environment variables
+
+# ====================================
+# Monitoring & Observability
+# ====================================
+# Consider adding:
+# - Centralized logging service
+# - Metrics collection (Prometheus/Grafana)
+# - Error tracking (Sentry)
+# - Uptime monitoring
+
+# ====================================
+# Deployment Strategy
+# ====================================
+# 1. Platform-level deployment triggered by changes
+# 2. Build matrix detects which services changed
+# 3. Only modified services are rebuilt and deployed
+# 4. Health checks ensure rolling deployment
+# 5. Rollback capability per service
+
+# ====================================
+# Scaling Strategy
+# ====================================
+# Start: All services on Starter plan
+# Scale: Monitor individual service metrics
+# Optimize: 
+# - High-traffic services → Standard/Pro plans
+# - CPU-intensive services → More instances
+# - I/O-heavy services → Better database connection pooling

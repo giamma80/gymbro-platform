@@ -68,9 +68,17 @@
 |--------|---------------|-----------|--------------|------------|----------|
 | **MOBILE-001** | 📱 Mobile | **Flutter App Completamente Mancante** | **10** | 🚫 CRITICAL | Foundation requirement |
 | **AI-001** | 🤖 AI Integration | **MCP Server Completamente Mancante** | **10** | 🚫 CRITICAL | Differentiator feature |
-| **DEPLOY-001** | 🚀 Deployment | **Render.com Deployment Non Configurato** | **10** | 🚫 CRITICAL | Production readiness |
 | **AI-002** | 🤖 AI Integration | **GPT-4V Food Recognition Non Implementato** | **9** | 🚫 HIGH | Core AI feature |
 | **MOBILE-002** | 📱 Mobile | **HealthKit/Health Connect Integration** | **9** | 🚫 HIGH | Core mobile feature |
+
+### 🔄 **IN PROGRESS (Deployment & Containerization Focus)**
+
+| **ID** | **Categoria** | **Issue** | **Priorità** | **Status** | **Sprint Target** |
+|--------|---------------|-----------|--------------|------------|------------------|
+| **DEPLOY-001** | 🚀 Deployment | **Render.com Deployment Non Configurato** | **10** | � IN PROGRESS | User Management Service deployment |
+| **DEPLOY-002** | 🚀 Deployment | **CI/CD GitHub Actions Mancanti** | **9** | 🟡 IN PROGRESS | Automated deployment pipeline |
+| **DEPLOY-003** | 🚀 Deployment | **Docker Compose Production Mancante** | **8** | � IN PROGRESS | Production containerization |
+| **DEPLOY-004** | � Deployment | **Environment Strategy Non Definita** | **6** | � IN PROGRESS | Dev/Staging/Prod environments |
 
 ---
 
@@ -253,10 +261,10 @@ Con la foundation solida, il progetto può ora progredire in modo sostenibile ve
 | **CLOUD-003** | ☁️ Cloud Infrastructure | **Global Edge Network Non Configurato** | Performance optimization documentata ma non attiva | **8** | 🟡 ALTO | 🟡 MEDIO | 🚫 OPEN | Attivare il Global Edge Network in Supabase e monitorare le performance |
 | **CLOUD-004** | ☁️ Cloud Infrastructure | **Supabase Auth Integration Mancante** | JWT + social login documentati ma non implementati | **8** | 🔴 CRITICO | 🟡 MEDIO | 🚫 OPEN | Implementare integrazione Auth di Supabase con JWT e login social |
 | **CLOUD-005** | ☁️ Cloud Infrastructure | **Row Level Security Non Configurata** | Database security policies documentate ma non attive | **6** | 🟡 ALTO | 🟢 BASSO | 🚫 OPEN | Configurare Row Level Security in Supabase per i dati sensibili |
-| **DEPLOY-001** | 🚀 Deployment | **Render.com Deployment Non Configurato** | Production deployment documentato ma senza configurazione | **10** | 🔴 CRITICO | 🟡 MEDIO | 🚫 OPEN | Creare configurazione Render.com per il deployment dell'applicazione |
-| **DEPLOY-002** | 🚀 Deployment | **CI/CD GitHub Actions Mancanti** | Pipeline automatizzata documentata ma inesistente | **9** | 🔴 CRITICO | 🟡 MEDIO | 🚫 OPEN | Aggiungere file di configurazione per GitHub Actions e testare la pipeline |
-| **DEPLOY-003** | 🚀 Deployment | **Docker Compose Production Mancante** | `docker-compose.dev.yml` referenziato ma non esistente | **8** | 🟡 ALTO | 🟢 BASSO | 🚫 OPEN | Creare file docker-compose per l'ambiente di produzione |
-| **DEPLOY-004** | 🚀 Deployment | **Environment Strategy Non Definita** | Staging/production environments documentati ma non configurati | **6** | 🟡 ALTO | 🟡 MEDIO | 🚫 OPEN | Definire e documentare la strategia per gli ambienti di staging e produzione |
+| **DEPLOY-001** | 🚀 Deployment | **Render.com Deployment Non Configurato** | Production deployment documentato ma senza configurazione | **10** | 🔴 CRITICO | 🟡 MEDIO | � IN PROGRESS | Configurazione Render.com per user-management service: Dockerfile, render.yaml, environment variables, database connection |
+| **DEPLOY-002** | 🚀 Deployment | **CI/CD GitHub Actions Mancanti** | Pipeline automatizzata documentata ma inesistente | **9** | 🔴 CRITICO | 🟡 MEDIO | � IN PROGRESS | GitHub Actions workflow per build, test e deploy automatico su Render.com |
+| **DEPLOY-003** | 🚀 Deployment | **Docker Compose Production Mancante** | `docker-compose.dev.yml` referenziato ma non esistente | **8** | 🟡 ALTO | 🟢 BASSO | � IN PROGRESS | Docker Compose per produzione con multi-stage build e ottimizzazioni |
+| **DEPLOY-004** | 🚀 Deployment | **Environment Strategy Non Definita** | Staging/production environments documentati ma non configurati | **6** | 🟡 ALTO | 🟡 MEDIO | � IN PROGRESS | Strategia environments: development, staging, production con configurazioni separate |
 | **DOC-001** | 📚 Documentazione | **README Status Inflazionato** | Status "✅ Tech stack finalizzato" falso - solo 1/5 microservizi | **9** | 🔴 CRITICO | 🟢 BASSO | 🚫 OPEN | Aggiornare il README per riflettere lo stato attuale dei microservizi |
 | **DOC-002** | 📚 Documentazione | **Makefile Comandi Non Funzionanti** | `flutter-dev`, `services-start` falliscono per file mancanti | **8** | 🟡 ALTO | 🟢 BASSO | 🚫 OPEN | Correggere i comandi nel Makefile e documentare le dipendenze necessarie |
 | **DOC-003** | 📚 Documentazione | **Roadmap Timeline Irrealistiche** | "Q1 2025 MVP completion" vs realtà 20% implementato | **7** | 🟡 ALTO | 🟢 BASSO | 🚫 OPEN | Aggiornare la roadmap con stime realistiche basate sullo stato attuale |

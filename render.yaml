@@ -10,27 +10,20 @@ services:
   - type: web
     name: nutrifit-user-management
     runtime: docker
-    repo: https://github.com/giamma80/gymbro-platform.git
-    rootDir: services/user-management
-    dockerfilePath: ./Dockerfile
-    dockerContext: services/user-management
+    
+    # GitHub Container Registry Configuration
+    image:
+      url: ghcr.io/giamma80/nutrifit-user-management:main
     
     # Runtime Configuration
     plan: starter
     region: oregon  
-    branch: main
     
-    # Auto Deploy
+    # Auto Deploy da Container Registry
     autoDeploy: true
     
     # Health Check
     healthCheckPath: /health
-    
-    # Deploy solo quando cambia questo servizio
-    buildFilter:
-      paths:
-        - services/user-management/**
-        - render.yaml
     
     # Environment Variables - Caricato come Secret File
     envVars:
@@ -45,32 +38,25 @@ services:
         value: "1"
 
   # ====================================
-  # Calorie Balance Service (quando pronto)
+  # Calorie Balance Service
   # ====================================
   - type: web
     name: nutrifit-calorie-balance
     runtime: docker
-    repo: https://github.com/giamma80/gymbro-platform.git
-    rootDir: services/calorie-balance
-    dockerfilePath: ./Dockerfile
-    dockerContext: services/calorie-balance
+    
+    # GitHub Container Registry Configuration
+    image:
+      url: ghcr.io/giamma80/nutrifit-calorie-balance:main
     
     # Runtime Configuration
     plan: starter
     region: oregon
-    branch: main
     
-    # Auto Deploy
+    # Auto Deploy da Container Registry
     autoDeploy: true
     
     # Health Check  
     healthCheckPath: /health
-    
-    # Deploy solo quando cambia questo servizio
-    buildFilter:
-      paths:
-        - services/calorie-balance/**
-        - render.yaml
     
     # Environment Variables
     envVars:

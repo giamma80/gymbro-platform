@@ -66,9 +66,6 @@ mypy = "^1.5.0"
 # Development tools
 pre-commit = "^3.4.0"
 
-[tool.poetry.extras]
-background = ["celery", "redis"]
-
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
@@ -120,18 +117,6 @@ omit = ["tests/*"]
 warn_unused_ignores = true
 warn_redundant_casts = true
 warn_unused_configs = true
-
-# pytest configuration
-[tool.pytest.ini_options]
-minversion = "7.0"
-addopts = "-ra -q --strict-markers --strict-config"
-testpaths = ["tests"]
-asyncio_mode = "auto"
-
-# Coverage configuration
-[tool.coverage.run]
-source = ["app"]
-omit = ["tests/*", "app/main.py"]
 
 [tool.coverage.report]
 exclude_lines = [

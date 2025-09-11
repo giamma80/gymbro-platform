@@ -1,104 +1,215 @@
-#!/bin/bash
 
-# Start Calorie Balance Service in development mode
-# Versione ottimizzata basata su start_and_test.sh
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Colori per l'output
+SERVICE_DIR="$(cd "$(dirname "$0")" && pwd)"
+SERVICE_NAME="calorie-balance"
+SERVICE_PORT=8001
+PYTHON_MODULE="app.main:app"
+VENV="$SERVICE_DIR/.venv"
+PID_FILE="/tmp/${SERVICE_NAME}-${SERVICE_PORT}.pid"
+LOG_FILE="/tmp/${SERVICE_NAME}-${SERVICE_PORT}.log"
+HEALTH_URL="http://localhost:${SERVICE_PORT}/health"
+
+# Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
 
-echo -e "${BLUE}🚀 Starting Calorie Balance Service in development mode...${NC}"
+print_banner() {
+    echo -e "${BLUE}============================================================"
+    echo "🚀 ${SERVICE_NAME} - Development Server"
+    echo -e "============================================================${NC}"
+}
 
-# Funzione per controllare se il server è già in esecuzione
-check_server_running() {
-    if curl -s -f "http://localhost:8001/health/" > /dev/null 2>&1; then
-        return 0  # Server in esecuzione
+log_info()    { echo -e "${BLUE}ℹ️  $1${NC}"; }
+log_success() { echo -e "${GREEN}✅ $1${NC}"; }
+log_warning() { echo -e "${YELLOW}⚠️  $1${NC}"; }
+log_error()   { echo -e "${RED}❌ $1${NC}"; }
+
+is_server_running() {
+    if [ -f "$PID_FILE" ]; then
+        local pid
+        pid=$(cat "$PID_FILE")
+        if ps -p "$pid" > /dev/null 2>&1; then
+            return 0
+        else
+            rm -f "$PID_FILE"
+            return 1
+        fi
+    fi
+    return 1
+}
+
+kill_processes_on_port() {
+    local port=$1
+    local pids
+    pids=$(lsof -ti:$port 2>/dev/null || true)
+    if [ -n "$pids" ]; then
+        echo "$pids" | xargs kill -TERM 2>/dev/null || true
+        sleep 1
+        pids=$(lsof -ti:$port 2>/dev/null || true)
+        if [ -n "$pids" ]; then
+            echo "$pids" | xargs kill -KILL 2>/dev/null || true
+        fi
+    fi
+}
+
+activate_venv() {
+    if command -v poetry >/dev/null 2>&1; then
+        log_info "Using Poetry (skip venv activation)"
+        return 0
+    fi
+    if [ -f "$VENV/bin/activate" ]; then
+        log_info "Activating virtualenv: $VENV"
+        # shellcheck disable=SC1090
+        source "$VENV/bin/activate"
+        return 0
+    fi
+    log_warning "Virtualenv not found at $VENV"
+    return 1
+}
+
+install_deps() {
+    if [ -f "$SERVICE_DIR/app/requirements.txt" ]; then
+        pip install -r "$SERVICE_DIR/app/requirements.txt"
+    fi
+}
+
+start_server() {
+    print_banner
+    if is_server_running; then
+        local pid
+        pid=$(cat "$PID_FILE")
+        log_warning "Server already running (PID $pid)"
+        return 0
+    fi
+
+    stop_server || true
+    activate_venv || true
+    if [ -f "$SERVICE_DIR/app/requirements.txt" ]; then
+        install_deps
+    fi
+
+    log_info "Starting ${SERVICE_NAME} on port ${SERVICE_PORT}"
+    rm -f "$LOG_FILE"
+
+    # Build uvicorn args; default no reload for stable background runs
+    RELOAD=${RELOAD:-0}
+    UVICORN_ARGS=(--host 0.0.0.0 --port "$SERVICE_PORT" --log-level info --access-log)
+    if [ "$RELOAD" = "1" ]; then
+        UVICORN_ARGS+=(--reload --reload-dir app)
+    fi
+
+    if command -v poetry >/dev/null 2>&1; then
+        nohup poetry run uvicorn $PYTHON_MODULE "${UVICORN_ARGS[@]}" > "$LOG_FILE" 2>&1 &
     else
-        return 1  # Server non in esecuzione
+        # prefer venv python if available
+        if [ -x "$VENV/bin/python" ]; then
+            nohup "$VENV/bin/python" -m uvicorn $PYTHON_MODULE "${UVICORN_ARGS[@]}" > "$LOG_FILE" 2>&1 &
+        else
+            nohup python3 -m uvicorn $PYTHON_MODULE "${UVICORN_ARGS[@]}" > "$LOG_FILE" 2>&1 &
+        fi
+    fi
+
+    # initial PID (may be reloader when --reload used)
+    local initial_pid
+    initial_pid=$!
+    echo "$initial_pid" > "$PID_FILE"
+
+    # Wait for health check
+    for i in $(seq 1 30); do
+        if curl -s "$HEALTH_URL" | grep -q 'healthy'; then
+            log_success "Health check OK"
+            # Prefer the PID actually listening on the port
+            if command -v lsof >/dev/null 2>&1; then
+                local real_pid
+                real_pid=$(lsof -ti:$SERVICE_PORT 2>/dev/null | head -n1 || true)
+                if [ -n "$real_pid" ]; then
+                    echo "$real_pid" > "$PID_FILE"
+                    log_info "Service listening PID: $real_pid"
+                fi
+            fi
+            echo "Server started, logs: $LOG_FILE"
+            return 0
+        fi
+        if ! ps -p "$initial_pid" > /dev/null 2>&1; then
+            log_error "Server process died during startup"
+            tail -n 40 "$LOG_FILE" || true
+            rm -f "$PID_FILE"
+            return 1
+        fi
+        sleep 1
+    done
+    log_error "Health check failed after timeout"
+    tail -n 40 "$LOG_FILE" || true
+    rm -f "$PID_FILE"
+    return 1
+}
+
+stop_server() {
+    print_banner
+    log_info "Stopping ${SERVICE_NAME}..."
+    if [ -f "$PID_FILE" ]; then
+        local pid
+        pid=$(cat "$PID_FILE")
+        if ps -p "$pid" > /dev/null 2>&1; then
+            kill -TERM "$pid" || true
+            sleep 1
+            if ps -p "$pid" > /dev/null 2>&1; then
+                kill -KILL "$pid" || true
+            fi
+        fi
+        rm -f "$PID_FILE"
+    fi
+    # Ensure port cleaned
+    kill_processes_on_port "$SERVICE_PORT"
+    pkill -f "uvicorn.*${PYTHON_MODULE}" 2>/dev/null || true
+    log_success "Stopped"
+}
+
+status_server() {
+    print_banner
+    if is_server_running; then
+        local pid
+        pid=$(cat "$PID_FILE")
+        log_success "Running (PID $pid)"
+        if curl -s "$HEALTH_URL" >/dev/null 2>&1; then
+            log_success "Responding to health checks"
+        else
+            log_warning "Not responding to health checks"
+        fi
+    else
+        log_info "Not running"
     fi
 }
 
-# Funzione per terminare processi esistenti
-kill_existing_server() {
-    echo -e "${YELLOW}🔄 Controllo processi esistenti...${NC}"
-    if pgrep -f "uvicorn app.main:app" > /dev/null; then
-        echo -e "${YELLOW}⚠️ Processo uvicorn esistente trovato, lo termino...${NC}"
-        pkill -f "uvicorn app.main:app" || true
-        sleep 3
-    fi
+restart_server() {
+    stop_server
+    sleep 1
+    start_server
 }
 
-# Verifica ambiente Poetry
-echo -e "${BLUE}🔍 Verifica ambiente Poetry...${NC}"
-if ! poetry --version > /dev/null 2>&1; then
-    echo -e "${RED}❌ Poetry non trovato. Installare Poetry prima di continuare.${NC}"
-    exit 1
-fi
-echo -e "${GREEN}✅ Poetry trovato: $(poetry --version)${NC}"
+case "${1:-start}" in
+    start)
+        start_server
+        ;;
+    stop)
+        stop_server
+        ;;
+    status)
+        status_server
+        ;;
+    restart)
+        restart_server
+        ;;
+    *)
+        echo "Usage: $0 [start|stop|status|restart]"
+        exit 1
+        ;;
+esac
 
-# Check if .env file exists
-if [ ! -f .env ]; then
-    echo -e "${YELLOW}⚠️ Creating .env file from template...${NC}"
-    cp .env.example .env
-    echo -e "${YELLOW}📝 Please edit .env file with your actual configuration values${NC}"
-    echo -e "${YELLOW}   Especially DATABASE_URL, SUPABASE_URL, and SUPABASE keys${NC}"
-fi
-
-# Installa dipendenze
-echo -e "${BLUE}📦 Installo dipendenze...${NC}"
-poetry install --only main > /dev/null 2>&1
-echo -e "${GREEN}✅ Dipendenze installate${NC}"
-
-# Verifica che l'app si importi correttamente
-echo -e "${BLUE}🔍 Verifica importazione app...${NC}"
-if poetry run python -c "from app.main import app; print('✅ App importata correttamente')" > /dev/null 2>&1; then
-    echo -e "${GREEN}✅ App importata correttamente${NC}"
-else
-    echo -e "${RED}❌ Errore nell'importazione app${NC}"
-    poetry run python -c "from app.main import app"  # Mostra l'errore
-    exit 1
-fi
-
-# Termina server esistente se presente
-kill_existing_server
-
-# Funzione di cleanup per gestire CTRL+C
-cleanup() {
-    echo -e "\n${YELLOW}🧹 Arresto del server...${NC}"
-    echo -e "${GREEN}✅ Server arrestato${NC}"
-}
-trap cleanup INT
-
-# Run database migrations (when implemented)
-# echo -e "${BLUE}🗃️ Running database migrations...${NC}"
-# poetry run alembic upgrade head
-
-# Start the service
-echo -e "${BLUE}🏃‍♂️ Starting FastAPI server on http://localhost:8001${NC}"
-echo -e "${GREEN}📖 Documentazione API disponibile su: http://localhost:8001/docs${NC}"
-echo -e "${YELLOW}Server running in background. Output in dev-server.log${NC}"
-echo -e "${YELLOW}Use 'pkill -f uvicorn' to stop the server${NC}"
-
-# Start server in background and redirect output to log file
-poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8001 > dev-server.log 2>&1 &
-
-# Save PID for potential cleanup
-SERVER_PID=$!
-echo -e "${GREEN}✅ Server started with PID: $SERVER_PID${NC}"
-
-# Wait a moment for server to start
-sleep 3
-
-# Check if server is responding
-if curl -s -f "http://localhost:8001/health/" > /dev/null 2>&1; then
-    echo -e "${GREEN}✅ Server is responding on http://localhost:8001${NC}"
-    echo -e "${BLUE}📊 Check dev-server.log for server output${NC}"
-else
-    echo -e "${RED}❌ Server failed to start properly${NC}"
-    echo -e "${YELLOW}📋 Last few lines from dev-server.log:${NC}"
-    tail -10 dev-server.log 2>/dev/null || echo "No log file found"
-    exit 1
-fi
+exit 0

@@ -1,77 +1,236 @@
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import text
-from sqlalchemy.pool import NullPool
-from typing import AsyncGenerator
-from uuid import uuid4
+"""
+Database Configuration - Supabase Client
+Service: calorie-balance
+"""
+
+from typing import Optional, Dict, Any
 import structlog
-from .config import settings
+from supabase import create_client, Client
+from postgrest.exceptions import APIError
 
-logger = structlog.get_logger(__name__)
+from app.core.config import get_settings
 
-# SQLAlchemy async engine with Supabase-compatible settings
-# Using UUID-based prepared statement names for PgBouncer transaction mode compatibility
-engine = create_async_engine(
-    settings.database_url,
-    echo=settings.debug,
-    poolclass=NullPool,  # Required for transaction mode compatibility
-    # PgBouncer transaction mode compatibility with UUID prepared statements
-    connect_args={
-        "prepared_statement_name_func": lambda: f"__asyncpg_{uuid4().hex}__",
-        "statement_cache_size": 0,
-        "prepared_statement_cache_size": 0,
-        "server_settings": {
-            "application_name": "calorie_balance_service",
-            "jit": "off",
-            "statement_timeout": "60000",
-            "idle_in_transaction_session_timeout": "60000",
-        }
-    },
-    pool_pre_ping=False,  # Disable to avoid prepared statement conflicts
-)
+logger = structlog.get_logger()
+settings = get_settings()
 
-# Session factory
-AsyncSessionLocal = async_sessionmaker(
-    engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-)
+# Global Supabase client
+_supabase_client: Optional[Client] = None
 
-class Base(DeclarativeBase):
-    """Base class for all database models"""
-    pass
-
-
-async def get_session() -> AsyncGenerator[AsyncSession, None]:
-    """Dependency to get database session"""
-    async with AsyncSessionLocal() as session:
+def create_supabase_client() -> Client:
+    """Create and configure Supabase client."""
+    global _supabase_client
+    
+    if _supabase_client is None:
         try:
-            yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
-        finally:
-            await session.close()
-
-
-async def init_db() -> None:
-    """Initialize database - create tables if needed"""
-    try:
-        # Since we already have tables, we can skip the table creation
-        # and just test the connection
-        async with AsyncSessionLocal() as session:
-            result = await session.execute(text("SELECT 1"))
-            await session.commit()
+            _supabase_client = create_client(
+                settings.supabase_url,
+                settings.supabase_service_key
+            )
             
-        logger.info("Database connection verified successfully")
+            logger.info(
+                "Supabase client created",
+                service=settings.service_name,
+                url=settings.supabase_url
+            )
+            
+        except Exception as e:
+            logger.error(
+                "Failed to create Supabase client",
+                error=str(e),
+                service=settings.service_name
+            )
+            raise
+    
+    return _supabase_client
+
+def get_supabase_client() -> Client:
+    """Get existing Supabase client."""
+    if _supabase_client is None:
+        return create_supabase_client()
+    return _supabase_client
+
+async def check_supabase_connection() -> bool:
+    """Check Supabase connectivity."""
+    try:
+        client = get_supabase_client()
+        
+        # Try a simple query to test connection using our actual schema
+        # Test with calorie_events table from calorie_balance schema
+        result = client.table("calorie_events").select("*").limit(1).execute()
+        
+        logger.info("Supabase connection check passed")
+        return True
+        
+    except APIError as e:
+        # Check for common error patterns that still indicate connectivity
+        error_msg = str(e).lower()
+        if any(pattern in error_msg for pattern in [
+            "relation", "table", "schema", "does not exist", 
+            "permission denied", "role"
+        ]):
+            # Database is reachable, just configuration/permission issue
+            logger.warning("Supabase accessible but schema/permissions issue", error=str(e))
+            return True
+        
+        logger.error("Supabase connection check failed", error=str(e))
+        return False
+        
     except Exception as e:
-        logger.error("Failed to initialize database", error=str(e))
-        raise
-        raise
+        logger.error("Supabase connection check failed", error=str(e))
+        return False
 
+class SupabaseRepository:
+    """Base repository class for Supabase operations."""
+    
+    def __init__(self, table_name: str):
+        self.table_name = table_name
+        self.client = get_supabase_client()
+        self.table = self.client.table(table_name)
+    
+    async def create(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a new record."""
+        try:
+            result = self.table.insert(data).execute()
+            
+            if result.data:
+                logger.info(
+                    "Record created",
+                    table=self.table_name,
+                    record_id=result.data[0].get("id") if result.data else None
+                )
+                return result.data[0]
+            else:
+                raise Exception("No data returned from insert")
+                
+        except Exception as e:
+            logger.error(
+                "Failed to create record",
+                table=self.table_name,
+                error=str(e)
+            )
+            raise
+    
+    async def get_by_id(self, record_id: str) -> Optional[Dict[str, Any]]:
+        """Get record by ID."""
+        try:
+            result = self.table.select("*").eq("id", record_id).execute()
+            
+            if result.data:
+                return result.data[0]
+            return None
+            
+        except Exception as e:
+            logger.error(
+                "Failed to get record by ID",
+                table=self.table_name,
+                record_id=record_id,
+                error=str(e)
+            )
+            raise
+    
+    async def get_all(self, limit: int = 100, offset: int = 0) -> list[Dict[str, Any]]:
+        """Get all records with pagination."""
+        try:
+            result = (
+                self.table
+                .select("*")
+                .range(offset, offset + limit - 1)
+                .execute()
+            )
+            
+            return result.data or []
+            
+        except Exception as e:
+            logger.error(
+                "Failed to get all records",
+                table=self.table_name,
+                error=str(e)
+            )
+            raise
+    
+    async def update(self, record_id: str, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Update record by ID."""
+        try:
+            result = (
+                self.table
+                .update(data)
+                .eq("id", record_id)
+                .execute()
+            )
+            
+            if result.data:
+                logger.info(
+                    "Record updated",
+                    table=self.table_name,
+                    record_id=record_id
+                )
+                return result.data[0]
+            return None
+            
+        except Exception as e:
+            logger.error(
+                "Failed to update record",
+                table=self.table_name,
+                record_id=record_id,
+                error=str(e)
+            )
+            raise
+    
+    async def delete(self, record_id: str) -> bool:
+        """Delete record by ID."""
+        try:
+            result = (
+                self.table
+                .delete()
+                .eq("id", record_id)
+                .execute()
+            )
+            
+            logger.info(
+                "Record deleted",
+                table=self.table_name,
+                record_id=record_id
+            )
+            return True
+            
+        except Exception as e:
+            logger.error(
+                "Failed to delete record",
+                table=self.table_name,
+                record_id=record_id,
+                error=str(e)
+            )
+            raise
+    
+    async def query(self, **filters) -> list[Dict[str, Any]]:
+        """Query records with filters."""
+        try:
+            query = self.table.select("*")
+            
+            for field, value in filters.items():
+                query = query.eq(field, value)
+            
+            result = query.execute()
+            return result.data or []
+            
+        except Exception as e:
+            logger.error(
+                "Failed to query records",
+                table=self.table_name,
+                filters=filters,
+                error=str(e)
+            )
+            raise
 
-async def close_db() -> None:
-    """Close database connections"""
-    await engine.dispose()
-    logger.info("Database connections closed")
+# Helper functions for common operations
+async def create_health_check_table():
+    """Create health check table if it doesn't exist."""
+    try:
+        client = get_supabase_client()
+        
+        # This would typically be done via migrations
+        # For now, we'll just log that the table should exist
+        logger.info("Health check table should be created via migrations")
+        
+    except Exception as e:
+        logger.error("Failed to create health check table", error=str(e))

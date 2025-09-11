@@ -1,45 +1,6 @@
-# Domain layer exports
-from .entities import (
-    User,
-    CalorieGoal,
-    DailyBalance,
-    MetabolicProfile,
-    ActivityLevel,
-    Gender,
-    GoalType
-)
+"""
+Domain Layer - calorie-balance Service
 
-from .repositories import (
-    UserRepository,
-    CalorieGoalRepository,
-    DailyBalanceRepository,
-    MetabolicProfileRepository
-)
-
-from .services import (
-    CalorieCalculationService,
-    MetabolicCalculationService,
-    WeightPredictionService
-)
-
-__all__ = [
-    # Entities
-    "User",
-    "CalorieGoal", 
-    "DailyBalance",
-    "MetabolicProfile",
-    "ActivityLevel",
-    "Gender",
-    "GoalType",
-    
-    # Repositories
-    "UserRepository",
-    "CalorieGoalRepository",
-    "DailyBalanceRepository", 
-    "MetabolicProfileRepository",
-    
-    # Services
-    "CalorieCalculationService",
-    "MetabolicCalculationService",
-    "WeightPredictionService"
-]
+This layer contains the core business logic, entities, and domain services.
+It should be independent of external frameworks and infrastructure.
+"""

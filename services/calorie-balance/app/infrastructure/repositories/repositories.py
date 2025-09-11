@@ -1,0 +1,722 @@
+"""
+Supabase Repository Implementations - Calorie Balance Service
+
+Concrete implementations of domain repository interfaces using Supabase
+for the event-driven calorie tracking system.
+"""
+
+from typing import List, Optional, Dict, Any
+from uuid import UUID
+from datetime import datetime, date as DateType
+from decimal import Decimal
+import logging
+
+# Domain interfaces and entities
+from app.domain.repositories import (
+    IUserRepository, ICalorieEventRepository, ICalorieGoalRepository,
+    IDailyBalanceRepository, IMetabolicProfileRepository,
+    ITemporalAnalyticsRepository, ICalorieSearchRepository
+)
+from app.domain.entities import (
+    User, CalorieEvent, CalorieGoal, DailyBalance, MetabolicProfile,
+    HourlyCalorieSummary, DailyCalorieSummary, WeeklyCalorieSummary,
+    MonthlyCalorieSummary, DailyBalanceSummary, EventType
+)
+
+# Core dependencies
+from app.core.database import get_supabase_client
+from supabase import Client
+
+logger = logging.getLogger(__name__)
+
+
+# =============================================================================
+# CORE REPOSITORIES - Supabase Implementations
+# =============================================================================
+
+class SupabaseUserRepository(IUserRepository):
+    """Supabase implementation for user metabolic profiles."""
+    
+    def __init__(self):
+        """Initialize with Supabase client."""
+        self.client: Client = get_supabase_client()
+        self.table = "users"
+    
+    async def get_by_id(self, user_id: str) -> Optional[User]:
+        """Get user by ID."""
+        try:
+            response = self.client.table(self.table).select("*").eq(
+                "id", user_id
+            ).single().execute()
+            
+            if response.data:
+                return User(**response.data)
+            return None
+            
+        except Exception as e:
+            logger.error(f"Failed to get user {user_id}: {e}")
+            return None
+    
+    async def create(self, user: User) -> User:
+        """Create new user profile."""
+        try:
+            user_dict = user.dict()
+            response = self.client.table(self.table).insert(
+                user_dict
+            ).single().execute()
+            
+            return User(**response.data)
+            
+        except Exception as e:
+            logger.error(f"Failed to create user: {e}")
+            raise
+    
+    async def update(self, user: User) -> Optional[User]:
+        """Update existing user profile."""
+        try:
+            user_dict = user.dict(exclude={'id', 'created_at'})
+            response = self.client.table(self.table).update(
+                user_dict
+            ).eq("id", str(user.id)).single().execute()
+            
+            if response.data:
+                return User(**response.data)
+            return None
+            
+        except Exception as e:
+            logger.error(f"Failed to update user {user.id}: {e}")
+            return None
+    
+    async def update_metabolic_rates(
+        self, user_id: str, bmr: Decimal, tdee: Decimal
+    ) -> bool:
+        """Update cached BMR/TDEE values for performance."""
+        try:
+            response = self.client.table(self.table).update({
+                "bmr_calories": str(bmr),
+                "tdee_calories": str(tdee),
+                "updated_at": datetime.utcnow().isoformat()
+            }).eq("id", user_id).execute()
+            
+            return len(response.data) > 0
+            
+        except Exception as e:
+            logger.error(f"Failed to update metabolic rates for {user_id}: {e}")
+            return False
+
+
+class SupabaseCalorieEventRepository(ICalorieEventRepository):
+    """🔥 HIGH-FREQUENCY SUPABASE REPOSITORY - Event-driven core."""
+    
+    def __init__(self):
+        """Initialize with Supabase client optimized for high-frequency ops."""
+        self.client: Client = get_supabase_client()
+        self.table = "calorie_events"
+        # Index hints for high-frequency queries
+        self._user_time_index = "idx_calorie_events_user_time"
+    
+    async def create(self, event: CalorieEvent) -> CalorieEvent:
+        """Create single calorie event - optimized for mobile apps."""
+        try:
+            event_dict = event.dict()
+            # Convert UUID to string for Supabase
+            event_dict['id'] = str(event_dict['id'])
+            
+            response = self.client.table(self.table).insert(
+                event_dict
+            ).single().execute()
+            
+            return CalorieEvent(**response.data)
+            
+        except Exception as e:
+            logger.error(f"Failed to create calorie event: {e}")
+            raise
+    
+    async def create_batch(
+        self, events: List[CalorieEvent]
+    ) -> List[CalorieEvent]:
+        """Batch create for mobile sync optimization."""
+        try:
+            events_data = []
+            for event in events:
+                event_dict = event.dict()
+                event_dict['id'] = str(event_dict['id'])
+                events_data.append(event_dict)
+            
+            response = self.client.table(self.table).insert(
+                events_data
+            ).execute()
+            
+            return [CalorieEvent(**data) for data in response.data]
+            
+        except Exception as e:
+            logger.error(f"Failed to batch create {len(events)} events: {e}")
+            raise
+    
+    async def get_events_by_user(
+        self,
+        user_id: str,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+        event_types: Optional[List[EventType]] = None,
+        limit: int = 1000
+    ) -> List[CalorieEvent]:
+        """Get user events with high-performance temporal filtering."""
+        try:
+            query = self.client.table(self.table).select("*").eq(
+                "user_id", user_id
+            )
+            
+            if start_time:
+                query = query.gte("event_timestamp", start_time.isoformat())
+            if end_time:
+                query = query.lte("event_timestamp", end_time.isoformat())
+            if event_types:
+                query = query.in_("event_type", [et.value for et in event_types])
+            
+            query = query.order("event_timestamp", desc=True).limit(limit)
+            response = query.execute()
+            
+            return [CalorieEvent(**data) for data in response.data]
+            
+        except Exception as e:
+            logger.error(
+                f"Failed to get events for user {user_id}: {e}"
+            )
+            return []
+    
+    async def get_recent_events(
+        self, user_id: str, limit: int = 100
+    ) -> List[CalorieEvent]:
+        """Get most recent events for timeline display."""
+        try:
+            response = self.client.table(self.table).select("*").eq(
+                "user_id", user_id
+            ).order("event_timestamp", desc=True).limit(limit).execute()
+            
+            return [CalorieEvent(**data) for data in response.data]
+            
+        except Exception as e:
+            logger.error(f"Failed to get recent events for {user_id}: {e}")
+            return []
+    
+    async def get_events_in_range(
+        self, user_id: str, start_date: DateType, end_date: DateType
+    ) -> List[CalorieEvent]:
+        """Get events for date range analysis."""
+        start_datetime = datetime.combine(start_date, datetime.min.time())
+        end_datetime = datetime.combine(
+            end_date, datetime.max.time().replace(microsecond=0)
+        )
+        
+        return await self.get_events_by_user(
+            user_id, start_datetime, end_datetime
+        )
+    
+    async def update(self, event: CalorieEvent) -> Optional[CalorieEvent]:
+        """Update event (rare in event-driven system)."""
+        try:
+            event_dict = event.dict(exclude={'created_at'})
+            event_dict['id'] = str(event_dict['id'])
+            
+            response = self.client.table(self.table).update(
+                event_dict
+            ).eq("id", str(event.id)).single().execute()
+            
+            if response.data:
+                return CalorieEvent(**response.data)
+            return None
+            
+        except Exception as e:
+            logger.error(f"Failed to update event {event.id}: {e}")
+            return None
+    
+    async def delete(self, event_id: UUID) -> bool:
+        """Delete event (prefer soft delete in production)."""
+        try:
+            response = self.client.table(self.table).delete().eq(
+                "id", str(event_id)
+            ).execute()
+            
+            return len(response.data) > 0
+            
+        except Exception as e:
+            logger.error(f"Failed to delete event {event_id}: {e}")
+            return False
+
+
+class SupabaseCalorieGoalRepository(ICalorieGoalRepository):
+    """Supabase implementation for dynamic calorie goals."""
+    
+    def __init__(self):
+        """Initialize with Supabase client."""
+        self.client: Client = get_supabase_client()
+        self.table = "calorie_goals"
+    
+    async def get_active_goal(self, user_id: str) -> Optional[CalorieGoal]:
+        """Get user's currently active goal."""
+        try:
+            response = self.client.table(self.table).select("*").eq(
+                "user_id", user_id
+            ).eq("is_active", True).single().execute()
+            
+            if response.data:
+                return CalorieGoal(**response.data)
+            return None
+            
+        except Exception as e:
+            logger.error(f"Failed to get active goal for {user_id}: {e}")
+            return None
+    
+    async def get_user_goals(
+        self, user_id: str, include_inactive: bool = False
+    ) -> List[CalorieGoal]:
+        """Get all user goals with optional inactive inclusion."""
+        try:
+            query = self.client.table(self.table).select("*").eq(
+                "user_id", user_id
+            )
+            
+            if not include_inactive:
+                query = query.eq("is_active", True)
+            
+            response = query.order("created_at", desc=True).execute()
+            
+            return [CalorieGoal(**data) for data in response.data]
+            
+        except Exception as e:
+            logger.error(f"Failed to get goals for user {user_id}: {e}")
+            return []
+    
+    async def create(self, goal: CalorieGoal) -> CalorieGoal:
+        """Create new goal (auto-deactivates conflicting goals)."""
+        try:
+            # Deactivate existing active goals of same type
+            await self._deactivate_conflicting_goals(
+                goal.user_id, goal.goal_type
+            )
+            
+            goal_dict = goal.dict()
+            goal_dict['id'] = str(goal_dict['id'])
+            
+            response = self.client.table(self.table).insert(
+                goal_dict
+            ).single().execute()
+            
+            return CalorieGoal(**response.data)
+            
+        except Exception as e:
+            logger.error(f"Failed to create goal: {e}")
+            raise
+    
+    async def update(self, goal: CalorieGoal) -> Optional[CalorieGoal]:
+        """Update existing goal."""
+        try:
+            goal_dict = goal.dict(exclude={'id', 'created_at'})
+            
+            response = self.client.table(self.table).update(
+                goal_dict
+            ).eq("id", str(goal.id)).single().execute()
+            
+            if response.data:
+                return CalorieGoal(**response.data)
+            return None
+            
+        except Exception as e:
+            logger.error(f"Failed to update goal {goal.id}: {e}")
+            return None
+    
+    async def deactivate_goal(self, goal_id: UUID) -> bool:
+        """Deactivate goal (soft deletion)."""
+        try:
+            response = self.client.table(self.table).update({
+                "is_active": False,
+                "updated_at": datetime.utcnow().isoformat()
+            }).eq("id", str(goal_id)).execute()
+            
+            return len(response.data) > 0
+            
+        except Exception as e:
+            logger.error(f"Failed to deactivate goal {goal_id}: {e}")
+            return False
+    
+    async def _deactivate_conflicting_goals(
+        self, user_id: str, goal_type: str
+    ) -> None:
+        """Helper to deactivate conflicting active goals."""
+        try:
+            self.client.table(self.table).update({
+                "is_active": False,
+                "updated_at": datetime.utcnow().isoformat()
+            }).eq("user_id", user_id).eq(
+                "goal_type", goal_type
+            ).eq("is_active", True).execute()
+            
+        except Exception as e:
+            logger.warning(
+                f"Failed to deactivate conflicting goals: {e}"
+            )
+
+
+class SupabaseDailyBalanceRepository(IDailyBalanceRepository):
+    """Supabase implementation for aggregated daily balances."""
+    
+    def __init__(self):
+        """Initialize with Supabase client."""
+        self.client: Client = get_supabase_client()
+        self.table = "daily_balances"
+    
+    async def get_by_user_date(
+        self, user_id: str, date: DateType
+    ) -> Optional[DailyBalance]:
+        """Get daily balance for specific date."""
+        try:
+            response = self.client.table(self.table).select("*").eq(
+                "user_id", user_id
+            ).eq("date", date.isoformat()).single().execute()
+            
+            if response.data:
+                return DailyBalance(**response.data)
+            return None
+            
+        except Exception as e:
+            logger.error(
+                f"Failed to get balance for {user_id} on {date}: {e}"
+            )
+            return None
+    
+    async def get_date_range(
+        self, user_id: str, start_date: DateType, end_date: DateType
+    ) -> List[DailyBalance]:
+        """Get daily balances for date range."""
+        try:
+            response = self.client.table(self.table).select("*").eq(
+                "user_id", user_id
+            ).gte("date", start_date.isoformat()).lte(
+                "date", end_date.isoformat()
+            ).order("date", desc=False).execute()
+            
+            return [DailyBalance(**data) for data in response.data]
+            
+        except Exception as e:
+            logger.error(
+                f"Failed to get balances for {user_id} "
+                f"from {start_date} to {end_date}: {e}"
+            )
+            return []
+    
+    async def upsert(self, balance: DailyBalance) -> DailyBalance:
+        """Upsert daily balance (create or update)."""
+        try:
+            balance_dict = balance.dict()
+            balance_dict['id'] = str(balance_dict['id'])
+            
+            response = self.client.table(self.table).upsert(
+                balance_dict,
+                on_conflict="user_id,date"  # Composite unique constraint
+            ).single().execute()
+            
+            return DailyBalance(**response.data)
+            
+        except Exception as e:
+            logger.error(f"Failed to upsert daily balance: {e}")
+            raise
+    
+    async def recalculate_balance(
+        self, user_id: str, date: DateType
+    ) -> DailyBalance:
+        """Recalculate balance from events (data consistency)."""
+        # This would typically call a stored procedure or trigger
+        # that recalculates from the events table
+        try:
+            # Call Supabase function to recalculate
+            response = self.client.rpc(
+                'recalculate_daily_balance',
+                {'p_user_id': user_id, 'p_date': date.isoformat()}
+            ).execute()
+            
+            if response.data:
+                return DailyBalance(**response.data[0])
+            else:
+                raise Exception(f"Failed to recalculate balance")
+                
+        except Exception as e:
+            logger.error(
+                f"Failed to recalculate balance for "
+                f"{user_id} on {date}: {e}"
+            )
+            raise
+
+
+class SupabaseMetabolicProfileRepository(IMetabolicProfileRepository):
+    """Supabase implementation for metabolic calculations."""
+    
+    def __init__(self):
+        """Initialize with Supabase client."""
+        self.client: Client = get_supabase_client()
+        self.table = "metabolic_profiles"
+    
+    async def get_latest(self, user_id: str) -> Optional[MetabolicProfile]:
+        """Get user's latest metabolic profile."""
+        try:
+            response = self.client.table(self.table).select("*").eq(
+                "user_id", user_id
+            ).order(
+                "calculation_date", desc=True
+            ).limit(1).single().execute()
+            
+            if response.data:
+                return MetabolicProfile(**response.data)
+            return None
+            
+        except Exception as e:
+            logger.error(
+                f"Failed to get latest profile for {user_id}: {e}"
+            )
+            return None
+    
+    async def get_history(
+        self, user_id: str, limit: int = 10
+    ) -> List[MetabolicProfile]:
+        """Get metabolic profile history."""
+        try:
+            response = self.client.table(self.table).select("*").eq(
+                "user_id", user_id
+            ).order("calculation_date", desc=True).limit(limit).execute()
+            
+            return [MetabolicProfile(**data) for data in response.data]
+            
+        except Exception as e:
+            logger.error(
+                f"Failed to get profile history for {user_id}: {e}"
+            )
+            return []
+    
+    async def create(self, profile: MetabolicProfile) -> MetabolicProfile:
+        """Create new metabolic profile."""
+        try:
+            profile_dict = profile.dict()
+            profile_dict['id'] = str(profile_dict['id'])
+            
+            response = self.client.table(self.table).insert(
+                profile_dict
+            ).single().execute()
+            
+            return MetabolicProfile(**response.data)
+            
+        except Exception as e:
+            logger.error(f"Failed to create metabolic profile: {e}")
+            raise
+
+
+# Continued in next section due to length...
+class SupabaseTemporalAnalyticsRepository(ITemporalAnalyticsRepository):
+    """Supabase implementation for 5-level temporal analytics views."""
+    
+    def __init__(self):
+        """Initialize with Supabase client for analytics views."""
+        self.client: Client = get_supabase_client()
+        # View names from our SQL schema
+        self.hourly_view = "hourly_calorie_summary"
+        self.daily_view = "daily_calorie_summary"
+        self.weekly_view = "weekly_calorie_summary"
+        self.monthly_view = "monthly_calorie_summary"
+        self.balance_view = "daily_balance_summary"
+    
+    async def get_hourly_summary(
+        self, user_id: str, date: DateType
+    ) -> List[HourlyCalorieSummary]:
+        """Get hourly calorie summary for a specific date."""
+        try:
+            response = self.client.table(self.hourly_view).select("*").eq(
+                "user_id", user_id
+            ).eq("date", date.isoformat()).order("hour").execute()
+            
+            return [HourlyCalorieSummary(**data) for data in response.data]
+            
+        except Exception as e:
+            logger.error(
+                f"Failed to get hourly summary for {user_id} "
+                f"on {date}: {e}"
+            )
+            return []
+    
+    async def get_daily_summary(
+        self, user_id: str, start_date: DateType, end_date: DateType
+    ) -> List[DailyCalorieSummary]:
+        """Get daily summaries for date range."""
+        try:
+            response = self.client.table(self.daily_view).select("*").eq(
+                "user_id", user_id
+            ).gte("date", start_date.isoformat()).lte(
+                "date", end_date.isoformat()
+            ).order("date").execute()
+            
+            return [DailyCalorieSummary(**data) for data in response.data]
+            
+        except Exception as e:
+            logger.error(
+                f"Failed to get daily summaries for {user_id}: {e}"
+            )
+            return []
+    
+    async def get_weekly_summary(
+        self, user_id: str, year: int, week_number: Optional[int] = None
+    ) -> List[WeeklyCalorieSummary]:
+        """Get weekly summaries for year (optional specific week)."""
+        try:
+            query = self.client.table(self.weekly_view).select("*").eq(
+                "user_id", user_id
+            ).eq("year", year)
+            
+            if week_number:
+                query = query.eq("week_number", week_number)
+            
+            response = query.order("week_number").execute()
+            
+            return [WeeklyCalorieSummary(**data) for data in response.data]
+            
+        except Exception as e:
+            logger.error(
+                f"Failed to get weekly summaries for {user_id}: {e}"
+            )
+            return []
+    
+    async def get_monthly_summary(
+        self, user_id: str, year: int, month: Optional[int] = None
+    ) -> List[MonthlyCalorieSummary]:
+        """Get monthly summaries for year (optional specific month)."""
+        try:
+            query = self.client.table(self.monthly_view).select("*").eq(
+                "user_id", user_id
+            ).eq("year", year)
+            
+            if month:
+                query = query.eq("month", month)
+            
+            response = query.order("month").execute()
+            
+            return [MonthlyCalorieSummary(**data) for data in response.data]
+            
+        except Exception as e:
+            logger.error(
+                f"Failed to get monthly summaries for {user_id}: {e}"
+            )
+            return []
+    
+    async def get_balance_summary(
+        self, user_id: str, start_date: DateType, end_date: DateType
+    ) -> List[DailyBalanceSummary]:
+        """Get daily balance with goal comparison."""
+        try:
+            response = self.client.table(self.balance_view).select("*").eq(
+                "user_id", user_id
+            ).gte("date", start_date.isoformat()).lte(
+                "date", end_date.isoformat()
+            ).order("date").execute()
+            
+            return [DailyBalanceSummary(**data) for data in response.data]
+            
+        except Exception as e:
+            logger.error(
+                f"Failed to get balance summaries for {user_id}: {e}"
+            )
+            return []
+
+
+class SupabaseCalorieSearchRepository(ICalorieSearchRepository):
+    """Supabase implementation for complex search operations."""
+    
+    def __init__(self):
+        """Initialize with Supabase client."""
+        self.client: Client = get_supabase_client()
+    
+    async def search_events(
+        self,
+        user_id: str,
+        filters: Dict[str, Any],
+        page: int = 1,
+        page_size: int = 100
+    ) -> Dict[str, Any]:
+        """Complex event search with pagination."""
+        try:
+            offset = (page - 1) * page_size
+            
+            query = self.client.table("calorie_events").select(
+                "*", count="exact"
+            ).eq("user_id", user_id)
+            
+            # Apply filters
+            for key, value in filters.items():
+                if key == "event_type" and value:
+                    query = query.eq("event_type", value)
+                elif key == "date_from" and value:
+                    query = query.gte("event_timestamp", value)
+                elif key == "date_to" and value:
+                    query = query.lte("event_timestamp", value)
+                elif key == "min_value" and value:
+                    query = query.gte("value", value)
+                elif key == "max_value" and value:
+                    query = query.lte("value", value)
+                elif key == "source" and value:
+                    query = query.eq("source", value)
+            
+            response = query.order(
+                "event_timestamp", desc=True
+            ).range(offset, offset + page_size - 1).execute()
+            
+            return {
+                "events": [CalorieEvent(**data) for data in response.data],
+                "total": response.count,
+                "page": page,
+                "page_size": page_size,
+                "total_pages": (response.count + page_size - 1) // page_size
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to search events for {user_id}: {e}")
+            return {
+                "events": [],
+                "total": 0,
+                "page": page,
+                "page_size": page_size,
+                "total_pages": 0
+            }
+    
+    async def get_statistics(
+        self, user_id: str, start_date: DateType, end_date: DateType
+    ) -> Dict[str, Any]:
+        """Get comprehensive user statistics."""
+        try:
+            # This would call a stored procedure for complex stats
+            response = self.client.rpc(
+                'get_user_statistics',
+                {
+                    'p_user_id': user_id,
+                    'p_start_date': start_date.isoformat(),
+                    'p_end_date': end_date.isoformat()
+                }
+            ).execute()
+            
+            return response.data[0] if response.data else {}
+            
+        except Exception as e:
+            logger.error(f"Failed to get statistics for {user_id}: {e}")
+            return {}
+    
+    async def get_trends(
+        self, user_id: str, days: int = 30
+    ) -> Dict[str, Any]:
+        """Get user trends analysis."""
+        try:
+            # Call stored procedure for trend analysis
+            response = self.client.rpc(
+                'get_user_trends',
+                {'p_user_id': user_id, 'p_days': days}
+            ).execute()
+            
+            return response.data[0] if response.data else {}
+            
+        except Exception as e:
+            logger.error(f"Failed to get trends for {user_id}: {e}")
+            return {}

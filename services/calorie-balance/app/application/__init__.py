@@ -1,58 +1,6 @@
-# Application layer exports
-from .commands import (
-    CreateUserCommand,
-    UpdateUserProfileCommand,
-    CreateCalorieGoalCommand,
-    UpdateDailyBalanceCommand,
-    UserCommandHandler,
-    CalorieGoalCommandHandler,
-    DailyBalanceCommandHandler
-)
+"""
+Application Layer - calorie-balance Service
 
-from .queries import (
-    GetUserQuery,
-    GetCalorieGoalQuery,
-    GetDailyBalanceQuery,
-    GetProgressQuery,
-    GetMetabolicProfileQuery,
-    UserQueryHandler,
-    CalorieGoalQueryHandler,
-    DailyBalanceQueryHandler,
-    ProgressQueryHandler,
-    MetabolicProfileQueryHandler
-)
-
-from .services import (
-    MetabolicProfileService,
-    AnalyticsService,
-    RecommendationService
-)
-
-__all__ = [
-    # Commands
-    "CreateUserCommand",
-    "UpdateUserProfileCommand", 
-    "CreateCalorieGoalCommand",
-    "UpdateDailyBalanceCommand",
-    "UserCommandHandler",
-    "CalorieGoalCommandHandler",
-    "DailyBalanceCommandHandler",
-    
-    # Queries
-    "GetUserQuery",
-    "GetUserBySupabaseIdQuery",
-    "GetCalorieGoalQuery", 
-    "GetDailyBalanceQuery",
-    "GetProgressQuery",
-    "GetMetabolicProfileQuery",
-    "UserQueryHandler",
-    "CalorieGoalQueryHandler",
-    "DailyBalanceQueryHandler",
-    "ProgressQueryHandler",
-    "MetabolicProfileQueryHandler",
-    
-    # Services
-    "MetabolicProfileService",
-    "AnalyticsService",
-    "RecommendationService"
-]
+This layer contains use cases, commands, queries, and services.
+It orchestrates the domain layer and infrastructure layer.
+"""

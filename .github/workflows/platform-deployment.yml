@@ -203,10 +203,14 @@ jobs:
     
     steps:
       - name: Deploy to Render (Staging)
-        uses: johnbeynon/render-deploy-action@v0.0.8
-        with:
-          service-id: ${{ secrets.RENDER_STAGING_SERVICE_ID }}
-          api-key: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          echo "🚀 Deploying to Render Staging..."
+          response=$(curl -X POST \
+            "https://api.render.com/v1/services/${{ secrets.RENDER_STAGING_SERVICE_ID }}/deploys" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{}')
+          echo "Deploy triggered: $response"
 
   # ====================================
   # Deploy to Production
@@ -222,21 +226,31 @@ jobs:
     
     steps:
       - name: Deploy to Render (Production)
-        uses: johnbeynon/render-deploy-action@v0.0.8
-        with:
-          service-id: ${{ secrets.RENDER_PRODUCTION_SERVICE_ID }}
-          api-key: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          echo "🚀 Deploying to Render Production..."
+          response=$(curl -X POST \
+            "https://api.render.com/v1/services/${{ secrets.RENDER_PRODUCTION_SERVICE_ID }}/deploys" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{}')
+          echo "Deploy triggered: $response"
       
       - name: Create GitHub Release
         if: github.ref == 'refs/heads/main'
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: platform-v${{ github.run_number }}
-          release_name: NutriFit Platform v${{ github.run_number }}
+          name: NutriFit Platform v${{ github.run_number }}
           body: |
             ## Platform Release
+            
+            ### Services Updated
+            - User Management Service
+            
+            ### Deploy Information
+            - Environment: Production
+            - Docker Image: ghcr.io/giamma80/nutrifit-user-management:main
+            - Render Service: ${{ secrets.RENDER_PRODUCTION_SERVICE_ID }}
             
             **Deployed Services**: ${{ needs.detect-changes.outputs.services }}
             **Commit**: ${{ github.sha }}
@@ -248,27 +262,4 @@ jobs:
             - Docker images built and deployed
           draft: false
           prerelease: false
-
-  # ====================================
-  # Notifications
-  # ====================================
-  notify:
-    name: Deployment Notifications
-    runs-on: ubuntu-latest
-    needs: [deploy-staging, deploy-production]
-    if: always() && (needs.deploy-staging.result != 'skipped' || needs.deploy-production.result != 'skipped')
-    
-    steps:
-      - name: Notify deployment status
-        if: env.SLACK_WEBHOOK_URL != ''
-        uses: 8398a7/action-slack@v3
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        with:
-          status: ${{ job.status }}
-          channel: '#deployments'
-          text: |
-            🚀 NutriFit Platform Deployment
-            Environment: ${{ needs.deploy-staging.result != 'skipped' && 'staging' || 'production' }}
-            Status: ${{ job.status }}
-            Services: ${{ needs.detect-changes.outputs.services }}
+          generate_release_notes: true

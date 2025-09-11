@@ -56,7 +56,7 @@ jobs:
     name: 🧪 Test User Management
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: needs.detect-changes.outputs.user-management == 'true' || github.event_name == 'pull_request'
+    if: needs.detect-changes.outputs.user-management == 'true' || github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     
     steps:
       - name: 📥 Checkout Code
@@ -113,7 +113,7 @@ jobs:
     name: 🧪 Test Calorie Balance  
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: needs.detect-changes.outputs.calorie-balance == 'true' || github.event_name == 'pull_request'
+    if: needs.detect-changes.outputs.calorie-balance == 'true' || github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     
     steps:
       - name: 📥 Checkout Code
@@ -169,8 +169,8 @@ jobs:
   build-user-management:
     name: 🐳 Build User Management
     runs-on: ubuntu-latest
-    needs: test-user-management
-    if: github.ref == 'refs/heads/main' && needs.detect-changes.outputs.user-management == 'true'
+    needs: [detect-changes, test-user-management]
+    if: github.ref == 'refs/heads/main'
     
     steps:
       - name: 📥 Checkout Code
@@ -210,8 +210,8 @@ jobs:
   build-calorie-balance:
     name: 🐳 Build Calorie Balance  
     runs-on: ubuntu-latest
-    needs: test-calorie-balance
-    if: github.ref == 'refs/heads/main' && needs.detect-changes.outputs.calorie-balance == 'true'
+    needs: [detect-changes, test-calorie-balance]
+    if: github.ref == 'refs/heads/main'
     
     steps:
       - name: 📥 Checkout Code

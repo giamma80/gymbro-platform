@@ -5,18 +5,26 @@ Service: user-management
 Schema: user_management
 """
 
-from datetime import datetime, date
-from typing import Optional, Dict, Any, List
-from uuid import UUID
+from datetime import date, datetime
 from enum import Enum
+from typing import Any, Dict, List, Optional
+from uuid import UUID
 
-from pydantic import BaseModel, Field, EmailStr, validator
+from pydantic import BaseModel, EmailStr, Field, validator
 
-from app.domain.entities import User, UserProfile, PrivacySettings, UserServiceContext, UserStatus, GenderType
+from app.domain.entities import (
+    GenderType,
+    PrivacySettings,
+    User,
+    UserProfile,
+    UserServiceContext,
+    UserStatus,
+)
 
 
 class UserStatusEnum(str, Enum):
     """User status for API responses."""
+
     ACTIVE = "active"
     INACTIVE = "inactive"
     SUSPENDED = "suspended"
@@ -25,6 +33,7 @@ class UserStatusEnum(str, Enum):
 
 class GenderTypeEnum(str, Enum):
     """Gender type for API responses."""
+
     MALE = "male"
     FEMALE = "female"
     OTHER = "other"
@@ -34,6 +43,7 @@ class GenderTypeEnum(str, Enum):
 # User Schemas
 class UserResponse(BaseModel):
     """User response schema."""
+
     id: UUID
     email: EmailStr
     username: str
@@ -44,10 +54,10 @@ class UserResponse(BaseModel):
     last_login_at: Optional[datetime] = None
     is_active: bool
     is_verified: bool
-    
+
     class Config:
         from_attributes = True
-    
+
     @classmethod
     def from_entity(cls, user: User) -> "UserResponse":
         """Create response from User entity."""
@@ -67,34 +77,41 @@ class UserResponse(BaseModel):
 
 class UserCreateRequest(BaseModel):
     """User creation request schema."""
+
     email: EmailStr
     username: str = Field(..., min_length=3, max_length=50)
-    
-    @validator('username')
+
+    @validator("username")
     def validate_username(cls, v):
         """Validate username format."""
-        if not v.replace('_', '').replace('-', '').isalnum():
-            raise ValueError('Username can only contain letters, numbers, underscores and hyphens')
+        if not v.replace("_", "").replace("-", "").isalnum():
+            raise ValueError(
+                "Username can only contain letters, numbers, underscores and hyphens"
+            )
         return v
 
 
 class UserUpdateRequest(BaseModel):
     """User update request schema."""
+
     email: Optional[EmailStr] = None
     username: Optional[str] = Field(None, min_length=3, max_length=50)
     status: Optional[UserStatusEnum] = None
-    
-    @validator('username')
+
+    @validator("username")
     def validate_username(cls, v):
         """Validate username format."""
-        if v and not v.replace('_', '').replace('-', '').isalnum():
-            raise ValueError('Username can only contain letters, numbers, underscores and hyphens')
+        if v and not v.replace("_", "").replace("-", "").isalnum():
+            raise ValueError(
+                "Username can only contain letters, numbers, underscores and hyphens"
+            )
         return v
 
 
 # User Profile Schemas
 class UserProfileResponse(BaseModel):
     """User profile response schema."""
+
     id: UUID
     user_id: UUID
     first_name: Optional[str] = None
@@ -110,10 +127,10 @@ class UserProfileResponse(BaseModel):
     updated_at: datetime
     full_name: str
     age: Optional[int] = None
-    
+
     class Config:
         from_attributes = True
-    
+
     @classmethod
     def from_entity(cls, profile: UserProfile) -> "UserProfileResponse":
         """Create response from UserProfile entity."""
@@ -138,6 +155,7 @@ class UserProfileResponse(BaseModel):
 
 class UserProfileUpdateRequest(BaseModel):
     """User profile update request schema."""
+
     first_name: Optional[str] = Field(None, max_length=100)
     last_name: Optional[str] = Field(None, max_length=100)
     display_name: Optional[str] = Field(None, max_length=150)
@@ -147,17 +165,17 @@ class UserProfileUpdateRequest(BaseModel):
     timezone: Optional[str] = Field(None, max_length=50)
     locale: Optional[str] = Field(None, max_length=10)
     preferences: Optional[Dict[str, Any]] = None
-    
-    @validator('date_of_birth')
+
+    @validator("date_of_birth")
     def validate_age(cls, v):
         """Validate user is at least 13 years old."""
         if v:
             today = date.today()
             age = today.year - v.year - ((today.month, today.day) < (v.month, v.day))
             if age < 13:
-                raise ValueError('User must be at least 13 years old')
+                raise ValueError("User must be at least 13 years old")
         return v
-    
+
     def update_entity(self, profile: UserProfile) -> UserProfile:
         """Update entity with request data."""
         if self.first_name is not None:
@@ -178,7 +196,7 @@ class UserProfileUpdateRequest(BaseModel):
             profile.locale = self.locale
         if self.preferences is not None:
             profile.preferences.update(self.preferences)
-        
+
         profile.updated_at = datetime.utcnow()
         return profile
 
@@ -186,6 +204,7 @@ class UserProfileUpdateRequest(BaseModel):
 # Privacy Settings Schemas
 class PrivacySettingsResponse(BaseModel):
     """Privacy settings response schema."""
+
     id: UUID
     user_id: UUID
     data_processing_consent: bool
@@ -198,10 +217,10 @@ class PrivacySettingsResponse(BaseModel):
     updated_at: datetime
     has_basic_consent: bool
     consent_level: str
-    
+
     class Config:
         from_attributes = True
-    
+
     @classmethod
     def from_entity(cls, settings: PrivacySettings) -> "PrivacySettingsResponse":
         """Create response from PrivacySettings entity."""
@@ -223,34 +242,38 @@ class PrivacySettingsResponse(BaseModel):
 
 class PrivacySettingsUpdateRequest(BaseModel):
     """Privacy settings update request schema."""
+
     data_processing_consent: Optional[bool] = None
     marketing_consent: Optional[bool] = None
     analytics_consent: Optional[bool] = None
     profile_visibility: Optional[bool] = None
     health_data_sharing: Optional[bool] = None
     preferences: Optional[Dict[str, Any]] = None
-    
+
     def update_entity(self, settings: PrivacySettings) -> PrivacySettings:
         """Update entity with request data."""
         if self.data_processing_consent is not None:
-            settings.update_consent('data_processing_consent', self.data_processing_consent)
+            settings.update_consent(
+                "data_processing_consent", self.data_processing_consent
+            )
         if self.marketing_consent is not None:
-            settings.update_consent('marketing_consent', self.marketing_consent)
+            settings.update_consent("marketing_consent", self.marketing_consent)
         if self.analytics_consent is not None:
-            settings.update_consent('analytics_consent', self.analytics_consent)
+            settings.update_consent("analytics_consent", self.analytics_consent)
         if self.profile_visibility is not None:
-            settings.update_consent('profile_visibility', self.profile_visibility)
+            settings.update_consent("profile_visibility", self.profile_visibility)
         if self.health_data_sharing is not None:
-            settings.update_consent('health_data_sharing', self.health_data_sharing)
+            settings.update_consent("health_data_sharing", self.health_data_sharing)
         if self.preferences is not None:
             settings.preferences.update(self.preferences)
-        
+
         return settings
 
 
 # User Service Context Schema
 class UserServiceContextResponse(BaseModel):
     """User service context response for GraphQL Federation."""
+
     user_id: UUID
     email: EmailStr
     username: str
@@ -269,10 +292,10 @@ class UserServiceContextResponse(BaseModel):
     is_active: bool
     is_verified: bool
     full_name: str
-    
+
     class Config:
         from_attributes = True
-    
+
     @classmethod
     def from_entity(cls, context: UserServiceContext) -> "UserServiceContextResponse":
         """Create response from UserServiceContext entity."""
@@ -301,6 +324,7 @@ class UserServiceContextResponse(BaseModel):
 # Health Check Schemas
 class HealthCheckResponse(BaseModel):
     """Health check response schema."""
+
     status: str
     service: str
     timestamp: Optional[float] = None
@@ -310,9 +334,10 @@ class HealthCheckResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     """Error response schema."""
+
     detail: str
     error_code: Optional[str] = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-    
+
     class Config:
         from_attributes = True

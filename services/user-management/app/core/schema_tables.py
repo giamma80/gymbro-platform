@@ -4,81 +4,82 @@ Centralized schema management with configurable schema name.
 """
 
 from typing import Any
+
 from supabase import Client
 
-from app.core.database import get_supabase_client
 from app.core.config import get_settings
+from app.core.database import get_supabase_client
 
 
 class SchemaManager:
     """Centralized schema management for database operations."""
-    
+
     def __init__(self, client: Client = None):
         """Initialize schema manager with optional client."""
         self._client = client or get_supabase_client()
         self._settings = get_settings()
         self._schema_name = self._settings.database_schema
-    
+
     @property
     def schema_name(self) -> str:
         """Get the configured schema name."""
         return self._schema_name
-    
+
     def table(self, table_name: str) -> Any:
         """Get a table from the configured schema."""
         return self._client.schema(self._schema_name).table(table_name)
-    
+
     # Core user tables
     @property
     def users(self) -> Any:
         """Get users table."""
-        return self.table('users')
-    
-    @property 
+        return self.table("users")
+
+    @property
     def user_profiles(self) -> Any:
         """Get user_profiles table."""
-        return self.table('user_profiles')
-    
+        return self.table("user_profiles")
+
     @property
     def privacy_settings(self) -> Any:
         """Get privacy_settings table."""
-        return self.table('privacy_settings')
-    
+        return self.table("privacy_settings")
+
     @property
     def user_service_context(self) -> Any:
         """Get user_service_context view."""
-        return self.table('user_service_context')
-    
+        return self.table("user_service_context")
+
     # Auth tables
     @property
     def auth_credentials(self) -> Any:
         """Get auth_credentials table."""
-        return self.table('auth_credentials')
-    
+        return self.table("auth_credentials")
+
     @property
     def auth_sessions(self) -> Any:
         """Get auth_sessions table."""
-        return self.table('auth_sessions')
-    
+        return self.table("auth_sessions")
+
     @property
     def password_reset_tokens(self) -> Any:
         """Get password_reset_tokens table."""
-        return self.table('password_reset_tokens')
-    
+        return self.table("password_reset_tokens")
+
     @property
     def email_verification_tokens(self) -> Any:
         """Get email_verification_tokens table."""
-        return self.table('email_verification_tokens')
-    
+        return self.table("email_verification_tokens")
+
     @property
     def social_auth_profiles(self) -> Any:
         """Get social_auth_profiles table."""
-        return self.table('social_auth_profiles')
-    
+        return self.table("social_auth_profiles")
+
     @property
     def audit_logs(self) -> Any:
         """Get audit_logs table."""
-        return self.table('audit_logs')
+        return self.table("audit_logs")
 
 
 # Global schema manager instance
@@ -100,7 +101,7 @@ def get_auth_credentials_table(client: Client = None):
 
 
 def get_auth_sessions_table(client: Client = None):
-    """Get auth_sessions table from configured schema.""" 
+    """Get auth_sessions table from configured schema."""
     return get_schema_manager(client).auth_sessions
 
 

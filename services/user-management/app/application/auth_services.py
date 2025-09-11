@@ -2,27 +2,39 @@
 Application services layer for authentication operations.
 """
 
-from typing import Optional, Dict, Any
-from uuid import UUID, uuid4
-from datetime import datetime, timedelta
-import secrets
 import logging
+import secrets
+from datetime import datetime, timedelta
+from typing import Any, Dict, Optional
+from uuid import UUID, uuid4
 
+from app.core.config import get_settings
+from app.core.security import (
+    create_access_token,
+    decode_access_token,
+    get_password_hash,
+    verify_password,
+)
 from app.domain.entities import (
-    User, AuthCredentials, AuthSession, PasswordResetToken, 
-    EmailVerificationToken, AuditLog, UserStatus, UserProfile,
-    CredentialStatus
+    AuditLog,
+    AuthCredentials,
+    AuthSession,
+    CredentialStatus,
+    EmailVerificationToken,
+    PasswordResetToken,
+    User,
+    UserProfile,
+    UserStatus,
 )
 from app.domain.repositories import (
-    UserRepository, AuthCredentialsRepository, AuthSessionRepository,
-    PasswordResetTokenRepository, EmailVerificationTokenRepository, 
-    AuditLogRepository, UserProfileRepository
+    AuditLogRepository,
+    AuthCredentialsRepository,
+    AuthSessionRepository,
+    EmailVerificationTokenRepository,
+    PasswordResetTokenRepository,
+    UserProfileRepository,
+    UserRepository,
 )
-from app.core.security import (
-    verify_password, get_password_hash, create_access_token,
-    decode_access_token
-)
-from app.core.config import get_settings
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -39,7 +51,7 @@ class AuthenticationService:
         password_reset_repo: PasswordResetTokenRepository,
         email_verification_repo: EmailVerificationTokenRepository,
         audit_log_repo: AuditLogRepository,
-        user_profile_repo: UserProfileRepository
+        user_profile_repo: UserProfileRepository,
     ):
         self.user_repo = user_repo
         self.auth_credentials_repo = auth_credentials_repo
@@ -56,7 +68,7 @@ class AuthenticationService:
         username: str,
         first_name: Optional[str] = None,
         last_name: Optional[str] = None,
-        request_info: Optional[Dict[str, str]] = None
+        request_info: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """Register a new user."""
         try:
@@ -78,7 +90,7 @@ class AuthenticationService:
                 email_verified_at=None,
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow(),
-                last_login_at=None
+                last_login_at=None,
             )
             user = await self.user_repo.create(user)
 
@@ -91,7 +103,7 @@ class AuthenticationService:
                     last_name=last_name,
                     display_name=f"{first_name or ''} {last_name or ''}".strip(),
                     created_at=datetime.utcnow(),
-                    updated_at=datetime.utcnow()
+                    updated_at=datetime.utcnow(),
                 )
                 await self.user_profile_repo.create(profile)
 
@@ -103,15 +115,13 @@ class AuthenticationService:
                 password_hash=password_hash,
                 salt=secrets.token_hex(32),
                 status=CredentialStatus.ACTIVE,
-                password_changed_at=datetime.utcnow()
+                password_changed_at=datetime.utcnow(),
             )
             await self.auth_credentials_repo.create(credentials)
 
             # Create email verification token
             verification_token = EmailVerificationToken(
-                user_id=user.id,
-                email=email,
-                token=secrets.token_urlsafe(32)
+                user_id=user.id, email=email, token=secrets.token_urlsafe(32)
             )
             await self.email_verification_repo.create(verification_token)
 
@@ -122,13 +132,13 @@ class AuthenticationService:
                 resource_type="user",
                 resource_id=user.id,
                 details={"email": email, "username": username},
-                request_info=request_info
+                request_info=request_info,
             )
 
             return {
                 "user": user,
                 "verification_token": verification_token.token,
-                "message": "User registered successfully. Please verify your email."
+                "message": "User registered successfully. Please verify your email.",
             }
 
         except Exception as e:
@@ -136,10 +146,7 @@ class AuthenticationService:
             raise
 
     async def login_user(
-        self,
-        email: str,
-        password: str,
-        request_info: Optional[Dict[str, str]] = None
+        self, email: str, password: str, request_info: Optional[Dict[str, str]] = None
     ) -> Dict[str, Any]:
         """Authenticate user and create session."""
         try:
@@ -159,13 +166,15 @@ class AuthenticationService:
 
             # Check if account is locked
             if credentials.is_locked():
-                raise ValueError("Account is temporarily locked due to failed login attempts")
+                raise ValueError(
+                    "Account is temporarily locked due to failed login attempts"
+                )
 
             # Verify password
             if not verify_password(password, credentials.password_hash):
                 # Increment failed attempts
                 await self.auth_credentials_repo.increment_failed_attempts(user.id)
-                
+
                 # Log failed attempt
                 await self._log_action(
                     user_id=user.id,
@@ -173,9 +182,9 @@ class AuthenticationService:
                     resource_type="user",
                     resource_id=user.id,
                     details={"reason": "invalid_password"},
-                    request_info=request_info
+                    request_info=request_info,
                 )
-                
+
                 raise ValueError("Invalid email or password")
 
             # Reset failed attempts on successful login
@@ -197,7 +206,7 @@ class AuthenticationService:
                 refresh_token=secrets.token_urlsafe(32),
                 device_info=request_info.get("device_info") if request_info else None,
                 ip_address=request_info.get("ip_address") if request_info else None,
-                user_agent=request_info.get("user_agent") if request_info else None
+                user_agent=request_info.get("user_agent") if request_info else None,
             )
             await self.auth_session_repo.create(session)
 
@@ -208,14 +217,14 @@ class AuthenticationService:
                 resource_type="user",
                 resource_id=user.id,
                 details={"session_id": str(session.id)},
-                request_info=request_info
+                request_info=request_info,
             )
 
             return {
                 "access_token": access_token,
                 "token_type": "bearer",
                 "expires_in": settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-                "user": user
+                "user": user,
             }
 
         except Exception as e:
@@ -223,9 +232,7 @@ class AuthenticationService:
             raise
 
     async def logout_user(
-        self,
-        token: str,
-        request_info: Optional[Dict[str, str]] = None
+        self, token: str, request_info: Optional[Dict[str, str]] = None
     ) -> bool:
         """Logout user and invalidate session."""
         try:
@@ -233,7 +240,7 @@ class AuthenticationService:
             session = await self.auth_session_repo.get_by_token(token)
             if session:
                 await self.auth_session_repo.invalidate_session(token)
-                
+
                 # Log logout
                 await self._log_action(
                     user_id=session.user_id,
@@ -241,11 +248,11 @@ class AuthenticationService:
                     resource_type="user",
                     resource_id=session.user_id,
                     details={"session_id": str(session.id)},
-                    request_info=request_info
+                    request_info=request_info,
                 )
-                
+
                 return True
-            
+
             return False
 
         except Exception as e:
@@ -253,9 +260,7 @@ class AuthenticationService:
             raise
 
     async def reset_password_request(
-        self,
-        email: str,
-        request_info: Optional[Dict[str, str]] = None
+        self, email: str, request_info: Optional[Dict[str, str]] = None
     ) -> Dict[str, Any]:
         """Request password reset."""
         try:
@@ -269,8 +274,7 @@ class AuthenticationService:
 
             # Create new reset token
             reset_token = PasswordResetToken(
-                user_id=user.id,
-                token=secrets.token_urlsafe(32)
+                user_id=user.id, token=secrets.token_urlsafe(32)
             )
             await self.password_reset_repo.create(reset_token)
 
@@ -281,12 +285,12 @@ class AuthenticationService:
                 resource_type="user",
                 resource_id=user.id,
                 details={"token_id": str(reset_token.id)},
-                request_info=request_info
+                request_info=request_info,
             )
 
             return {
                 "message": "Password reset link has been sent to your email.",
-                "reset_token": reset_token.token  # In production, send via email
+                "reset_token": reset_token.token,  # In production, send via email
             }
 
         except Exception as e:
@@ -297,7 +301,7 @@ class AuthenticationService:
         self,
         token: str,
         new_password: str,
-        request_info: Optional[Dict[str, str]] = None
+        request_info: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """Confirm password reset with token."""
         try:
@@ -332,7 +336,7 @@ class AuthenticationService:
                 resource_type="user",
                 resource_id=user.id,
                 details={"via": "reset_token"},
-                request_info=request_info
+                request_info=request_info,
             )
 
             return {"message": "Password has been reset successfully."}
@@ -342,9 +346,7 @@ class AuthenticationService:
             raise
 
     async def verify_email(
-        self,
-        token: str,
-        request_info: Optional[Dict[str, str]] = None
+        self, token: str, request_info: Optional[Dict[str, str]] = None
     ) -> Dict[str, Any]:
         """Verify email with token."""
         try:
@@ -373,7 +375,7 @@ class AuthenticationService:
                 resource_type="user",
                 resource_id=user.id,
                 details={"email": user.email},
-                request_info=request_info
+                request_info=request_info,
             )
 
             return {"message": "Email verified successfully."}
@@ -409,7 +411,7 @@ class AuthenticationService:
         resource_type: str,
         resource_id: Optional[UUID] = None,
         details: Optional[Dict[str, Any]] = None,
-        request_info: Optional[Dict[str, str]] = None
+        request_info: Optional[Dict[str, str]] = None,
     ):
         """Log user action for audit purposes."""
         try:
@@ -420,7 +422,7 @@ class AuthenticationService:
                 resource_id=resource_id,
                 details=details or {},
                 ip_address=request_info.get("ip_address") if request_info else None,
-                user_agent=request_info.get("user_agent") if request_info else None
+                user_agent=request_info.get("user_agent") if request_info else None,
             )
             await self.audit_log_repo.create(log_entry)
         except Exception as e:

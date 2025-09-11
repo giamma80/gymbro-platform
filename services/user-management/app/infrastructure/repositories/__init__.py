@@ -6,9 +6,9 @@ Schema: user_management
 """
 
 from .user_repository import (
-    UserRepository,
-    UserProfileRepository,
     PrivacySettingsRepository,
+    UserProfileRepository,
+    UserRepository,
     UserServiceContextRepository,
 )
 

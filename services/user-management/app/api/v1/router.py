@@ -5,8 +5,9 @@ Schema: user_management
 """
 
 from fastapi import APIRouter
-from app.api.v1.endpoints import health
+
 from app.api.v1 import users
+from app.api.v1.endpoints import health
 
 api_router = APIRouter()
 

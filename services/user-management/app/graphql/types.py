@@ -2,15 +2,16 @@
 GraphQL Types for user-management
 """
 
-import strawberry
-from typing import List, Optional
 from datetime import datetime
+from typing import List, Optional
+
+import strawberry
 
 
 @strawberry.federation.type(keys=["id"])
 class UserType:
     """GraphQL type for user entity with federation support."""
-    
+
     id: strawberry.ID
     email: str
     username: Optional[str] = None
@@ -18,12 +19,13 @@ class UserType:
     is_active: bool = True
     created_at: datetime
     updated_at: Optional[datetime] = None
-    
+
     @classmethod
     def resolve_reference(cls, id: strawberry.ID):
         """Resolve user reference for Apollo Federation."""
         # This will be implemented with actual user fetching
         from app.core.database import SupabaseRepository
+
         repo = SupabaseRepository("users")
         # TODO: Implement async reference resolution
         pass
@@ -32,7 +34,7 @@ class UserType:
 @strawberry.input
 class CreateUserInput:
     """Input type for creating user."""
-    
+
     email: str
     username: Optional[str] = None
     full_name: Optional[str] = None
@@ -42,7 +44,7 @@ class CreateUserInput:
 @strawberry.input
 class UpdateUserInput:
     """Input type for updating user."""
-    
+
     email: Optional[str] = None
     username: Optional[str] = None
     full_name: Optional[str] = None
@@ -52,7 +54,7 @@ class UpdateUserInput:
 @strawberry.type
 class UserResponse:
     """Response type for user operations."""
-    
+
     success: bool
     message: str
     data: Optional[UserType] = None
@@ -61,7 +63,7 @@ class UserResponse:
 @strawberry.type
 class UserListResponse:
     """Response type for user list operations."""
-    
+
     success: bool
     message: str
     data: List[UserType]
@@ -71,7 +73,7 @@ class UserListResponse:
 @strawberry.type
 class AuthResponse:
     """Response type for authentication operations."""
-    
+
     success: bool
     message: str
     access_token: Optional[str] = None

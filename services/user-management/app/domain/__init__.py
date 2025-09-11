@@ -9,20 +9,20 @@ for the user management service.
 """
 
 from .entities import (
-    User,
-    UserProfile,
+    GenderType,
     PrivacySettings,
+    User,
+    UserCreatedEvent,
+    UserProfile,
+    UserProfileUpdatedEvent,
     UserServiceContext,
     UserStatus,
-    GenderType,
-    UserCreatedEvent,
     UserVerifiedEvent,
-    UserProfileUpdatedEvent,
 )
 
 __all__ = [
     "User",
-    "UserProfile", 
+    "UserProfile",
     "PrivacySettings",
     "UserServiceContext",
     "UserStatus",

@@ -1,7 +1,7 @@
 # ==========================================
 # NutriFit Platform - CI/CD Pipeline
 # ==========================================
-# Build & Test - Render Deploy Automatico via Blueprint
+# Build, Test & Release - Render Deploy Automatico via Blueprint
 
 name: 🚀 NutriFit Platform CI/CD
 
@@ -92,6 +92,13 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'mock-key' }}
           JWT_SECRET: test-secret-key
 
+      - name: 🐳 Docker Build Test
+        working-directory: ./services/user-management
+        run: |
+          echo "🏗️ Testing Docker build..."
+          docker build --target production -t user-management:test .
+          echo "✅ Docker build successful!"
+
       - name: ✅ Tests Complete
         run: |
           echo "🎉 User Management tests passed!"
@@ -141,6 +148,13 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'mock-key' }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'mock-key' }}
           JWT_SECRET: test-secret-key
+
+      - name: 🐳 Docker Build Test
+        working-directory: ./services/calorie-balance
+        run: |
+          echo "🏗️ Testing Docker build..."
+          docker build --target production -t calorie-balance:test .
+          echo "✅ Docker build successful!"
 
       - name: ✅ Tests Complete
         run: |

@@ -7,6 +7,52 @@ e questo progetto aderisce al [Semantic Versioning](https://semver.org/spec/v2.0
 
 ## [Unreleased]
 
+## [v1.5.0] - 2025-09-11 - Production Deployment & CI/CD Pipeline Complete
+
+### 🚀 Production Deployment Success
+- **Live Service**: https://nutrifit-user-management.onrender.com deployed and operational
+- **100% Production Test Success**: All 22 comprehensive tests pass in production environment
+- **Render Auto-Deploy**: Repository-based deployment with buildFilter configuration
+- **Environment Variables**: Production secrets configured via Render dashboard (manual entry)
+- **Database Connection**: Supabase production database fully operational
+
+### 🔄 CI/CD Pipeline Implementation
+- **GitHub Actions Workflow**: Simplified test-only pipeline (removed Container Registry complexity)
+- **Repository-Based Deployment**: Direct repository sync instead of Container Registry approach
+- **Build Filter Configuration**: Selective deployment triggers for `services/user-management/**` and `render.yaml`
+- **Automated Releases**: GitHub releases with proper versioning and changelog generation
+- **Environment Profiles**: Support for `local` and `prod` testing profiles
+
+### 🛠️ Infrastructure Improvements
+- **render.yaml**: Switched from Container Registry to repository-based configuration
+- **Docker Multi-stage Build**: Production-ready containers with Poetry and Python 3.11
+- **Secret Management**: Environment variables configured directly in Render dashboard
+- **Auto-Deploy**: Enabled with proper buildFilter for selective deployments
+
+### 🧪 Enhanced Testing Suite
+- **test_comprehensive.py**: Added environment profile support (`local`/`prod`)
+- **Production Testing**: Comprehensive validation against live production endpoints
+- **Performance Metrics**: Production tests complete in ~17 seconds vs ~8 seconds local
+- **API Documentation**: Swagger UI available in development (disabled in production for security)
+
+### 🔧 Technical Configuration
+- **Environment Variable Corrections**: Fixed `SUPABASE_SERVICE_KEY` and `SECRET_KEY` naming
+- **Poetry Integration**: All testing and development commands use Poetry virtual environment
+- **GitHub Actions Simplification**: Removed unnecessary Container Registry push steps
+- **Deployment Strategy**: Direct repository monitoring with automatic builds on Render
+
+### 📊 Production Metrics
+- **Service Health**: All health checks passing (`/health`, `/health/ready`, `/health/live`)
+- **API Response Times**: Average response times within acceptable limits
+- **Database Performance**: Supabase queries executing efficiently in production
+- **Test Coverage**: 22/22 tests passing (100% success rate) in both local and production
+
+### 🎯 Quality Assurance
+- **Zero Failed Tests**: Complete test suite passes in production environment
+- **Database Integrity**: All CRUD operations working correctly with real production data
+- **Security Compliance**: Swagger documentation properly disabled in production
+- **Error Handling**: Proper HTTP status codes and error responses validated
+
 ## [v1.4.0] - 2025-09-10 - User Management Service Production Ready
 
 ### 🎯 Major Achievements - Complete Service Lifecycle

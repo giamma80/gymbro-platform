@@ -29,6 +29,14 @@ env:
   POETRY_VERSION: '1.6.1'
 
 # ====================================
+# Permissions
+# ====================================
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+# ====================================
 # Jobs
 # ====================================
 jobs:
@@ -164,7 +172,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.DOCKER_REGISTRY }}/giamma80/nutrifit-user-management
+          images: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/gymbro-platform-user-management
           tags: |
             type=ref,event=branch
             type=sha,prefix={{branch}}-

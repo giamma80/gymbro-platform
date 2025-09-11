@@ -205,7 +205,13 @@ jobs:
       - name: Deploy to Render (Staging)
         run: |
           echo "🚀 Triggering Render Staging Deploy via Webhook..."
-          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}"
+          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}" ]; then
+            echo "⚠️  RENDER_DEPLOY_HOOK_STAGING secret not configured, skipping staging deploy"
+            exit 0
+          fi
+          response=$(curl -s -X POST "${{ secrets.RENDER_DEPLOY_HOOK_STAGING }}")
+          echo "✅ Staging deploy hook triggered successfully"
+          echo "📋 Response: $response"
 
   # ====================================
   # Deploy to Production
@@ -223,7 +229,18 @@ jobs:
       - name: Deploy to Render (Production)
         run: |
           echo "🚀 Triggering Render Deploy via Webhook..."
-          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            echo "⚠️  RENDER_DEPLOY_HOOK_URL secret not configured"
+            echo "💡 To enable automatic deployment:"
+            echo "   1. Go to Render Dashboard → Your Service → Settings"
+            echo "   2. Copy the 'Deploy Hook' URL"
+            echo "   3. Add it as RENDER_DEPLOY_HOOK_URL secret on GitHub"
+            echo "🏗️  For now, Render will deploy automatically on Docker image push"
+            exit 0
+          fi
+          response=$(curl -s -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}")
+          echo "✅ Deploy hook triggered successfully"
+          echo "📋 Response: $response"
       
       - name: Create GitHub Release
         if: github.ref == 'refs/heads/main'

@@ -1,7 +1,7 @@
 # ===============================================
-# NutriFit Platform - Render.com Configuration
+# NutriFit Platform - Render.com Configuration  
 # ===============================================
-# Complete platform deployment for all microservices
+# Blueprint sync con la configurazione esistente
 
 services:
   # ====================================
@@ -13,28 +13,86 @@ services:
     repo: https://github.com/giamma80/gymbro-platform.git
     rootDir: services/user-management
     dockerfilePath: ./Dockerfile
+    dockerContext: services/user-management
     
-    # Build Configuration
-    buildCommand: ""  # Docker handles the build
+    # Runtime Configuration
+    plan: starter
+    region: oregon  
+    branch: main
+    
+    # Auto Deploy
+    autoDeploy: true
+    
+    # Health Check
+    healthCheckPath: /health
+    
+    # Deploy solo quando cambia questo servizio
+    buildFilter:
+      paths:
+        - services/user-management/**
+        - render.yaml
+    
+    # Environment Variables (da configurare nel dashboard)
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: LOG_LEVEL  
+        value: INFO
+      - key: PORT
+        value: "8000"
+      
+      # Supabase (configurare nel dashboard Render)
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false  
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      
+      # JWT
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      
+      # Python optimizations
+      - key: PYTHONDONTWRITEBYTECODE
+        value: "1"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+  # ====================================
+  # Calorie Balance Service (quando pronto)
+  # ====================================
+  - type: web
+    name: nutrifit-calorie-balance
+    runtime: docker
+    repo: https://github.com/giamma80/gymbro-platform.git
+    rootDir: services/calorie-balance
+    dockerfilePath: ./Dockerfile
+    dockerContext: services/calorie-balance
     
     # Runtime Configuration
     plan: starter
     region: oregon
     branch: main
     
-    # Health Check
-    healthCheckPath: /health
+    # Auto Deploy
     autoDeploy: true
     
-    # Build Filter - Only deploy when this service changes
+    # Health Check  
+    healthCheckPath: /health
+    
+    # Deploy solo quando cambia questo servizio
     buildFilter:
       paths:
-        - services/user-management/**
+        - services/calorie-balance/**
         - render.yaml
     
     # Environment Variables
     envVars:
-      # Application
       - key: ENVIRONMENT
         value: production
       - key: DEBUG
@@ -42,12 +100,27 @@ services:
       - key: LOG_LEVEL
         value: INFO
       - key: PORT
-        value: "8000"
-      - key: DATABASE_SCHEMA
-        value: user_management
+        value: "8001"
       
-      # Supabase (set in Render dashboard)
+      # Supabase
       - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      
+      # JWT
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+        
+      # Python optimizations
+      - key: PYTHONDONTWRITEBYTECODE
+        value: "1" 
+      - key: PYTHONUNBUFFERED
+        value: "1"
         sync: false
       - key: SUPABASE_ANON_KEY
         sync: false

@@ -8,9 +8,16 @@ Date: 9 settembre 2025
 
 This script runs a comprehensive test suite for the user management service,
 including database connectivity, API endpoints, and data validation.
+
+Usage:
+    python test_comprehensive.py [local|prod]
+    
+    local: Test against localhost:8001 (default)
+    prod:  Test against https://nutrifit-user-management.onrender.com
 """
 
 import asyncio
+import sys
 import time
 from datetime import datetime
 from typing import Any, Dict, Optional
@@ -21,8 +28,24 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Environment Configuration
+ENVIRONMENTS = {
+    "local": "http://localhost:8001",
+    "prod": "https://nutrifit-user-management.onrender.com"
+}
+
+# Determine environment from command line argument
+if len(sys.argv) > 1:
+    env_profile = sys.argv[1].lower()
+    if env_profile not in ENVIRONMENTS:
+        print(f"❌ Invalid profile: {env_profile}")
+        print(f"Available profiles: {', '.join(ENVIRONMENTS.keys())}")
+        sys.exit(1)
+else:
+    env_profile = "local"
+
 # Test Configuration
-BASE_URL = "http://localhost:8001"
+BASE_URL = ENVIRONMENTS[env_profile]
 TEST_USER_ID = "00000000-0000-0000-0000-000000000001"
 TEST_EMAIL = "test@nutrifit.com"
 
@@ -436,6 +459,7 @@ class UserManagementTests:
         print("=" * 60)
         print(f"Service: user-management")
         print(f"Schema: user_management")
+        print(f"Environment: {env_profile.upper()}")
         print(f"Base URL: {BASE_URL}")
         print(f"Test User: {TEST_EMAIL} ({TEST_USER_ID})")
         print(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")

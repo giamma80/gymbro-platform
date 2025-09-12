@@ -7,8 +7,103 @@ and serialization for the calorie-balance service API.
 
 from typing import List, Optional, Any, Dict
 from datetime import datetime
+from decimal import Decimal
 from pydantic import BaseModel, Field, ConfigDict
 from pydantic.types import UUID4
+
+# Import domain enums
+from app.domain.entities import GenderType, ActivityLevel
+
+
+class UserMetricsSchema(BaseModel):
+    """Schema for user metrics using Parameter Passing pattern."""
+    
+    weight_kg: Decimal = Field(
+        ...,
+        description="Current weight in kilograms",
+        ge=20,
+        le=500
+    )
+    height_cm: Decimal = Field(
+        ...,
+        description="Height in centimeters",
+        ge=50,
+        le=300
+    )
+    age: int = Field(..., description="Age in years", ge=13, le=120)
+    gender: GenderType = Field(..., description="Gender (MALE/FEMALE)")
+    activity_level: ActivityLevel = Field(
+        ...,
+        description="Physical activity level"
+    )
+    
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "weight_kg": 75.5,
+                "height_cm": 175.0,
+                "age": 30,
+                "gender": "MALE",
+                "activity_level": "MODERATE"
+            }
+        }
+    )
+
+
+class MetabolicCalculationRequest(UserMetricsSchema):
+    """Schema for metabolic profile calculation request."""
+    pass
+
+
+class MetabolicProfileResponse(BaseModel):
+    """Schema for metabolic profile response."""
+    
+    id: UUID4
+    user_id: UUID4
+    bmr_calories: Decimal
+    tdee_calories: Decimal
+    activity_level: ActivityLevel
+    current_weight_kg: Decimal
+    current_height_cm: Decimal
+    current_age: int
+    gender: GenderType
+    calculation_method: str
+    calculation_date: datetime
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+class WeightLossGoalRequest(UserMetricsSchema):
+    """Schema for creating weight loss goal with user metrics."""
+    
+    target_weight_kg: Decimal = Field(
+        ...,
+        description="Target weight in kilograms",
+        ge=20,
+        le=500
+    )
+    weekly_loss_kg: Decimal = Field(
+        ...,
+        description="Desired weekly weight loss in kg",
+        ge=0.1,
+        le=2.0
+    )
+    
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "weight_kg": 80.0,
+                "height_cm": 175.0,
+                "age": 30,
+                "gender": "MALE",
+                "activity_level": "MODERATE",
+                "target_weight_kg": 75.0,
+                "weekly_loss_kg": 0.5
+            }
+        }
+    )
 
 
 class UcalorieUbalanceBase(BaseModel):
@@ -24,13 +119,13 @@ class UcalorieUbalanceBase(BaseModel):
 class UcalorieUbalanceCreate(UcalorieUbalanceBase):
     """Schema for creating a new calorie-balance record."""
     
-    # Add your specific fields here based on your service requirements
     name: str = Field(..., min_length=1, max_length=255, description="Name of the calorie-balance")
     description: Optional[str] = Field(None, max_length=1000, description="Description of the calorie-balance")
     metadata: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Additional metadata")
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
             "example": {
                 "name": "Example calorie-balance",
                 "description": "This is an example calorie-balance record",
@@ -40,10 +135,15 @@ class UcalorieUbalanceCreate(UcalorieUbalanceBase):
                 }
             }
         }
+    )
 
 
 class UcalorieUbalanceUpdate(BaseModel):
     """Schema for updating a calorie-balance record."""
+    
+    name: Optional[str] = Field(None, min_length=1, max_length=255, description="Name of the calorie-balance")
+    description: Optional[str] = Field(None, max_length=1000, description="Description of the calorie-balance")
+    metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata")
     
     model_config = ConfigDict(
         from_attributes=True,
@@ -55,11 +155,6 @@ class UcalorieUbalanceUpdate(BaseModel):
             }
         }
     )
-    
-    # All fields are optional for updates
-    name: Optional[str] = Field(None, min_length=1, max_length=255, description="Name of the calorie-balance")
-    description: Optional[str] = Field(None, max_length=1000, description="Description of the calorie-balance")
-    metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata")
 
 
 class UcalorieUbalanceResponse(UcalorieUbalanceBase):
@@ -75,15 +170,7 @@ class UcalorieUbalanceResponse(UcalorieUbalanceBase):
     
     @classmethod
     def from_entity(cls, entity) -> "UcalorieUbalanceResponse":
-        """
-        Create response schema from domain entity.
-        
-        Args:
-            entity: Domain entity instance
-            
-        Returns:
-            UcalorieUbalanceResponse instance
-        """
+        """Create response schema from domain entity."""
         return cls(
             id=entity.id,
             user_id=entity.user_id,
@@ -94,8 +181,9 @@ class UcalorieUbalanceResponse(UcalorieUbalanceBase):
             updated_at=entity.updated_at
         )
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
             "example": {
                 "id": "123e4567-e89b-12d3-a456-426614174000",
                 "user_id": "987fcdeb-51d2-43a1-b789-123456789abc",
@@ -109,20 +197,20 @@ class UcalorieUbalanceResponse(UcalorieUbalanceBase):
                 "updated_at": "2024-01-01T12:00:00Z"
             }
         }
+    )
 
 
 class UcalorieUbalanceListResponse(BaseModel):
     """Schema for paginated calorie-balance list responses."""
-    
-    model_config = ConfigDict(from_attributes=True)
     
     records: List[UcalorieUbalanceResponse] = Field(..., description="List of calorie-balance records")
     total: int = Field(..., description="Total number of records returned")
     limit: int = Field(..., description="Maximum number of records requested")
     offset: int = Field(..., description="Number of records skipped")
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
             "example": {
                 "records": [
                     {
@@ -136,43 +224,43 @@ class UcalorieUbalanceListResponse(BaseModel):
                     }
                 ],
                 "total": 1,
-                "limit": 100,
+                "limit": 10,
                 "offset": 0
             }
         }
+    )
 
 
 class ErrorResponse(BaseModel):
     """Schema for error responses."""
     
-    model_config = ConfigDict(from_attributes=True)
-    
     detail: str = Field(..., description="Error message")
     error_code: Optional[str] = Field(None, description="Specific error code")
     timestamp: datetime = Field(default_factory=datetime.utcnow, description="Error timestamp")
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
             "example": {
                 "detail": "Resource not found",
                 "error_code": "RESOURCE_NOT_FOUND",
                 "timestamp": "2024-01-01T12:00:00Z"
             }
         }
+    )
 
 
 class HealthResponse(BaseModel):
     """Schema for health check responses."""
-    
-    model_config = ConfigDict(from_attributes=True)
     
     status: str = Field(..., description="Health status")
     service: str = Field(..., description="Service name")
     timestamp: datetime = Field(..., description="Health check timestamp")
     details: Optional[Dict[str, Any]] = Field(None, description="Additional health details")
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
             "example": {
                 "status": "healthy",
                 "service": "calorie-balance",
@@ -183,3 +271,4 @@ class HealthResponse(BaseModel):
                 }
             }
         }
+    )

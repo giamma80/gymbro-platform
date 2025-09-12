@@ -109,8 +109,16 @@ Architettura ottimizzata con database Supabase condiviso e schema dedicati per m
 - ✅ **Cost-effective**: Database Supabase condiviso riduce costi
 - ✅ **Data isolation**: Schema dedicati mantengono separazione logica
 - ✅ **Centralized auth**: user_management schema fornisce autenticazione unificata
-- ✅ **Cross-service queries**: Possibili join cross-schema quando necessari
+- ✅ **Cross-schema Foreign Keys**: Riferimenti diretti cross-schema per integrità referenziale
+- ✅ **Single Source of Truth**: user_management è l'unico proprietario dei dati utente
 - ✅ **Simplified deployment**: Un solo database da configurare e monitorare
+
+**Pattern Cross-Schema per User Management:**
+- 🎯 **No Duplicate Users Tables**: Ogni microservizio rimuove tabelle `users` duplicate
+- 🔗 **Direct Foreign Key References**: `FOREIGN KEY (user_id) REFERENCES user_management.users(id)`
+- 📊 **Partial Indexes**: Indici ottimizzati solo per utenti attivi (`WHERE is_active = true`)
+- 🛡️ **Soft Delete Safety**: Mai delete fisico, solo `is_active = false` in user_management
+- ⚡ **Performance Optimized**: FK cross-schema native PostgreSQL senza overhead
 
 In sintesi, l'adozione dei microservizi apporta **maggiore agilità** e
 **manutenibilità**[\[4\]](https://www.atlassian.com/it/microservices/cloud-computing/advantages-of-microservices#:~:text=1)[\[1\]](https://learn.microsoft.com/it-it/azure/architecture/guide/architecture-styles/microservices#:~:text=I%20microservizi%20sono%20componenti%20di,le%20implementazioni%20interne%20nascoste%20da).
@@ -119,7 +127,66 @@ deploy, test d'integrazione, versionamento API) e previsto un robusto
 sistema di logging e
 monitoring[\[4\]](https://www.atlassian.com/it/microservices/cloud-computing/advantages-of-microservices#:~:text=1)[\[6\]](https://learn.microsoft.com/it-it/azure/architecture/guide/architecture-styles/microservices#:~:text=,ostruzioni%20e%20migliorare%20le%20prestazioni).
 
-## 🔄 N8N Orchestration e Workflow Management
+## �️ Database Architecture & Cross-Schema Patterns
+
+### User Management as Single Source of Truth
+
+La piattaforma adotta il pattern **Single Source of Truth** per i dati utente, dove:
+
+- **user_management.users** è l'unica tabella autoritative per utenti
+- **Nessun microservizio** replica la tabella users localmente
+- **Foreign Keys Cross-Schema** garantiscono integrità referenziale
+- **Soft Delete Strategy** con `is_active` flag per sicurezza dati
+
+#### Implementazione Cross-Schema Foreign Keys
+
+```sql
+-- Schema user_management (Master)
+CREATE TABLE user_management.users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email TEXT UNIQUE NOT NULL,
+    username TEXT UNIQUE,
+    full_name TEXT,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indici parziali per performance ottimale
+CREATE INDEX idx_users_active ON user_management.users (id) 
+WHERE is_active = true;
+
+CREATE UNIQUE INDEX idx_users_email_active ON user_management.users (email) 
+WHERE is_active = true;
+```
+
+```sql
+-- Schema calorie_balance (Consumer)
+CREATE TABLE calorie_balance.calorie_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    calories DECIMAL(8,2) NOT NULL,
+    event_type TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    
+    -- Foreign Key Cross-Schema (NO tabella users locale)
+    FOREIGN KEY (user_id) REFERENCES user_management.users(id)
+        ON UPDATE CASCADE
+        -- Niente DELETE RESTRICT - soft delete strategy
+);
+```
+
+#### Vantaggi del Pattern Cross-Schema
+
+| Aspetto | Beneficio | Implementazione |
+|---------|-----------|-----------------|
+| **Data Consistency** | Single source of truth garantita | FK dirette cross-schema |
+| **Performance** | Nessun overhead di join complessi | Indici parziali ottimizzati |
+| **Microservice Compliance** | Ogni servizio gestisce i propri domini | No duplicazione users table |
+| **Safety** | Soft delete prevents data loss | `is_active = false` strategy |
+| **Scalability** | PostgreSQL native cross-schema support | Zero API overhead |
+
+## �🔄 N8N Orchestration e Workflow Management
 
 ### Ruolo di N8N Cloud come Orchestratore Centrale
 

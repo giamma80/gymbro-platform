@@ -2,6 +2,33 @@
 
 Questo documento descrive la strategia di segregazione dei database per la piattaforma NutriFit. Ogni microservizio avrà un database dedicato su Supabase, con schema e policy indipendenti.
 
+## ⚠️ CONFIGURAZIONE CRITICA - Esposizione Schema in Supabase
+
+**IMPORTANTE**: Dopo aver creato gli schemi personalizzati, devono essere esposti tramite PostgREST nella dashboard di Supabase.
+
+### Passi Obbligatori per Ogni Schema
+
+1. **Accedere alla Dashboard Supabase**: `https://supabase.com/dashboard/project/{project-id}/settings/api`
+
+2. **Configurare API Settings**:
+   - Sezione: `API Settings` 
+   - Campo: `Exposed schemas`
+   - **Aggiungere gli schemi custom** (es. `calorie_balance, user_management`)
+   
+3. **Schema da Esporre per Servizio**:
+   ```
+   user_management      # Per user-management service
+   calorie_balance      # Per calorie-balance service  
+   meal_tracking        # Per meal-tracking service
+   health_monitor       # Per health-monitor service
+   notifications        # Per notifications service
+   ai_coach            # Per ai-coach service
+   ```
+
+4. **Verificare Esposizione**: Gli schemi devono apparire nella lista `The schema must be one of the following` negli errori PostgREST
+
+⚠️ **Senza questa configurazione**: I microservizi non possono accedere ai propri schemi e restituiscono errori `PGRST106`.
+
 ## Microservizi e Database dedicati
 
 | Microservizio         | Database dedicato         | Documentazione Datamodel |

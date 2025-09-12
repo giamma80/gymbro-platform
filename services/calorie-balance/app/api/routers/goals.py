@@ -17,6 +17,7 @@ from app.api.calorie_schemas import (
     CalorieGoalCreateRequest,
     CalorieGoalUpdateRequest
 )
+from app.api.schemas import WeightLossGoalRequest
 
 # Domain entities and services
 from app.application.services import (
@@ -233,4 +234,54 @@ async def get_ai_goal_recommendation(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to generate AI recommendation"
+        )
+
+
+@router.post(
+    "/users/{user_id}/weight-loss",
+    response_model=CalorieGoalResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create Weight Loss Goal with User Metrics",
+    description="""
+    Create intelligent weight loss goal using Parameter Passing pattern.
+    
+    **Architecture**: User metrics provided in request body
+    - No dependency on user-management service
+    - Enables microservice decoupling and reusability
+    - Suitable for mobile app and N8N orchestrator usage
+    
+    **Calculations**:
+    - BMR calculated using Mifflin-St Jeor equation
+    - TDEE derived from BMR and activity level
+    - Daily calorie deficit based on desired weekly loss
+    """
+)
+async def create_weight_loss_goal_with_metrics(
+    user_id: str,
+    request: WeightLossGoalRequest,
+    goal_service: CalorieGoalService = Depends(get_calorie_goal_service)
+) -> CalorieGoalResponse:
+    """Create weight loss goal with user metrics provided in request."""
+    try:
+        from uuid import UUID
+        
+        goal = await goal_service.create_weight_loss_goal(
+            user_id=UUID(user_id),
+            target_weight_kg=request.target_weight_kg,
+            weekly_loss_kg=request.weekly_loss_kg,
+            current_weight_kg=request.weight_kg,
+            height_cm=request.height_cm,
+            age=request.age,
+            gender=request.gender,
+            activity_level=request.activity_level
+        )
+        
+        logger.info(f"Created weight loss goal for user {user_id}")
+        return CalorieGoalResponse.from_entity(goal)
+        
+    except Exception as e:
+        logger.error(f"Failed to create weight loss goal: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create weight loss goal: {str(e)}"
         )

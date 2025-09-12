@@ -498,6 +498,81 @@ graph TB
 |---------------|-------------------|-------------------|------------|
 | **calorie-balance** | `nutrifit_calorie_balance` | Goals, BMR, energy balance | ✅ Per AI insights |
 | **meal-tracking** | `nutrifit_meal_tracking` | Food data, nutrition facts | ✅ Per food analysis |
+
+### 🎯 Parameter Passing Pattern per Microservice Decoupling
+
+**Problema Architetturale Risolto (ARCH-011)**: Eliminare dipendenze cross-service tra microservizi mantenendo la funzionalità business.
+
+**Soluzione Implementata**: Pattern Parameter Passing dove i client (mobile app, N8N orchestrator) forniscono i dati utente necessari nel request body invece di richiedere accesso cross-service.
+
+#### Implementazione nel Calorie Balance Service
+
+```python
+# API Schema con Parameter Passing
+class MetabolicCalculationRequest(BaseModel):
+    """Request che include user metrics per calcoli metabolici"""
+    weight_kg: float = Field(..., description="Peso utente in kg")
+    height_cm: float = Field(..., description="Altezza utente in cm") 
+    age: int = Field(..., description="Età utente")
+    gender: GenderType = Field(..., description="Genere utente")
+    activity_level: ActivityLevel = Field(..., description="Livello attività")
+
+# Service Layer che accetta user metrics come parametri
+class MetabolicCalculationService:
+    async def calculate_metabolic_profile(
+        self, 
+        user_id: UUID,
+        weight_kg: float,
+        height_cm: float, 
+        age: int,
+        gender: GenderType,
+        activity_level: ActivityLevel
+    ) -> MetabolicProfile:
+        """
+        Calcola profilo metabolico usando user metrics fornite nel request.
+        Non accede direttamente al user-management service.
+        """
+        # Calcolo BMR usando Harris-Benedict equation
+        if gender == GenderType.MALE:
+            bmr = 88.362 + (13.397 * weight_kg) + (4.799 * height_cm) - (5.677 * age)
+        else:
+            bmr = 447.593 + (9.247 * weight_kg) + (3.098 * height_cm) - (4.330 * age)
+            
+        # Calcolo activity_multiplier da activity_level
+        multipliers = {
+            ActivityLevel.SEDENTARY: 1.2,
+            ActivityLevel.LIGHT: 1.375, 
+            ActivityLevel.MODERATE: 1.55,
+            ActivityLevel.ACTIVE: 1.725,
+            ActivityLevel.VERY_ACTIVE: 1.9
+        }
+        
+        activity_multiplier = multipliers[activity_level]
+        tdee = bmr * activity_multiplier
+        
+        return MetabolicProfile(
+            user_id=user_id,
+            current_weight_kg=weight_kg,
+            current_height_cm=height_cm,
+            current_age=age,
+            gender=gender,
+            activity_level=activity_level,
+            activity_multiplier=activity_multiplier,
+            bmr_calories=int(bmr),
+            tdee_calories=int(tdee)
+        )
+```
+
+#### Benefici Architetturali
+
+- **✅ Microservice Independence**: Ogni service è autonomo e non dipende da altri per funzionare
+- **✅ Mobile App Ready**: L'app mobile può chiamare direttamente i servizi con i dati utente 
+- **✅ N8N Orchestrator Compatible**: I workflow N8N possono aggregare dati e chiamare servizi
+- **✅ Testing Simplified**: Unit test semplificati senza mock di servizi esterni
+- **✅ Deployment Flexibility**: Servizi possono essere deployati indipendentemente
+- **✅ Performance Optimized**: Elimina network calls cross-service
+
+**Status**: ✅ **COMPLETATO** - Implementato nel calorie-balance service con successo
 | **health-monitor** | `nutrifit_health_monitor` | HealthKit sync, metrics | ❌ Solo data collection |
 | **notifications** | `nutrifit_notifications` | Push notifications, alerts | ❌ Solo messaging |
 | **ai-coach** | `nutrifit_ai_coach` | Conversations, recommendations | ✅ Primary MCP server |

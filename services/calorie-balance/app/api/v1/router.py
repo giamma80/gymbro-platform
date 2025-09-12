@@ -8,7 +8,7 @@ from app.api.v1.endpoints import health, items
 from app.api.v1 import entities
 
 # Import the new calorie events router (Priority 1)
-from app.api.routers import events, balance, goals
+from app.api.routers import events, balance, goals, metabolic
 
 api_router = APIRouter()
 
@@ -18,6 +18,9 @@ api_router.include_router(events.router, tags=["events"])
 # Include router for balance and goals
 api_router.include_router(balance.router, prefix="/balance", tags=["balance"])
 api_router.include_router(goals.router, prefix="/goals", tags=["goals"])
+
+# Include new metabolic profiles router (Parameter Passing Pattern)
+api_router.include_router(metabolic.router, tags=["metabolic"])
 
 # Template routers (can be removed in production)
 api_router.include_router(health.router, prefix="/health", tags=["health"])

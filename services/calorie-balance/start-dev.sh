@@ -4,7 +4,7 @@ set -euo pipefail
 
 SERVICE_DIR="$(cd "$(dirname "$0")" && pwd)"
 SERVICE_NAME="calorie-balance"
-SERVICE_PORT=8001
+SERVICE_PORT=8002
 PYTHON_MODULE="app.main:app"
 VENV="$SERVICE_DIR/.venv"
 PID_FILE="/tmp/${SERVICE_NAME}-${SERVICE_PORT}.pid"

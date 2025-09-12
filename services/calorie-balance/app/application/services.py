@@ -14,13 +14,13 @@ from datetime import date  # For date.today() usage
 
 # Domain entities and repositories
 from app.domain.entities import (
-    User, CalorieEvent, CalorieGoal, DailyBalance, MetabolicProfile,
+    CalorieEvent, CalorieGoal, DailyBalance, MetabolicProfile,
     EventType, EventSource, GenderType, ActivityLevel, GoalType,
     HourlyCalorieSummary, DailyCalorieSummary, WeeklyCalorieSummary,
     MonthlyCalorieSummary, DailyBalanceSummary
 )
 from app.domain.repositories import (
-    IUserRepository, ICalorieEventRepository, ICalorieGoalRepository,
+    ICalorieEventRepository, ICalorieGoalRepository,
     IDailyBalanceRepository, IMetabolicProfileRepository,
     ITemporalAnalyticsRepository, ICalorieSearchRepository
 )
@@ -38,12 +38,10 @@ class CalorieEventService:
     def __init__(
         self,
         event_repo: ICalorieEventRepository,
-        balance_repo: IDailyBalanceRepository,
-        user_repo: IUserRepository
+        balance_repo: IDailyBalanceRepository
     ):
         self.event_repo = event_repo
         self.balance_repo = balance_repo
-        self.user_repo = user_repo
     
     async def record_calorie_consumed(
         self,
@@ -133,9 +131,6 @@ class CalorieEventService:
         try:
             created_event = await self.event_repo.create(event)
             
-            # Update user's current weight
-            await self._update_user_weight(user_id, weight_kg)
-            
             # Update daily balance with weight
             await self._update_daily_balance_weight(
                 user_id, event.event_timestamp.date(), weight_kg
@@ -222,17 +217,6 @@ class CalorieEventService:
             
         except Exception as e:
             logger.warning(f"Failed to update balance weight: {e}")
-    
-    async def _update_user_weight(self, user_id: str, weight: Decimal) -> None:
-        """Update user's current weight for BMR recalculation."""
-        try:
-            user = await self.user_repo.get_by_id(user_id)
-            if user:
-                user.current_weight_kg = weight
-                await self.user_repo.update(user)
-            
-        except Exception as e:
-            logger.warning(f"Failed to update user weight: {e}")
 
 
 class CalorieGoalService:
@@ -241,28 +225,39 @@ class CalorieGoalService:
     def __init__(
         self,
         goal_repo: ICalorieGoalRepository,
-        user_repo: IUserRepository,
         metabolic_service: 'MetabolicCalculationService'
     ):
         self.goal_repo = goal_repo
-        self.user_repo = user_repo
         self.metabolic_service = metabolic_service
     
     async def create_weight_loss_goal(
-        self,
-        user_id: str,
-        target_weight_kg: Decimal,
-        weekly_loss_kg: Decimal = Decimal("0.5")
+        self, 
+        user_id: UUID, 
+        target_weight_kg: Decimal, 
+        weekly_loss_kg: Decimal,
+        # Parameter Passing Pattern - User metrics provided by client
+        current_weight_kg: Decimal,
+        height_cm: Decimal,
+        age: int,
+        gender: GenderType,
+        activity_level: ActivityLevel
     ) -> CalorieGoal:
-        """Create AI-optimized weight loss goal."""
+        """
+        Create intelligent weight loss goal using Parameter Passing pattern.
+        
+        User metrics are provided by client (mobile app, N8N orchestrator)
+        ensuring microservice decoupling and reusability.
+        """
         try:
-            # Calculate calorie target based on metabolic profile
-            user = await self.user_repo.get_by_id(user_id)
-            if not user:
-                raise ValueError("User not found")
-            
-            # Get latest metabolic profile
-            metabolic_profile = await self.metabolic_service.get_or_calculate_profile(user_id)
+            # Calculate metabolic profile with provided user metrics
+            metabolic_profile = await self.metabolic_service.calculate_metabolic_profile(
+                user_id=user_id,
+                weight_kg=current_weight_kg,
+                height_cm=height_cm,
+                age=age,
+                gender=gender,
+                activity_level=activity_level
+            )
             
             # Calculate daily calorie deficit (3500 cal = 1 lb = 0.45 kg)
             weekly_calorie_deficit = weekly_loss_kg * Decimal("7700")  # Cal per kg
@@ -291,9 +286,8 @@ class CalorieGoalService:
                 updated_at=datetime.utcnow()
             )
             
-            # Update user target weight
-            user.target_weight_kg = target_weight_kg
-            await self.user_repo.update(user)
+            # NOTE: target_weight_kg should be updated in user-management service
+            # via frontend orchestration or N8N workflow
             
             return await self.goal_repo.create(goal)
             
@@ -331,10 +325,8 @@ class MetabolicCalculationService:
     
     def __init__(
         self,
-        user_repo: IUserRepository,
         profile_repo: IMetabolicProfileRepository
     ):
-        self.user_repo = user_repo
         self.profile_repo = profile_repo
     
     async def calculate_bmr_mifflin(
@@ -367,54 +359,79 @@ class MetabolicCalculationService:
         
         return bmr * multipliers[activity_level]
     
-    async def get_or_calculate_profile(
-        self, user_id: str
+    async def calculate_metabolic_profile(
+        self,
+        user_id: UUID,
+        weight_kg: Decimal,
+        height_cm: Decimal,
+        age: int,
+        gender: GenderType,
+        activity_level: ActivityLevel
     ) -> MetabolicProfile:
-        """Get latest profile or calculate new one."""
+        """
+        Calculate metabolic profile with user data passed as parameters.
+        
+        This implements the Parameter Passing pattern for microservice
+        decoupling:
+        - User metrics provided by client/orchestrator (N8N, mobile app)
+        - No direct access to user-management service
+        - Ensures reusability and clean architecture
+        """
         try:
-            # Try to get recent profile (within 30 days)
-            profile = await self.profile_repo.get_latest(user_id)
-            if (profile and 
-                (datetime.utcnow() - profile.calculation_date).days < 30):
-                return profile
-            
-            # Calculate new profile
-            user = await self.user_repo.get_by_id(user_id)
-            if not user or not all([
-                user.current_weight_kg, user.height_cm, user.age, user.gender
-            ]):
-                raise ValueError("Insufficient user data for metabolic calculation")
-            
+            # Calculate BMR using Mifflin-St Jeor equation
             bmr = await self.calculate_bmr_mifflin(
-                user.current_weight_kg, user.height_cm, 
-                user.age, user.gender
+                weight_kg, height_cm, age, gender
             )
             
-            tdee = await self.calculate_tdee(bmr, user.activity_level)
+            # Calculate TDEE from BMR and activity level
+            tdee = await self.calculate_tdee(bmr, activity_level)
             
-            # Create new profile
+            # Get activity multiplier for storage
+            multipliers = {
+                ActivityLevel.SEDENTARY: Decimal("1.2"),
+                ActivityLevel.LIGHT: Decimal("1.375"),
+                ActivityLevel.MODERATE: Decimal("1.55"),
+                ActivityLevel.HIGH: Decimal("1.725"),
+                ActivityLevel.EXTREME: Decimal("1.9")
+            }
+            activity_multiplier = multipliers[activity_level]
+            
+            # Create metabolic profile
             profile = MetabolicProfile(
                 id=uuid4(),
                 user_id=user_id,
+                calculation_date=datetime.utcnow(),
                 bmr_calories=bmr,
                 tdee_calories=tdee,
+                activity_level=activity_level,
+                current_weight_kg=weight_kg,
+                current_height_cm=height_cm,
+                current_age=age,
+                gender=gender,
+                activity_multiplier=activity_multiplier,
                 calculation_method="mifflin_st_jeor",
-                calculation_date=datetime.utcnow(),
-                activity_multiplier=await self._get_activity_multiplier(
-                    user.activity_level
-                ),
+                metadata={
+                    "calculated_with_parameter_passing": True,
+                    "architecture_pattern": "microservice_decoupled",
+                    "client_provided_metrics": True
+                },
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow()
             )
             
-            # Store profile and update user cache
-            profile = await self.profile_repo.create(profile)
-            await self.user_repo.update_metabolic_rates(user_id, bmr, tdee)
+            # Save to repository
+            await self.profile_repo.create(profile)
             
+            logger.info(
+                f"Metabolic profile calculated for user {user_id}: "
+                f"BMR={bmr}, TDEE={tdee}"
+            )
             return profile
             
         except Exception as e:
-            logger.error(f"Failed to get/calculate metabolic profile: {e}")
+            logger.error(
+                f"Failed to calculate metabolic profile for user {user_id}: {e}"
+            )
             raise
     
     async def _get_activity_multiplier(

@@ -15,10 +15,10 @@ Il database del **Calorie Balance Service** implementa un'**architettura event-d
 
 ```mermaid
 erDiagram
-    USERS ||--o{ CALORIE_GOALS : "ha"
-    USERS ||--o{ CALORIE_EVENTS : "genera"
-    USERS ||--o{ DAILY_BALANCES : "possiede"
-    USERS ||--o{ METABOLIC_PROFILES : "ha"
+    USER_MANAGEMENT_USERS ||--o{ CALORIE_GOALS : "ha"
+    USER_MANAGEMENT_USERS ||--o{ CALORIE_EVENTS : "genera"
+    USER_MANAGEMENT_USERS ||--o{ DAILY_BALANCES : "possiede"
+    USER_MANAGEMENT_USERS ||--o{ METABOLIC_PROFILES : "ha"
     
     CALORIE_EVENTS ||--o{ HOURLY_CALORIE_SUMMARY : "aggregato in"
     CALORIE_EVENTS ||--o{ DAILY_CALORIE_SUMMARY : "aggregato in"
@@ -26,10 +26,10 @@ erDiagram
     CALORIE_EVENTS ||--o{ MONTHLY_CALORIE_SUMMARY : "aggregato in"
     CALORIE_EVENTS ||--o{ DAILY_BALANCE_SUMMARY : "bilancio netto"
     
-    USERS {
-        UUID id PK
-        varchar username UK
-        varchar email UK
+    USER_MANAGEMENT_USERS {
+        UUID id PK "Cross-schema reference"
+        varchar username UK "from user_management.users"
+        varchar email UK "Single Source of Truth"
         varchar full_name
         int age
         varchar gender
@@ -93,35 +93,31 @@ erDiagram
 
 ## Core Tables
 
-### 1. `users` - Profili Utente
+### 1. `user_management.users` - Cross-Schema Reference (Single Source of Truth)
 ```sql
-CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    username VARCHAR(100) UNIQUE NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    full_name VARCHAR(255),
-    age INTEGER CHECK (age >= 10 AND age <= 120),
-    gender VARCHAR(10) CHECK (gender IN ('male', 'female', 'other')),
-    height_cm DECIMAL(5,1) CHECK (height_cm >= 50 AND height_cm <= 300),
-    weight_kg DECIMAL(5,1) CHECK (weight_kg >= 20 AND weight_kg <= 500),
-    activity_level VARCHAR(20) CHECK (activity_level IN ('sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extra_active')),
-    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    is_active BOOLEAN DEFAULT TRUE,
-    CONSTRAINT chk_username_length CHECK (LENGTH(username) >= 3)
-);
+-- NOTA: Questa tabella risiede nello schema user_management
+-- Il servizio calorie_balance fa riferimento via FK cross-schema
 
--- Performance indexes
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_username ON users(username);
+-- Riferimento Cross-Schema (NON duplicata localmente)
+-- La tabella users è gestita dal microservizio user-management
+-- Vedere docs/databases/user-management-db.md per dettagli completi
+
+FOREIGN KEY (user_id) REFERENCES user_management.users(id)
+    ON UPDATE CASCADE;
+    -- No DELETE RESTRICT - soft delete strategy con is_active flag
 ```
-**API Mapping**: `/api/v1/users/*`
+
+**Vantaggi Single Source of Truth:**
+- ✅ **No Data Duplication**: Nessuna tabella users locale duplicata
+- ✅ **Referential Integrity**: FK cross-schema garantisce consistenza
+- ✅ **Soft Delete Safety**: `user_management.users.is_active = false` strategy
+- ✅ **Performance**: Indici parziali ottimizzati per utenti attivi
 
 ### 2. `calorie_goals` - Obiettivi Calorici Dinamici
 ```sql
 CREATE TABLE calorie_goals (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL,
     goal_type VARCHAR(30) NOT NULL,
     target_calories DECIMAL(6, 1) NOT NULL,
     target_weight_kg DECIMAL(5, 1),
@@ -131,6 +127,10 @@ CREATE TABLE calorie_goals (
     is_active BOOLEAN DEFAULT TRUE NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    
+    -- Cross-Schema Foreign Key (Single Source of Truth)
+    FOREIGN KEY (user_id) REFERENCES user_management.users(id)
+        ON UPDATE CASCADE,
     
     CONSTRAINT chk_target_calories CHECK (target_calories >= 800 AND target_calories <= 5000),
     CONSTRAINT chk_target_weight_kg CHECK (target_weight_kg >= 0 AND target_weight_kg <= 500),
@@ -149,12 +149,16 @@ CREATE INDEX idx_calorie_goals_user_start_date ON calorie_goals(user_id, start_d
 ```sql
 CREATE TABLE calorie_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL,
     event_type VARCHAR(30) NOT NULL,  -- consumed, burned_exercise, burned_bmr, weight
     value DECIMAL(8, 2) NOT NULL,     -- calories or weight value
     event_timestamp TIMESTAMPTZ DEFAULT NOW() NOT NULL,  -- precise timestamp for 2-minute sampling
     metadata JSONB,                   -- additional data (food_id, exercise_id, etc.)
     source VARCHAR(50) DEFAULT 'app' NOT NULL,  -- app, smartwatch, manual, etc.
+    
+    -- Cross-Schema Foreign Key (Single Source of Truth)
+    FOREIGN KEY (user_id) REFERENCES user_management.users(id)
+        ON UPDATE CASCADE,
     
     CONSTRAINT chk_event_type CHECK (event_type IN ('consumed', 'burned_exercise', 'burned_bmr', 'weight')),
     CONSTRAINT chk_event_value CHECK (value >= 0 AND value <= 10000),
@@ -173,7 +177,7 @@ CREATE INDEX idx_calorie_events_type ON calorie_events(event_type);
 ```sql
 CREATE TABLE daily_balances (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL,
     date DATE NOT NULL,
     calories_consumed DECIMAL(6, 1) DEFAULT 0.0 NOT NULL,
     calories_burned_exercise DECIMAL(6, 1) DEFAULT 0.0 NOT NULL,
@@ -185,6 +189,10 @@ CREATE TABLE daily_balances (
     notes TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    
+    -- Cross-Schema Foreign Key (Single Source of Truth)
+    FOREIGN KEY (user_id) REFERENCES user_management.users(id)
+        ON UPDATE CASCADE,
     
     CONSTRAINT chk_calories_consumed CHECK (calories_consumed >= 0 AND calories_consumed <= 10000),
     CONSTRAINT chk_calories_burned_exercise CHECK (calories_burned_exercise >= 0 AND calories_burned_exercise <= 5000),
@@ -336,6 +344,16 @@ GROUP BY user_id, DATE(event_timestamp);
 **Use Case**: Deficit/surplus tracking, weight correlation analysis
 
 ## 🔧 Performance & Optimization
+
+### ⚠️ SETUP CRITICO - Esposizione Schema in Supabase
+
+**STEP OBBLIGATORIO**: Dopo la creazione del database, esporre lo schema `calorie_balance` nella Dashboard Supabase:
+
+1. **Dashboard**: `https://supabase.com/dashboard/project/{project-id}/settings/api`
+2. **API Settings** → **Exposed schemas** → Aggiungere: `calorie_balance`  
+3. **Verificare**: Lo schema deve apparire nella lista PostgREST
+
+⚠️ **Senza questa configurazione**: Il servizio restituisce errore `PGRST106` - schema non esposto.
 
 ### Critical Indexes for Mobile Performance
 ```sql

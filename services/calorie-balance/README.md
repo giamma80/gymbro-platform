@@ -2,22 +2,50 @@
 
 ## Overview
 
-Il **Calorie Balance Service** è il microservizio centrale della piattaforma NutriFit con **architettura event-driven** di nuova generazione, responsabile per:
+Il **Calorie Balance Service** è il microservizio centrale della piattaforma NutriFit con **architettura event-driven** di nuova generazione e **Parameter Passing pattern** per microservice decoupling, responsabile per:
 
-- 🔥 **Energy Metabolism**: Calcolo BMR, TDEE, e fabbisogno calorico personalizzato
+- 🔥 **Energy Metabolism**: Calcolo BMR, TDEE, e fabbisogno calorico personalizzato con Parameter Passing pattern
 - ⚖️ **Balance Tracking**: Monitoraggio bilancio calorico in tempo reale con campionamento 2-minuti
 - 🎯 **Goal Management**: Gestione obiettivi calorici dinamici con AI optimization
 - 📊 **Timeline Analytics**: Pattern analysis e trend calculation con 5-level temporal aggregations
 - 📱 **Mobile-First**: Architettura ottimizzata per raccolta dati smartphone ad alta frequenza
+- 🔗 **Service Independence**: Parameter Passing per eliminare dipendenze cross-service
 
 > **📋 [API Development Roadmap](API-roadmap.md)** - Stato completo delle API implementate e da sviluppare  
-> **Status**: ✅ **Event-Driven Ready** | **v1.2.0** | **Database Migration Complete**
+> **Status**: ✅ **Architecture Enhanced** | **v1.4.0** | **Parameter Passing Implemented**
 
 ## 🚀 Event-Driven Architecture
 
 ### Architettura Bi-Level
 1. **High-Frequency Events** (`calorie_events`) - Precisione al secondo, campionamento 2-minuti
 2. **Daily Aggregations** (`daily_balances`) - Cache giornaliera per performance
+
+### 🎯 Parameter Passing Pattern for Microservice Decoupling
+
+**Implementazione ARCH-011**: Risolve dipendenze cross-service utilizzando user metrics nel request body.
+
+#### Pattern Overview
+```python
+# Client (Mobile App, N8N) fornisce user metrics
+POST /api/v1/users/{user_id}/profile/metabolic/calculate
+{
+  "weight_kg": 75.5,
+  "height_cm": 175.0,
+  "age": 30,
+  "gender": "male", 
+  "activity_level": "moderate"
+}
+
+# Service calcola metabolic profile senza accedere a user-management
+# Nessuna dipendenza cross-service
+```
+
+#### Benefici Realizzati
+- ✅ **Service Independence**: Calorie-balance autonomo dal user-management service
+- ✅ **Mobile Ready**: App può chiamare direttamente con dati utente locali
+- ✅ **N8N Compatible**: Workflow orchestration semplificata
+- ✅ **Testing Simplified**: Unit test senza mock di servizi esterni
+- ✅ **Performance Optimized**: Zero network calls cross-service
 
 ### 🗓️ 5-Level Temporal Analytics
 | Livello | Vista Database | Aggregazione | Use Case |
@@ -48,7 +76,7 @@ app/
 - **CalorieGoal**: Obiettivi calorici dinamici
 - **CalorieEvent**: 🔥 **NEW** - Eventi ad alta frequenza per timeline analytics
 - **DailyBalance**: Bilancio giornaliero con aggregazioni da eventi
-- **MetabolicProfile**: Profilo metabolico personalizzato
+- **MetabolicProfile**: 🎯 **ENHANCED** - Profilo metabolico con Parameter Passing support
 
 ### Event Types
 - **CalorieConsumed**: Eventi consumo calorico da pasti
@@ -119,8 +147,8 @@ app/
 
 ### 🧬 Metabolic Profiles
 - `GET /api/v1/users/{user_id}/profile/metabolic` - Get metabolic profile (TODO)
-- `PUT /api/v1/users/{user_id}/profile/metabolic` - Update metabolic profile (TODO)
-- `POST /api/v1/users/{user_id}/profile/metabolic/calculate` - Recalculate BMR/TDEE (TODO)
+- `PUT /api/v1/users/{user_id}/profile/metabolic` - Update metabolic profile (TODO) 
+- `POST /api/v1/users/{user_id}/profile/metabolic/calculate` - Calculate BMR/TDEE with Parameter Passing ✅
 
 ## Setup & Development
 
@@ -242,23 +270,23 @@ engine = create_async_engine(
 
 ## Integration Points
 
-### 📱 Mobile App Integration (High-Frequency)
+### 📱 Mobile App Integration (High-Frequency + Parameter Passing)
 - **2-minute sampling** supportata via calorie_events
 - **Batch API** per ridurre network calls
 - **Offline support** con event queuing
 - **Real-time aggregations** per dashboard updates
+- **Parameter Passing Ready**: App fornisce user metrics per calcoli metabolici
 
-### Supabase Integration
-- **Real-time subscriptions** per balance updates
-- **Row Level Security** per data isolation
-- **Event-driven functions** per calcoli automatici
-- **Performance views** per analytics veloci
+### 🤖 N8N Orchestrator Integration
+- **Parameter Passing Compatible**: Workflow possono aggregare dati utente e chiamare servizi
+- **Event-driven triggers**: Pattern anomali e milestone achievements
+- **AI Integration**: Timeline analytics per insights generation
 
-### External Services
+### External Services (Decoupled Architecture)
 - **Meal Tracking Service**: Invia eventi CalorieConsumed
-- **Health Monitor Service**: Invia eventi CalorieBurned da HealthKit/GoogleFit
+- **Health Monitor Service**: Invia eventi CalorieBurned da HealthKit/GoogleFit  
 - **AI Coach Service**: Consuma timeline analytics per insights AI
-- **N8N Workflows**: Trigger su pattern anomali e milestone achievements
+- **User Management Service**: ✅ **DECOUPLED** - No direct dependencies via Parameter Passing
 
 ## Deployment
 

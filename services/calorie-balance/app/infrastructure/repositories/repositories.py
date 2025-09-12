@@ -13,120 +13,54 @@ import logging
 
 # Domain interfaces and entities
 from app.domain.repositories import (
-    IUserRepository, ICalorieEventRepository, ICalorieGoalRepository,
+    ICalorieEventRepository, ICalorieGoalRepository,
     IDailyBalanceRepository, IMetabolicProfileRepository,
     ITemporalAnalyticsRepository, ICalorieSearchRepository
 )
 from app.domain.entities import (
-    User, CalorieEvent, CalorieGoal, DailyBalance, MetabolicProfile,
+    CalorieEvent, CalorieGoal, DailyBalance, MetabolicProfile,
     HourlyCalorieSummary, DailyCalorieSummary, WeeklyCalorieSummary,
     MonthlyCalorieSummary, DailyBalanceSummary, EventType
 )
 
 # Core dependencies
 from app.core.database import get_supabase_client
+from app.core.schema_tables import get_schema_manager
 from supabase import Client
 
 logger = logging.getLogger(__name__)
 
 
 # =============================================================================
-# CORE REPOSITORIES - Supabase Implementations
+# CORE REPOSITORIES - Supabase Implementations  
 # =============================================================================
-
-class SupabaseUserRepository(IUserRepository):
-    """Supabase implementation for user metabolic profiles."""
-    
-    def __init__(self):
-        """Initialize with Supabase client."""
-        self.client: Client = get_supabase_client()
-        self.table = "users"
-    
-    async def get_by_id(self, user_id: str) -> Optional[User]:
-        """Get user by ID."""
-        try:
-            response = self.client.table(self.table).select("*").eq(
-                "id", user_id
-            ).single().execute()
-            
-            if response.data:
-                return User(**response.data)
-            return None
-            
-        except Exception as e:
-            logger.error(f"Failed to get user {user_id}: {e}")
-            return None
-    
-    async def create(self, user: User) -> User:
-        """Create new user profile."""
-        try:
-            user_dict = user.dict()
-            response = self.client.table(self.table).insert(
-                user_dict
-            ).single().execute()
-            
-            return User(**response.data)
-            
-        except Exception as e:
-            logger.error(f"Failed to create user: {e}")
-            raise
-    
-    async def update(self, user: User) -> Optional[User]:
-        """Update existing user profile."""
-        try:
-            user_dict = user.dict(exclude={'id', 'created_at'})
-            response = self.client.table(self.table).update(
-                user_dict
-            ).eq("id", str(user.id)).single().execute()
-            
-            if response.data:
-                return User(**response.data)
-            return None
-            
-        except Exception as e:
-            logger.error(f"Failed to update user {user.id}: {e}")
-            return None
-    
-    async def update_metabolic_rates(
-        self, user_id: str, bmr: Decimal, tdee: Decimal
-    ) -> bool:
-        """Update cached BMR/TDEE values for performance."""
-        try:
-            response = self.client.table(self.table).update({
-                "bmr_calories": str(bmr),
-                "tdee_calories": str(tdee),
-                "updated_at": datetime.utcnow().isoformat()
-            }).eq("id", user_id).execute()
-            
-            return len(response.data) > 0
-            
-        except Exception as e:
-            logger.error(f"Failed to update metabolic rates for {user_id}: {e}")
-            return False
-
+# NOTE: User management is handled by user-management microservice
+# This service only maintains calorie-specific data with user_id foreign keys
 
 class SupabaseCalorieEventRepository(ICalorieEventRepository):
     """🔥 HIGH-FREQUENCY SUPABASE REPOSITORY - Event-driven core."""
     
     def __init__(self):
         """Initialize with Supabase client optimized for high-frequency ops."""
-        self.client: Client = get_supabase_client()
-        self.table = "calorie_events"
+        self.schema_manager = get_schema_manager()
+        self.table = self.schema_manager.calorie_events
         # Index hints for high-frequency queries
         self._user_time_index = "idx_calorie_events_user_time"
     
     async def create(self, event: CalorieEvent) -> CalorieEvent:
         """Create single calorie event - optimized for mobile apps."""
         try:
-            event_dict = event.dict()
+            # Use model_dump with serialize for proper date handling
+            event_dict = event.model_dump(mode='json')
             # Convert UUID to string for Supabase
             event_dict['id'] = str(event_dict['id'])
             
-            response = self.client.table(self.table).insert(
-                event_dict
-            ).single().execute()
+            response = self.table.insert(event_dict).execute()
             
-            return CalorieEvent(**response.data)
+            if response.data:
+                return CalorieEvent(**response.data[0])
+            else:
+                raise Exception("No data returned from event creation")
             
         except Exception as e:
             logger.error(f"Failed to create calorie event: {e}")
@@ -212,6 +146,15 @@ class SupabaseCalorieEventRepository(ICalorieEventRepository):
         return await self.get_events_by_user(
             user_id, start_datetime, end_datetime
         )
+    
+    async def get_events_by_date_range(
+        self,
+        user_id: str,
+        start_date: DateType,
+        end_date: DateType
+    ) -> List[CalorieEvent]:
+        """Get events for date range analysis - alias for compatibility."""
+        return await self.get_events_in_range(user_id, start_date, end_date)
     
     async def update(self, event: CalorieEvent) -> Optional[CalorieEvent]:
         """Update event (rare in event-driven system)."""

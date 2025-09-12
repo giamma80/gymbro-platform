@@ -3,6 +3,11 @@ Domain Repositories - Calorie Balance Service
 
 Abstract repository interfaces for the event-driven calorie tracking domain.
 These define the contracts that infrastructure implementations must fulfill.
+
+Cross-Schema Architecture:
+- IUserRepository removed - users managed by user-management service
+- All user_id parameters now use UUID type for cross-schema FK consistency
+- Focus on calorie events, goals, and metabolic calculations repositories
 """
 
 from abc import ABC, abstractmethod
@@ -10,11 +15,10 @@ from typing import List, Optional, Dict, Any
 from uuid import UUID
 from datetime import datetime
 from datetime import date as DateType
-from decimal import Decimal
 
 # Import domain entities
 from app.domain.entities import (
-    User, CalorieEvent, CalorieGoal, DailyBalance, MetabolicProfile,
+    CalorieEvent, CalorieGoal, DailyBalance, MetabolicProfile,
     HourlyCalorieSummary, DailyCalorieSummary, WeeklyCalorieSummary,
     MonthlyCalorieSummary, DailyBalanceSummary, EventType
 )
@@ -23,32 +27,7 @@ from app.domain.entities import (
 # =============================================================================
 # CORE REPOSITORIES - Event-Driven Architecture
 # =============================================================================
-
-class IUserRepository(ABC):
-    """Repository for user metabolic profiles."""
-    
-    @abstractmethod
-    async def get_by_id(self, user_id: str) -> Optional[User]:
-        """Get user by ID."""
-        pass
-    
-    @abstractmethod
-    async def create(self, user: User) -> User:
-        """Create new user profile."""
-        pass
-    
-    @abstractmethod
-    async def update(self, user: User) -> Optional[User]:
-        """Update existing user profile."""
-        pass
-    
-    @abstractmethod
-    async def update_metabolic_rates(
-        self, user_id: str, bmr: Decimal, tdee: Decimal
-    ) -> bool:
-        """Update cached BMR/TDEE values."""
-        pass
-
+# NOTE: User repository not needed - users managed by user-management service
 
 class ICalorieEventRepository(ABC):
     """🔥 HIGH-FREQUENCY REPOSITORY - Core of event-driven architecture."""
@@ -68,7 +47,7 @@ class ICalorieEventRepository(ABC):
     @abstractmethod
     async def get_events_by_user(
         self,
-        user_id: str,
+        user_id: UUID,
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
         event_types: Optional[List[EventType]] = None,
@@ -79,7 +58,7 @@ class ICalorieEventRepository(ABC):
     
     @abstractmethod
     async def get_recent_events(
-        self, user_id: str, limit: int = 100
+        self, user_id: UUID, limit: int = 100
     ) -> List[CalorieEvent]:
         """Get most recent events for timeline display."""
         pass
@@ -87,7 +66,7 @@ class ICalorieEventRepository(ABC):
     @abstractmethod
     async def get_events_by_date_range(
         self,
-        user_id: str,
+        user_id: UUID,
         start_date: DateType,
         end_date: DateType
     ) -> List[CalorieEvent]:
@@ -109,13 +88,13 @@ class ICalorieGoalRepository(ABC):
     """Repository for dynamic calorie goals."""
     
     @abstractmethod
-    async def get_active_goal(self, user_id: str) -> Optional[CalorieGoal]:
+    async def get_active_goal(self, user_id: UUID) -> Optional[CalorieGoal]:
         """Get user's currently active goal."""
         pass
     
     @abstractmethod
     async def get_user_goals(
-        self, user_id: str, include_inactive: bool = False
+        self, user_id: UUID, include_inactive: bool = False
     ) -> List[CalorieGoal]:
         """Get all user goals with optional inactive inclusion."""
         pass
@@ -141,14 +120,14 @@ class IDailyBalanceRepository(ABC):
     
     @abstractmethod
     async def get_by_user_date(
-        self, user_id: str, date: DateType
+        self, user_id: UUID, date: DateType
     ) -> Optional[DailyBalance]:
         """Get daily balance for specific date."""
         pass
     
     @abstractmethod
     async def get_date_range(
-        self, user_id: str, start_date: DateType, end_date: DateType
+        self, user_id: UUID, start_date: DateType, end_date: DateType
     ) -> List[DailyBalance]:
         """Get daily balances for date range."""
         pass
@@ -160,7 +139,7 @@ class IDailyBalanceRepository(ABC):
     
     @abstractmethod
     async def recalculate_balance(
-        self, user_id: str, date: DateType
+        self, user_id: UUID, date: DateType
     ) -> DailyBalance:
         """Recalculate balance from events (data consistency)."""
         pass
@@ -170,13 +149,13 @@ class IMetabolicProfileRepository(ABC):
     """Repository for metabolic calculations."""
     
     @abstractmethod
-    async def get_latest(self, user_id: str) -> Optional[MetabolicProfile]:
+    async def get_latest(self, user_id: UUID) -> Optional[MetabolicProfile]:
         """Get user's latest metabolic profile."""
         pass
     
     @abstractmethod
     async def get_history(
-        self, user_id: str, limit: int = 10
+        self, user_id: UUID, limit: int = 10
     ) -> List[MetabolicProfile]:
         """Get metabolic profile history."""
         pass
@@ -197,7 +176,7 @@ class ITemporalAnalyticsRepository(ABC):
     # Hourly aggregation
     @abstractmethod
     async def get_hourly_summary(
-        self, user_id: str, date: DateType
+        self, user_id: UUID, date: DateType
     ) -> List[HourlyCalorieSummary]:
         """Get hourly calorie summary for a specific date."""
         pass
@@ -205,7 +184,7 @@ class ITemporalAnalyticsRepository(ABC):
     # Daily aggregation
     @abstractmethod
     async def get_daily_summary(
-        self, user_id: str, start_date: DateType, end_date: DateType
+        self, user_id: UUID, start_date: DateType, end_date: DateType
     ) -> List[DailyCalorieSummary]:
         """Get daily summaries for date range."""
         pass
@@ -213,7 +192,7 @@ class ITemporalAnalyticsRepository(ABC):
     # Weekly aggregation
     @abstractmethod
     async def get_weekly_summary(
-        self, user_id: str, year: int, week_number: Optional[int] = None
+        self, user_id: UUID, year: int, week_number: Optional[int] = None
     ) -> List[WeeklyCalorieSummary]:
         """Get weekly summaries for year (optional specific week)."""
         pass
@@ -221,7 +200,7 @@ class ITemporalAnalyticsRepository(ABC):
     # Monthly aggregation
     @abstractmethod
     async def get_monthly_summary(
-        self, user_id: str, year: int, month: Optional[int] = None
+        self, user_id: UUID, year: int, month: Optional[int] = None
     ) -> List[MonthlyCalorieSummary]:
         """Get monthly summaries for year (optional specific month)."""
         pass
@@ -229,7 +208,7 @@ class ITemporalAnalyticsRepository(ABC):
     # Daily balance with goals comparison
     @abstractmethod
     async def get_balance_summary(
-        self, user_id: str, start_date: DateType, end_date: DateType
+        self, user_id: UUID, start_date: DateType, end_date: DateType
     ) -> List[DailyBalanceSummary]:
         """Get daily balance with goal comparison."""
         pass
@@ -245,7 +224,7 @@ class ICalorieSearchRepository(ABC):
     @abstractmethod
     async def search_events(
         self,
-        user_id: str,
+        user_id: UUID,
         filters: Dict[str, Any],
         page: int = 1,
         page_size: int = 100
@@ -255,14 +234,14 @@ class ICalorieSearchRepository(ABC):
     
     @abstractmethod
     async def get_statistics(
-        self, user_id: str, start_date: DateType, end_date: DateType
+        self, user_id: UUID, start_date: DateType, end_date: DateType
     ) -> Dict[str, Any]:
         """Get comprehensive user statistics."""
         pass
     
     @abstractmethod
     async def get_trends(
-        self, user_id: str, days: int = 30
+        self, user_id: UUID, days: int = 30
     ) -> Dict[str, Any]:
         """Get user trends analysis."""
         pass

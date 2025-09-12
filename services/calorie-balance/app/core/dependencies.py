@@ -17,7 +17,7 @@ from app.application.services import (
 
 # Repositories  
 from app.infrastructure.repositories.repositories import (
-    SupabaseUserRepository, SupabaseCalorieEventRepository,
+    SupabaseCalorieEventRepository,
     SupabaseCalorieGoalRepository, SupabaseDailyBalanceRepository,
     SupabaseMetabolicProfileRepository, SupabaseTemporalAnalyticsRepository,
     SupabaseCalorieSearchRepository
@@ -29,12 +29,7 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 # REPOSITORY DEPENDENCIES - Singleton Instances
 # =============================================================================
-
-@lru_cache()
-def get_user_repository() -> SupabaseUserRepository:
-    """Get user repository instance."""
-    return SupabaseUserRepository()
-
+# NOTE: User repository removed - user management handled by separate microservice
 
 @lru_cache()
 def get_calorie_event_repository() -> SupabaseCalorieEventRepository:
@@ -77,29 +72,26 @@ def get_search_repository() -> SupabaseCalorieSearchRepository:
 # =============================================================================
 
 def get_metabolic_service(
-    user_repo: SupabaseUserRepository = Depends(get_user_repository),
     profile_repo: SupabaseMetabolicProfileRepository = Depends(get_metabolic_profile_repository)
 ) -> MetabolicCalculationService:
     """Get metabolic calculation service."""
-    return MetabolicCalculationService(user_repo, profile_repo)
+    return MetabolicCalculationService(profile_repo)
 
 
 def get_calorie_event_service(
     event_repo: SupabaseCalorieEventRepository = Depends(get_calorie_event_repository),
-    balance_repo: SupabaseDailyBalanceRepository = Depends(get_daily_balance_repository),
-    user_repo: SupabaseUserRepository = Depends(get_user_repository)
+    balance_repo: SupabaseDailyBalanceRepository = Depends(get_daily_balance_repository)
 ) -> CalorieEventService:
     """Get calorie event service - HIGH FREQUENCY."""
-    return CalorieEventService(event_repo, balance_repo, user_repo)
+    return CalorieEventService(event_repo, balance_repo)
 
 
 def get_calorie_goal_service(
     goal_repo: SupabaseCalorieGoalRepository = Depends(get_calorie_goal_repository),
-    user_repo: SupabaseUserRepository = Depends(get_user_repository),
     metabolic_service: MetabolicCalculationService = Depends(get_metabolic_service)
 ) -> CalorieGoalService:
     """Get calorie goal service."""
-    return CalorieGoalService(goal_repo, user_repo, metabolic_service)
+    return CalorieGoalService(goal_repo, metabolic_service)
 
 
 def get_analytics_service(

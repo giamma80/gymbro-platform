@@ -1,24 +1,35 @@
-# API Roadmap - Calorie Balance Service
+# API Roa| Categoria | Implementate | Totali | Completamento |
+|-----------|--------------|--------|---------------|
+| **Health & Status** | 3 | 3 | ✅ 100% |
+| **~~User Management~~ (REMOVED)** | 0 | 0 | ⚠️ **Migrated to user-management service** |
+| **Calorie Goals** | 2 | 6 | 🟡 33% |
+| **🔥 Calorie Events (NEW)** | 4 | 6 | 🟡 67% |
+| **Daily Balance (Legacy)** | 4 | 7 | 🟡 57% |
+| **📈 Timeline Analytics (NEW)** | 0 | 12 | 🔴 0% |
+| **🗓️ Temporal Views (DB Ready)** | 5 | 5 | ✅ 100% |
+| **Analytics & Trends** | 0 | 4 | 🔴 0% |
+| **Metabolic Profiles** | 0 | 3 | 🔴 0% |
+| **TOTALE** | **18** | **49** | **🟡 37%** |ie Balance Service
 
-> **Status del microservizio**: ✅ **Production Ready** - Soluzione UUID per PgBouncer implementata!  
-> **Versione attuale**: v1.3.0 (Persistence Solution + Full Test Validation)  
-> **Ultimo aggiornamento**: 5 settembre 2025  
-> **🎉 MILESTONE**: DuplicatePreparedStatementError risolto - API completamente funzionali
+> **Status del microservizio**: ✅ **Architecture Enhanced** - Parameter Passing pattern implementato!  
+> **Versione attuale**: v1.4.0 (Parameter Passing + Microservice Decoupling)  
+> **Ultimo aggiornamento**: 12 settembre 2025  
+> **🎉 MILESTONE**: ARCH-011 risolto - Microservice decoupling completo con user metrics in request body
 
 ## 📊 Overview dello Stato
 
 | Categoria | Implementate | Totali | Completamento |
 |-----------|--------------|--------|---------------|
-| **Health & Status** | 3 | 3 | � 100% |
-| **User Management** | 3 | 5 | � 60% |
-| **Calorie Goals** | 2 | 6 | � 33% |
-| **🔥 Calorie Events (NEW)** | 4 | 6 | � 67% |
+| **Health & Status** | 3 | 3 | ✅ 100% |
+| **~~User Management~~ (REMOVED)** | 0 | 0 | ⚠️ **Migrated to user-management service** |
+| **Calorie Goals** | 2 | 6 | 🟡 33% |
+| **🔥 Calorie Events (NEW)** | 4 | 6 | 🟡 67% |
 | **Daily Balance (Legacy)** | 4 | 7 | 🟡 57% |
 | **📈 Timeline Analytics (NEW)** | 0 | 12 | 🔴 0% |
-| **🗓️ Temporal Views (DB Ready)** | 5 | 5 | 🟢 100% |
+| **🗓️ Temporal Views (DB Ready)** | 5 | 5 | ✅ 100% |
 | **Analytics & Trends** | 0 | 4 | 🔴 0% |
-| **Metabolic Profiles** | 0 | 3 | 🔴 0% |
-| **TOTALE** | **21** | **54** | **🟡 39%** |
+| **Metabolic Profiles** | 1 | 3 | � 33% |
+| **TOTALE** | **19** | **49** | **🟡 39%** |
 
 > **Status del microservizio**: � **Major Refactoring** - Ristrutturazione per supporto eventi ad alta frequenza  
 > **Versione attuale**: v1.1.0 (Event-Driven Architecture)  
@@ -51,24 +62,35 @@
 | `/health/ready` | GET | ✅ **FATTO** | P0 | Kubernetes readiness |
 | `/health/live` | GET | ✅ **FATTO** | P0 | Kubernetes liveness |
 
-### 👤 User Management
-| Endpoint | Metodo | Status | Priorità | Note |
-|----------|--------|--------|----------|------|
-| `/api/v1/users/` | POST | ✅ **FATTO** | P0 | Create user profile |
-| `/api/v1/users/{user_id}` | GET | ✅ **FATTO** | P0 | Get user profile |
-| `/api/v1/users/{user_id}` | PUT | ✅ **FATTO** | P0 | Update user profile |
-| `/api/v1/users/{user_id}` | DELETE | ❌ **TODO** | P2 | Delete user profile |
-| `/api/v1/users/` | GET | ❌ **TODO** | P3 | List users (admin) |
+### ⚠️ User Management (ARCHITECTURAL VIOLATION - REMOVED)
+**NOTICE**: User Management endpoints **removed from calorie-balance** service following microservice boundary analysis.
 
-### 🎯 Calorie Goals
+**Reason**: Violated Single Source of Truth principle - user data must be managed exclusively by `user-management` service.
+
+**Migration**: 
+- User CRUD operations → `user-management` service at port 8001
+- Cross-schema queries via `user_id UUID` foreign key to `user_management.users`
+- Service-to-service calls for user data via GraphQL Federation or REST API
+
+| ~~Endpoint~~ | ~~Metodo~~ | Status | ~~Priorità~~ | Migration Target |
+|----------|--------|--------|----------|------|
+| ~~`/api/v1/users/`~~ | ~~POST~~ | 🚫 **REMOVED** | - | `user-management:8001/api/v1/users` |
+| ~~`/api/v1/users/{user_id}`~~ | ~~GET~~ | 🚫 **REMOVED** | - | `user-management:8001/api/v1/users/{user_id}` |
+| ~~`/api/v1/users/{user_id}`~~ | ~~PUT~~ | 🚫 **REMOVED** | - | `user-management:8001/api/v1/users/{user_id}` |
+| ~~`/api/v1/users/{user_id}`~~ | ~~DELETE~~ | 🚫 **REMOVED** | - | `user-management:8001/api/v1/privacy/users/{user_id}/data` |
+| ~~`/api/v1/users/`~~ | ~~GET~~ | 🚫 **REMOVED** | - | `user-management:8001/api/v1/users` |
+
+### 🎯 Calorie Goals (Enhanced with Parameter Passing)
 | Endpoint | Metodo | Status | Priorità | Note |
 |----------|--------|--------|----------|------|
-| `/api/v1/goals/users/{user_id}` | POST | ✅ **FATTO** | P0 | Create calorie goal |
+| `/api/v1/goals/users/{user_id}` | POST | 🔄 **REFACTORING** | P0 | **UPDATED**: Now accepts user metrics in request body |
 | `/api/v1/goals/users/{user_id}/active` | GET | ✅ **FATTO** | P0 | Get active goal |
 | `/api/v1/goals/users/{user_id}/goals/{goal_id}` | PUT | ❌ **TODO** | P1 | Update specific goal |
 | `/api/v1/goals/users/{user_id}/goals/{goal_id}` | DELETE | ❌ **TODO** | P1 | Delete goal |
 | `/api/v1/goals/users/{user_id}/history` | GET | ❌ **TODO** | P2 | Goals history |
 | `/api/v1/goals/users/{user_id}/goals` | GET | ❌ **TODO** | P2 | List all user goals |
+
+**🏗️ Architecture Enhancement**: Goal creation now uses Parameter Passing pattern - client provides user metrics (weight, height, age, gender, activity_level) in request body for intelligent goal calculation.
 
 ### 🔥 Calorie Events (Event-Driven Architecture)
 | Endpoint | Metodo | Status | Priorità | Note |
@@ -124,12 +146,14 @@
 | `/api/v1/users/{user_id}/analytics/weight` | GET | ❌ **TODO** | P2 | Weight trend analysis |
 | `/api/v1/users/{user_id}/analytics/performance` | GET | ❌ **TODO** | P2 | Goal performance metrics |
 
-### 🧬 Metabolic Profiles
+### 🧬 Metabolic Profiles (Parameter Passing Pattern)
 | Endpoint | Metodo | Status | Priorità | Note |
 |----------|--------|--------|----------|------|
+| `/api/v1/users/{user_id}/profile/metabolic/calculate` | POST | ✅ **FATTO** | P1 | **IMPLEMENTED**: Calculate BMR/TDEE with user metrics in request body (Parameter Passing pattern) |
 | `/api/v1/users/{user_id}/profile/metabolic` | GET | ❌ **TODO** | P1 | Get metabolic profile |
-| `/api/v1/users/{user_id}/profile/metabolic` | PUT | ❌ **TODO** | P1 | Update metabolic profile |
-| `/api/v1/users/{user_id}/profile/metabolic/calculate` | POST | ❌ **TODO** | P2 | Recalculate BMR/TDEE |
+| `/api/v1/users/{user_id}/profile/metabolic` | PUT | ❌ **TODO** | P2 | Update metabolic profile |
+
+**🏗️ Architecture Pattern**: Parameter Passing - User metrics (weight, height, age, gender, activity_level) passed as request body parameters instead of accessing user-management service directly. This ensures microservice decoupling and reusability.
 
 ### 🏆 Advanced Features
 | Endpoint | Metodo | Status | Priorità | Note |
@@ -145,7 +169,7 @@
 ### **P0 - Critical (DATABASE READY ✅)**
 Migrazione all'architettura event-driven completata:
 - ✅ Health checks (completato)
-- ✅ User CRUD base (completato)
+- ⚠️ **User CRUD (MIGRATED)** - Now handled by user-management service
 - ✅ Goals creation/retrieval (completato)
 - ✅ **Database Schema Migration** - **COMPLETED**
 - ✅ **Temporal Views (5-Level)** - **READY FOR APIS**
@@ -218,10 +242,10 @@ Funzionalità avanzate per scaling:
 
 | Categoria | Unit Tests | Integration Tests | Status |
 |-----------|------------|-------------------|--------|
-| **Health** | ✅ 100% | ✅ 100% | 🟢 Complete |
-| **Users** | ✅ 100% | ✅ 100% | 🟢 Complete |
-| **Goals** | ✅ 100% | ✅ 100% | 🟢 Complete |
-| **Balance** | ✅ 100% | ✅ 100% | 🟢 Complete |
+| **Health** | ✅ 100% | ✅ 100% | ✅ Complete |
+| **~~Users~~ (REMOVED)** | ⚠️ **Migrated** | ⚠️ **Migrated** | � **See user-management service** |
+| **Goals** | ✅ 100% | ✅ 100% | ✅ Complete |
+| **Balance** | ✅ 100% | ✅ 100% | ✅ Complete |
 | **Analytics** | ❌ 0% | ❌ 0% | 🔴 Missing |
 | **Metabolic** | ❌ 0% | ❌ 0% | 🔴 Missing |
 
@@ -323,8 +347,9 @@ ADD COLUMN last_event_timestamp TIMESTAMPTZ;
 ---
 
 **🔄 Migration Status**: ✅ **Database Phase Complete**  
-**📊 New Completion**: 31% (17/54 endpoints)  
+**📊 New Completion**: 37% (18/49 endpoints) - User Management migrated to dedicated service  
 **🗓️ Temporal Views**: ✅ **All 5 levels ready**  
 **🎯 Event-Driven APIs**: Week 2  
 **🚀 Mobile-Ready**: Week 4  
-**📈 Full Analytics**: Week 6
+**📈 Full Analytics**: Week 6  
+**⚠️ Architecture**: User management boundary violations resolved - now proper microservice separation

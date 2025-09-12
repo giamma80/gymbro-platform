@@ -3,6 +3,11 @@ Domain Entities - Calorie Balance Service
 
 Core business entities for the event-driven calorie tracking domain.
 Event-driven architecture with high-frequency smartphone data collection.
+
+Cross-Schema Architecture:
+- User entities managed by user-management service (single source of truth)
+- Local entities use UUID foreign keys to user_management.users
+- Focus on calorie events, goals, and metabolic calculations
 """
 
 from typing import Optional, Dict, Any
@@ -74,42 +79,13 @@ class GoalType(str, Enum):
 # =============================================================================
 # CORE ENTITIES - Event-Driven Architecture
 # =============================================================================
-
-class User(BaseEntity):
-    """User entity with metabolic parameters for calorie calculations."""
-    email: str = Field(..., description="User email address")
-    age: Optional[int] = Field(
-        None, ge=10, le=120, description="User age"
-    )
-    gender: Optional[GenderType] = Field(
-        None, description="Gender for BMR calculations"
-    )
-    height_cm: Optional[Decimal] = Field(
-        None, ge=50, le=300, description="Height in centimeters"
-    )
-    current_weight_kg: Optional[Decimal] = Field(
-        None, ge=20, le=500, description="Current weight in kg"
-    )
-    target_weight_kg: Optional[Decimal] = Field(
-        None, ge=20, le=500, description="Target weight in kg"
-    )
-    activity_level: ActivityLevel = Field(
-        ActivityLevel.MODERATE, description="Activity level"
-    )
-    
-    # Calculated metabolic values (cached for performance)
-    bmr_calories: Optional[Decimal] = Field(
-        None, gt=0, description="Basal Metabolic Rate"
-    )
-    tdee_calories: Optional[Decimal] = Field(
-        None, gt=0, description="Total Daily Energy Expenditure"
-    )
-
+# NOTE: User entity is managed by user-management service (cross-schema FK)
+# This service focuses on calorie events and metabolic calculations
 
 class CalorieEvent(BaseEntity):
     """🔥 HIGH-FREQUENCY EVENT - Core of event-driven architecture."""
-    user_id: str = Field(
-        ..., description="User ID (references user-management service)"
+    user_id: UUID = Field(
+        ..., description="User ID (cross-schema FK to user_management.users)"
     )
     event_type: EventType = Field(..., description="Type of calorie event")
     event_timestamp: datetime = Field(
@@ -147,7 +123,9 @@ class CalorieEvent(BaseEntity):
 
 class CalorieGoal(BaseEntity):
     """Dynamic calorie goals with AI optimization support."""
-    user_id: str = Field(..., description="User ID")
+    user_id: UUID = Field(
+        ..., description="User ID (cross-schema FK to user_management.users)"
+    )
     goal_type: GoalType = Field(..., description="Type of calorie goal")
     daily_calorie_target: Decimal = Field(
         ..., ge=800, le=5000, description="Daily calorie target"
@@ -187,7 +165,9 @@ class CalorieGoal(BaseEntity):
 
 class DailyBalance(BaseEntity):
     """Daily aggregated balance for performance optimization."""
-    user_id: str = Field(..., description="User ID")
+    user_id: UUID = Field(
+        ..., description="User ID (cross-schema FK to user_management.users)"
+    )
     date: DateType = Field(..., description="Balance date")
     
     # Calorie aggregations
@@ -233,7 +213,9 @@ class DailyBalance(BaseEntity):
 
 class MetabolicProfile(BaseEntity):
     """Metabolic profile with BMR/TDEE calculations."""
-    user_id: str = Field(..., description="User ID")
+    user_id: UUID = Field(
+        ..., description="User ID (cross-schema FK to user_management.users)"
+    )
     
     # Calculated metabolic rates
     bmr_calories: Decimal = Field(
@@ -241,6 +223,28 @@ class MetabolicProfile(BaseEntity):
     )
     tdee_calories: Decimal = Field(
         ..., gt=0, description="Total Daily Energy Expenditure"
+    )
+    
+    # User metrics (from Parameter Passing pattern)
+    activity_level: ActivityLevel = Field(
+        ..., description="Physical activity level used in calculation"
+    )
+    current_weight_kg: Decimal = Field(
+        ..., gt=0, description="Weight at calculation time"
+    )
+    current_height_cm: Decimal = Field(
+        ..., gt=0, description="Height at calculation time"
+    )
+    current_age: int = Field(
+        ..., ge=13, le=120, description="Age at calculation time"
+    )
+    gender: GenderType = Field(
+        ..., description="Gender used in BMR calculation"
+    )
+    
+    # Activity factors used in TDEE calculation
+    activity_multiplier: Decimal = Field(
+        ..., gt=0, description="Activity level multiplier"
     )
     
     # Body composition (optional)
@@ -259,9 +263,9 @@ class MetabolicProfile(BaseEntity):
         ..., description="When calculation was performed"
     )
     
-    # Activity factors used in TDEE calculation
-    activity_multiplier: Decimal = Field(
-        ..., gt=0, description="Activity level multiplier"
+    # Additional metadata for Parameter Passing pattern
+    metadata: Optional[Dict[str, Any]] = Field(
+        default_factory=dict, description="Calculation metadata"
     )
 
 
@@ -271,7 +275,7 @@ class MetabolicProfile(BaseEntity):
 
 class HourlyCalorieSummary(BaseModel):
     """Hourly calorie aggregation from temporal view."""
-    user_id: str
+    user_id: UUID
     date: DateType
     hour: int
     calories_consumed: Decimal
@@ -285,7 +289,7 @@ class HourlyCalorieSummary(BaseModel):
 
 class DailyCalorieSummary(BaseModel):
     """Daily calorie aggregation from temporal view."""
-    user_id: str
+    user_id: UUID
     date: DateType
     calories_consumed: Decimal
     calories_burned_exercise: Decimal
@@ -300,7 +304,7 @@ class DailyCalorieSummary(BaseModel):
 
 class WeeklyCalorieSummary(BaseModel):
     """Weekly calorie aggregation from temporal view."""
-    user_id: str
+    user_id: UUID
     week_start: DateType
     week_end: DateType
     year: int
@@ -318,7 +322,7 @@ class WeeklyCalorieSummary(BaseModel):
 
 class MonthlyCalorieSummary(BaseModel):
     """Monthly calorie aggregation from temporal view."""
-    user_id: str
+    user_id: UUID
     month_start: DateType
     month_end: DateType
     year: int
@@ -338,7 +342,7 @@ class MonthlyCalorieSummary(BaseModel):
 
 class DailyBalanceSummary(BaseModel):
     """Daily balance with goal comparison from temporal view."""
-    user_id: str
+    user_id: UUID
     date: DateType
     calories_consumed: Decimal
     calories_burned_exercise: Decimal

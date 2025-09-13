@@ -84,10 +84,22 @@ erDiagram
     METABOLIC_PROFILES {
         UUID id PK
         UUID user_id FK
-        decimal bmr
-        decimal tdee
+        numeric bmr_calories
+        numeric tdee_calories
+        numeric rmr_calories
+        varchar calculation_method
+        numeric accuracy_score
+        numeric sedentary_multiplier
+        numeric light_multiplier
+        numeric moderate_multiplier
+        numeric high_multiplier
+        numeric extreme_multiplier
+        boolean ai_adjusted
+        numeric adjustment_factor
+        int learning_iterations
         timestamptz calculated_at
-        timestamptz valid_until
+        timestamptz expires_at
+        boolean is_active
     }
 ```
 
@@ -210,25 +222,53 @@ CREATE INDEX idx_daily_balances_last_event ON daily_balances(user_id, last_event
 ```
 **API Mapping**: `/api/v1/balance/*`
 
-### 5. `metabolic_profiles` - Profili Metabolici Personalizzati
+### 5. `metabolic_profiles` - Profili Metabolici Personalizzati (Schema Reale)
 ```sql
 CREATE TABLE metabolic_profiles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    bmr DECIMAL(6, 1) NOT NULL,
-    tdee DECIMAL(6, 1) NOT NULL,
+    user_id UUID NOT NULL,
+    bmr_calories NUMERIC,
+    tdee_calories NUMERIC,
+    rmr_calories NUMERIC,
+    calculation_method CHARACTER VARYING,
+    accuracy_score NUMERIC,
+    sedentary_multiplier NUMERIC,
+    light_multiplier NUMERIC,
+    moderate_multiplier NUMERIC,
+    high_multiplier NUMERIC,
+    extreme_multiplier NUMERIC,
+    ai_adjusted BOOLEAN,
+    adjustment_factor NUMERIC,
+    learning_iterations INTEGER,
     calculated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    valid_until TIMESTAMPTZ NOT NULL,
+    expires_at TIMESTAMPTZ,
+    is_active BOOLEAN,
     
-    CONSTRAINT chk_bmr CHECK (bmr >= 800 AND bmr <= 5000),
-    CONSTRAINT chk_tdee CHECK (tdee >= 800 AND tdee <= 6000)
+    -- Cross-Schema Foreign Key (Single Source of Truth)
+    FOREIGN KEY (user_id) REFERENCES user_management.users(id)
+        ON UPDATE CASCADE,
+    
+    CONSTRAINT chk_bmr_calories CHECK (bmr_calories >= 800 AND bmr_calories <= 5000),
+    CONSTRAINT chk_tdee_calories CHECK (tdee_calories >= 800 AND tdee_calories <= 6000),
+    CONSTRAINT chk_accuracy_score CHECK (accuracy_score >= 0.0 AND accuracy_score <= 1.0),
+    CONSTRAINT chk_multipliers CHECK (
+        sedentary_multiplier >= 1.0 AND sedentary_multiplier <= 2.0 AND
+        light_multiplier >= 1.0 AND light_multiplier <= 2.0 AND
+        moderate_multiplier >= 1.0 AND moderate_multiplier <= 2.0 AND
+        high_multiplier >= 1.0 AND high_multiplier <= 2.0 AND
+        extreme_multiplier >= 1.0 AND extreme_multiplier <= 2.0
+    )
 );
 
 -- Performance indexes
 CREATE INDEX idx_metabolic_profiles_user_id ON metabolic_profiles(user_id);
-CREATE INDEX idx_metabolic_profiles_valid_until ON metabolic_profiles(valid_until);
+CREATE INDEX idx_metabolic_profiles_expires_at ON metabolic_profiles(expires_at);
+CREATE INDEX idx_metabolic_profiles_active ON metabolic_profiles(user_id, is_active) 
+    WHERE is_active = true;
 ```
 **API Mapping**: `/api/v1/users/{user_id}/profile/metabolic`
+
+> **⚠️ NOTA CRITICA**: Lo schema reale della tabella `metabolic_profiles` è significativamente diverso da quello precedentemente documentato. Include campi avanzati per AI machine learning (`learning_iterations`, `ai_adjusted`), multipliers di attività personalizzati e metodologie di calcolo multiple.
 
 ## 📊 5-Level Temporal Analytics Views
 

@@ -49,7 +49,7 @@ async def create_calorie_goal(
     Automatically calculates optimal targets based on user profile.
     """
     try:
-        # Create goal using the service
+        # Create goal using the service with Parameter Passing
         goal = await goal_service.create_goal(
             user_id=user_id,
             goal_type=GoalType(request.goal_type),
@@ -57,7 +57,12 @@ async def create_calorie_goal(
             target_date=request.target_date,
             weekly_weight_change_kg=request.weekly_weight_change_kg,
             activity_level=request.activity_level,
-            custom_calorie_target=request.custom_calorie_target
+            custom_calorie_target=request.custom_calorie_target,
+            # Parameter Passing - User metrics from request
+            user_weight_kg=request.user_weight_kg,
+            user_height_cm=request.user_height_cm,
+            user_age=request.user_age,
+            user_gender=request.user_gender
         )
         
         return CalorieGoalResponse.from_entity(goal)
@@ -72,7 +77,7 @@ async def create_calorie_goal(
         logger.error(f"Failed to create goal for {user_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create calorie goal"
+            detail=f"Failed to create calorie goal: {str(e)}"
         )
 
 

@@ -265,6 +265,24 @@ class CalorieGoalService:
             
             daily_target = metabolic_profile.tdee_calories - daily_deficit
             
+            # Calculate end_date if target_weight_kg is provided
+            end_date = None
+            logger.info(f"End date calculation - target_weight_kg: {target_weight_kg}, user_weight_kg: {user_weight_kg}, weekly_weight_change_kg: {weekly_weight_change_kg}")
+            
+            if target_weight_kg and user_weight_kg and weekly_weight_change_kg:
+                logger.info("All parameters present for end_date calculation")
+                # Calculate weeks needed to reach target
+                weight_diff = abs(float(user_weight_kg - target_weight_kg))
+                weeks_needed = weight_diff / float(weekly_weight_change_kg)
+                
+                logger.info(f"Weight difference: {weight_diff} kg, Weeks needed: {weeks_needed}")
+                
+                # Calculate end date
+                end_date = date.today() + timedelta(weeks=int(weeks_needed))
+                logger.info(f"Calculated end_date: {end_date}")
+            else:
+                logger.info("Missing parameters for end_date calculation - will be null")
+            
             # Create goal
             goal = CalorieGoal(
                 id=uuid4(),
@@ -274,7 +292,7 @@ class CalorieGoalService:
                 daily_deficit_target=daily_deficit,
                 weekly_weight_change_kg=-weekly_loss_kg,
                 start_date=date.today(),
-                end_date=None,
+                end_date=end_date,
                 is_active=True,
                 ai_optimized=True,
                 optimization_metadata={
@@ -293,6 +311,158 @@ class CalorieGoalService:
             
         except Exception as e:
             logger.error(f"Failed to create weight loss goal: {e}")
+            raise
+    
+    async def create_goal(
+        self,
+        user_id: str,
+        goal_type: GoalType,
+        target_weight_kg: Optional[Decimal] = None,
+        target_date: Optional[DateType] = None,
+        weekly_weight_change_kg: Optional[Decimal] = None,
+        activity_level: Optional[str] = None,
+        custom_calorie_target: Optional[Decimal] = None,
+        # Parameter Passing - User metrics provided by client
+        user_weight_kg: Optional[Decimal] = None,
+        user_height_cm: Optional[Decimal] = None,
+        user_age: Optional[int] = None,
+        user_gender: Optional[str] = None
+    ) -> CalorieGoal:
+        """
+        Create calorie goal using Parameter Passing pattern.
+        
+        User metrics are provided by client ensuring microservice decoupling.
+        """
+        logger.info("🔥🔥🔥 STARTING CREATE_GOAL METHOD - DEBUG VERSION LOADED! 🔥🔥🔥")
+        logger.info("TEST LOG: Code version with end_date calculation active")
+        try:
+            # Convert user_id to UUID for domain layer compatibility
+            from uuid import UUID
+            try:
+                user_uuid = UUID(user_id)
+            except ValueError:
+                # For non-UUID user_ids, generate deterministic UUID
+                import hashlib
+                user_hash = hashlib.md5(user_id.encode()).hexdigest()
+                # Format as proper UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx  
+                formatted_hash = f"{user_hash[:8]}-{user_hash[8:12]}-{user_hash[12:16]}-{user_hash[16:20]}-{user_hash[20:32]}"
+                user_uuid = UUID(formatted_hash)
+                logger.info(f"Generated UUID {user_uuid} for user_id {user_id}")
+            
+            # If custom target provided, use it directly
+            if custom_calorie_target:
+                daily_target = custom_calorie_target
+            elif all([user_weight_kg, user_height_cm, user_age, user_gender]):
+                # Calculate target using provided user metrics
+                from app.domain.entities import GenderType, ActivityLevel
+                
+                gender_enum = GenderType(user_gender) if user_gender else GenderType.OTHER
+                activity_enum = ActivityLevel(activity_level) if activity_level else ActivityLevel.MODERATE
+                
+                # Calculate metabolic profile
+                metabolic_profile = await self.metabolic_service.calculate_metabolic_profile(
+                    user_id=str(user_uuid),  # Pass as string to metabolic service
+                    weight_kg=user_weight_kg,
+                    height_cm=user_height_cm,
+                    age=user_age,
+                    gender=gender_enum,
+                    activity_level=activity_enum
+                )
+                
+                if goal_type == GoalType.WEIGHT_LOSS and weekly_weight_change_kg:
+                    # Calculate calorie deficit for weight loss
+                    weekly_calorie_deficit = abs(weekly_weight_change_kg) * Decimal("7700")  # Cal per kg
+                    daily_deficit = weekly_calorie_deficit / 7
+                    daily_target = metabolic_profile.tdee_calories - daily_deficit
+                elif goal_type == GoalType.WEIGHT_GAIN and weekly_weight_change_kg:
+                    # Calculate calorie surplus for weight gain
+                    weekly_calorie_surplus = weekly_weight_change_kg * Decimal("7700")  # Cal per kg
+                    daily_surplus = weekly_calorie_surplus / 7
+                    daily_target = metabolic_profile.tdee_calories + daily_surplus
+                else:
+                    # Maintain weight
+                    daily_target = metabolic_profile.tdee_calories
+            else:
+                # Fallback to default if no user metrics provided
+                daily_target = Decimal("2000")  # Default calorie target
+            
+            # Create goal entity
+            from datetime import datetime, timedelta
+            
+            # Calculate end_date if target_weight_kg is provided and target_date is not
+            calculated_end_date = target_date  # Start with provided target_date
+            logger.info(f"End_date calculation - target_weight_kg: {target_weight_kg}, user_weight_kg: {user_weight_kg}, weekly_weight_change_kg: {weekly_weight_change_kg}")
+            
+            if not target_date and target_weight_kg and user_weight_kg and weekly_weight_change_kg:
+                logger.info("All parameters present for end_date calculation")
+                # Calculate weeks needed to reach target
+                weight_diff = abs(float(user_weight_kg) - float(target_weight_kg))
+                weeks_needed = weight_diff / abs(float(weekly_weight_change_kg))
+                
+                logger.info(f"Weight difference: {weight_diff} kg, Weeks needed: {weeks_needed}")
+                
+                # Calculate end date
+                calculated_end_date = date.today() + timedelta(weeks=int(weeks_needed))
+                logger.info(f"Calculated end_date: {calculated_end_date}")
+            elif not target_date and target_weight_kg:
+                logger.info("Missing user_weight_kg or weekly_weight_change_kg for end_date calculation")
+            else:
+                logger.info(f"Using provided target_date: {target_date} or no target_weight_kg: {target_weight_kg}")
+            
+            goal = CalorieGoal(
+                id=uuid4(),
+                user_id=user_uuid,  # Use UUID for domain entity
+                goal_type=goal_type,
+                daily_calorie_target=daily_target,
+                daily_deficit_target=daily_target - Decimal("2000") if goal_type == GoalType.WEIGHT_LOSS else None,
+                weekly_weight_change_kg=weekly_weight_change_kg or Decimal("0"),
+                start_date=date.today(),
+                end_date=calculated_end_date,
+                is_active=True,
+                ai_optimized=bool(all([user_weight_kg, user_height_cm, user_age, user_gender])),
+                optimization_metadata={
+                    "method": "parameter_passing_pattern",
+                    "user_metrics_provided": bool(all([user_weight_kg, user_height_cm, user_age, user_gender])),
+                    "custom_target": bool(custom_calorie_target)
+                },
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow()
+            )
+            
+            return await self.goal_repo.create(goal)
+            
+        except Exception as e:
+            logger.error(f"Failed to create goal: {e}")
+            raise
+    
+    async def get_user_goals(self, user_id: str, active_only: bool = True) -> List[CalorieGoal]:
+        """Get all goals for user."""
+        try:
+            # Convert user_id to UUID for repository compatibility
+            from uuid import UUID
+            try:
+                user_uuid = UUID(user_id)
+            except ValueError:
+                # Generate same deterministic UUID as create_goal
+                import hashlib
+                user_hash = hashlib.md5(user_id.encode()).hexdigest()
+                formatted_hash = (
+                    f"{user_hash[:8]}-{user_hash[8:12]}-"
+                    f"{user_hash[12:16]}-{user_hash[16:20]}-{user_hash[20:32]}"
+                )
+                user_uuid = UUID(formatted_hash)
+            
+            if active_only:
+                active_goal = await self.goal_repo.get_active_goal(user_uuid)
+                return [active_goal] if active_goal else []
+            else:
+                # This would require a new repository method
+                # For now, return active goal only
+                active_goal = await self.goal_repo.get_active_goal(user_uuid)
+                return [active_goal] if active_goal else []
+                
+        except Exception as e:
+            logger.error(f"Failed to get user goals: {e}")
             raise
     
     async def get_active_goal(self, user_id: str) -> Optional[CalorieGoal]:
@@ -330,7 +500,11 @@ class MetabolicCalculationService:
         self.profile_repo = profile_repo
     
     async def calculate_bmr_mifflin(
-        self, weight_kg: Decimal, height_cm: Decimal, age: int, gender: GenderType
+        self,
+        weight_kg: Decimal,
+        height_cm: Decimal,
+        age: int,
+        gender: GenderType
     ) -> Decimal:
         """Calculate BMR using Mifflin-St Jeor equation."""
         # Men: BMR = 10W + 6.25H - 5A + 5

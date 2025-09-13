@@ -13,14 +13,14 @@ import logging
 
 # Domain interfaces and entities
 from app.domain.repositories import (
-    ICalorieEventRepository, ICalorieGoalRepository,
-    IDailyBalanceRepository, IMetabolicProfileRepository,
+    ICalorieEventRepository, ICalorieGoalRepository, IDailyBalanceRepository, IMetabolicProfileRepository,
     ITemporalAnalyticsRepository, ICalorieSearchRepository
 )
 from app.domain.entities import (
     CalorieEvent, CalorieGoal, DailyBalance, MetabolicProfile,
     HourlyCalorieSummary, DailyCalorieSummary, WeeklyCalorieSummary,
-    MonthlyCalorieSummary, DailyBalanceSummary, EventType
+    MonthlyCalorieSummary, DailyBalanceSummary, EventType,
+    ActivityLevel, GenderType
 )
 
 # Core dependencies
@@ -86,6 +86,26 @@ class SupabaseCalorieEventRepository(ICalorieEventRepository):
         except Exception as e:
             logger.error(f"Failed to batch create {len(events)} events: {e}")
             raise
+
+    def _map_event_from_db(self, data: Dict) -> CalorieEvent:
+        """Map database row to CalorieEvent entity."""
+        # Convert string UUID to UUID object if needed
+        if isinstance(data.get('user_id'), str):
+            data['user_id'] = UUID(data['user_id'])
+        if isinstance(data.get('id'), str):
+            data['id'] = UUID(data['id'])
+        
+        return CalorieEvent(**data)
+
+    def _map_profile_from_db(self, data: Dict) -> MetabolicProfile:
+        """Map database row to MetabolicProfile entity."""
+        # Convert string UUID to UUID object if needed
+        if isinstance(data.get('user_id'), str):
+            data['user_id'] = UUID(data['user_id'])
+        if isinstance(data.get('id'), str):
+            data['id'] = UUID(data['id'])
+        
+        return MetabolicProfile(**data)
     
     async def get_events_by_user(
         self,
@@ -111,7 +131,7 @@ class SupabaseCalorieEventRepository(ICalorieEventRepository):
             query = query.order("event_timestamp", desc=True).limit(limit)
             response = query.execute()
             
-            return [CalorieEvent(**data) for data in response.data]
+            return [self._map_event_from_db(data) for data in response.data]
             
         except Exception as e:
             logger.error(
@@ -164,10 +184,10 @@ class SupabaseCalorieEventRepository(ICalorieEventRepository):
             
             response = self.client.table(self.table).update(
                 event_dict
-            ).eq("id", str(event.id)).single().execute()
+            ).eq("id", str(event.id)).execute()
             
-            if response.data:
-                return CalorieEvent(**response.data)
+            if response.data and len(response.data) > 0:
+                return self._map_event_from_db(response.data[0])
             return None
             
         except Exception as e:
@@ -201,10 +221,10 @@ class SupabaseCalorieGoalRepository(ICalorieGoalRepository):
         try:
             response = self.client.table(self.table).select("*").eq(
                 "user_id", user_id
-            ).eq("is_active", True).single().execute()
+            ).eq("is_active", True).execute()
             
-            if response.data:
-                return CalorieGoal(**response.data)
+            if response.data and len(response.data) > 0:
+                return CalorieGoal(**response.data[0])
             return None
             
         except Exception as e:
@@ -241,12 +261,41 @@ class SupabaseCalorieGoalRepository(ICalorieGoalRepository):
             
             goal_dict = goal.dict()
             goal_dict['id'] = str(goal_dict['id'])
+            goal_dict['user_id'] = str(goal_dict['user_id'])
+            
+            # Convert datetime objects to ISO format strings
+            if 'created_at' in goal_dict and goal_dict['created_at']:
+                goal_dict['created_at'] = goal_dict['created_at'].isoformat()
+            if 'updated_at' in goal_dict and goal_dict['updated_at']:
+                goal_dict['updated_at'] = goal_dict['updated_at'].isoformat()
+            
+            # Convert date objects to ISO format strings
+            if 'start_date' in goal_dict and goal_dict['start_date']:
+                goal_dict['start_date'] = goal_dict['start_date'].isoformat()
+            if 'end_date' in goal_dict and goal_dict['end_date']:
+                goal_dict['end_date'] = goal_dict['end_date'].isoformat()
+            
+            # Convert Decimal objects to float for JSON serialization
+            decimal_fields = [
+                'daily_calorie_target', 'daily_deficit_target',
+                'weekly_weight_change_kg'
+            ]
+            for field in decimal_fields:
+                if field in goal_dict and goal_dict[field] is not None:
+                    goal_dict[field] = float(goal_dict[field])
+            
+            # Convert enum objects to string
+            if 'goal_type' in goal_dict and goal_dict['goal_type']:
+                goal_dict['goal_type'] = goal_dict['goal_type'].value
             
             response = self.client.table(self.table).insert(
                 goal_dict
-            ).single().execute()
+            ).execute()
             
-            return CalorieGoal(**response.data)
+            if response.data and len(response.data) > 0:
+                return CalorieGoal(**response.data[0])
+            else:
+                raise Exception("No data returned from goal creation")
             
         except Exception as e:
             logger.error(f"Failed to create goal: {e}")
@@ -259,10 +308,10 @@ class SupabaseCalorieGoalRepository(ICalorieGoalRepository):
             
             response = self.client.table(self.table).update(
                 goal_dict
-            ).eq("id", str(goal.id)).single().execute()
+            ).eq("id", str(goal.id)).execute()
             
-            if response.data:
-                return CalorieGoal(**response.data)
+            if response.data and len(response.data) > 0:
+                return CalorieGoal(**response.data[0])
             return None
             
         except Exception as e:
@@ -316,10 +365,10 @@ class SupabaseDailyBalanceRepository(IDailyBalanceRepository):
         try:
             response = self.client.table(self.table).select("*").eq(
                 "user_id", user_id
-            ).eq("date", date.isoformat()).single().execute()
+            ).eq("date", date.isoformat()).execute()
             
-            if response.data:
-                return DailyBalance(**response.data)
+            if response.data and len(response.data) > 0:
+                return DailyBalance(**response.data[0])
             return None
             
         except Exception as e:
@@ -357,9 +406,12 @@ class SupabaseDailyBalanceRepository(IDailyBalanceRepository):
             response = self.client.table(self.table).upsert(
                 balance_dict,
                 on_conflict="user_id,date"  # Composite unique constraint
-            ).single().execute()
+            ).execute()
             
-            return DailyBalance(**response.data)
+            if response.data and len(response.data) > 0:
+                return DailyBalance(**response.data[0])
+            else:
+                raise Exception("No data returned from balance upsert")
             
         except Exception as e:
             logger.error(f"Failed to upsert daily balance: {e}")
@@ -396,20 +448,54 @@ class SupabaseMetabolicProfileRepository(IMetabolicProfileRepository):
     
     def __init__(self):
         """Initialize with Supabase client."""
-        self.client: Client = get_supabase_client()
-        self.table = "metabolic_profiles"
+        self.schema_manager = get_schema_manager()
+        self.table = self.schema_manager.metabolic_profiles
+    
+    def _map_profile_from_db(self, data: Dict) -> MetabolicProfile:
+        """Map database row to MetabolicProfile entity."""
+        # Convert string UUID to UUID object if needed
+        if isinstance(data.get('user_id'), str):
+            data['user_id'] = UUID(data['user_id'])
+        if isinstance(data.get('id'), str):
+            data['id'] = UUID(data['id'])
+        
+        # Map database column names to entity field names
+        mapped_data = {
+            'id': data.get('id'),
+            'user_id': data.get('user_id'),
+            'bmr_calories': Decimal(str(data.get('bmr_calories', 0))),
+            'tdee_calories': Decimal(str(data.get('tdee_calories', 0))),
+            'calculation_date': datetime.fromisoformat(
+                data.get('calculated_at', datetime.now().isoformat())
+            ),
+            'calculation_method': data.get('calculation_method', 'mifflin_st_jeor'),
+            'created_at': datetime.fromisoformat(
+                data.get('calculated_at', datetime.now().isoformat())
+            ),
+            'updated_at': datetime.now(),
+            # Default values for required fields that don't exist in DB
+            'activity_level': ActivityLevel.MODERATE,
+            'current_weight_kg': Decimal('70.0'),
+            'current_height_cm': Decimal('175.0'),
+            'current_age': 30,
+            'gender': GenderType.MALE,
+            'activity_multiplier': Decimal('1.55'),
+            'metadata': {}
+        }
+        
+        return MetabolicProfile(**mapped_data)
     
     async def get_latest(self, user_id: str) -> Optional[MetabolicProfile]:
         """Get user's latest metabolic profile."""
         try:
-            response = self.client.table(self.table).select("*").eq(
+            response = self.table.select("*").eq(
                 "user_id", user_id
             ).order(
-                "calculation_date", desc=True
-            ).limit(1).single().execute()
+                "calculated_at", desc=True
+            ).limit(1).execute()
             
-            if response.data:
-                return MetabolicProfile(**response.data)
+            if response.data and len(response.data) > 0:
+                return self._map_profile_from_db(response.data[0])
             return None
             
         except Exception as e:
@@ -423,11 +509,11 @@ class SupabaseMetabolicProfileRepository(IMetabolicProfileRepository):
     ) -> List[MetabolicProfile]:
         """Get metabolic profile history."""
         try:
-            response = self.client.table(self.table).select("*").eq(
+            response = self.table.select("*").eq(
                 "user_id", user_id
-            ).order("calculation_date", desc=True).limit(limit).execute()
+            ).order("calculated_at", desc=True).limit(limit).execute()
             
-            return [MetabolicProfile(**data) for data in response.data]
+            return [self._map_profile_from_db(data) for data in response.data]
             
         except Exception as e:
             logger.error(
@@ -438,14 +524,26 @@ class SupabaseMetabolicProfileRepository(IMetabolicProfileRepository):
     async def create(self, profile: MetabolicProfile) -> MetabolicProfile:
         """Create new metabolic profile."""
         try:
-            profile_dict = profile.dict()
-            profile_dict['id'] = str(profile_dict['id'])
+            # Convert entity to dict with proper datetime serialization
+            # Map to actual database schema
+            profile_dict = {
+                "id": str(profile.id),
+                "user_id": str(profile.user_id),
+                "bmr_calories": float(profile.bmr_calories),
+                "tdee_calories": float(profile.tdee_calories),
+                "calculation_method": profile.calculation_method,
+                "calculated_at": profile.created_at.isoformat(),
+                "is_active": True
+            }
             
-            response = self.client.table(self.table).insert(
+            response = self.table.insert(
                 profile_dict
-            ).single().execute()
+            ).execute()
             
-            return MetabolicProfile(**response.data)
+            if response.data and len(response.data) > 0:
+                return self._map_profile_from_db(response.data[0])
+            else:
+                raise Exception("No data returned from profile creation")
             
         except Exception as e:
             logger.error(f"Failed to create metabolic profile: {e}")

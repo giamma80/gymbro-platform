@@ -1,16 +1,9 @@
 # 🚨 Issues Identificate - NutriFit Platform - AGGIORNAMENTO
 
-**Data Ultima Analisi:### 🔄 **IN PROGRESS (Authentication Focus)**
-
-| **ID** | **Categoria** | **Issue** | **Priorità** | **Status** | **Sprint Target** |
-|--------|---------------|-----------|--------------|------------|------------------|
-| **AUTH-001** | 🔐 Autenticazione | **JWT Authentication APIs Missing** | **10** | 🟡 IN PROGRESS | Register, Login, Logout, Refresh endpoints |
-| **AUTH-002** | 🔐 Autenticazione | **Password Reset Flow Missing** | **9** | 🟡 IN PROGRESS | Password reset flow implementation |
-| **AUTH-003** | 🔐 Autenticazione | **Session Management Missing** | **8** | 🟡 PLANNED | Multi-device session tracking |
-| **AUTH-004** | 🔐 Autenticazione | **Email Verification Missing** | **7** | 🟡 PLANNED | Email verification flow testing |ttembre 2025  
+**Data Ultima Analisi:** 13 settembre 2025  
 **Data Analisi Precedente:** 10 settembre 2025  
-**Scope:** Production deployment completion + CI/CD pipeline implementation  
-**Metodologia:** Verifica sistemica deployment + test validation in produzione
+**Scope:** Calorie-Balance Service architectural issues + cross-schema migration validation  
+**Metodologia:** Test-driven analysis + schema validation + architectural compliance check
 
 ---
 
@@ -18,25 +11,25 @@
 
 | **Categoria** | **Issues Totali** | **Priorità Alta (8-10)** | **Priorità Media (5-7)** | **Priorità Bassa (1-4)** | **✅ Risolte** | **🆕 Nuove** |
 |---------------|-------------------|---------------------------|---------------------------|---------------------------|----------------|--------------|
-| 🏗️ **Architettura** | 12 | 9 | 3 | 0 | **7** (+1) | **3** |
+| 🏗️ **Architettura** | 13 | 10 | 3 | 0 | **7** | **4** |
 | 🔐 **Autenticazione** | 4 | 3 | 1 | 0 | **0** | **4** |
 | 📱 **Mobile** | 4 | 4 | 0 | 0 | **0** | **0** |
 | 🤖 **AI Integration** | 3 | 3 | 0 | 0 | **0** | **0** |
-| ☁️ **Cloud Infrastructure** | 5 | 4 | 1 | 0 | **2** (+0) | **0** |
-| 🚀 **Deployment** | 4 | 3 | 1 | 0 | **4** (+4) | **0** |
-| 📚 **Documentazione** | 6 | 2 | 3 | 1 | **5** (+0) | **0** |
-| 🔧 **Code Quality** | 4 | 1 | 2 | 1 | **2** (+0) | **0** |
+| ☁️ **Cloud Infrastructure** | 5 | 4 | 1 | 0 | **2** | **0** |
+| 🚀 **Deployment** | 4 | 3 | 1 | 0 | **4** | **0** |
+| 📚 **Documentazione** | 7 | 3 | 3 | 1 | **5** | **1** |
+| 🔧 **Code Quality** | 6 | 3 | 2 | 1 | **2** | **2** |
 | 🛡️ **GDPR & Privacy** | 2 | 1 | 1 | 0 | **0** | **2** |
-| 🏥 **Health & Monitoring** | 1 | 0 | 1 | 0 | **1** (+1) | **0** |
-| **TOTALE** | **45** | **30** | **13** | **2** | **21** | **9** |
+| 🏥 **Health & Monitoring** | 1 | 0 | 1 | 0 | **1** | **0** |
+| **TOTALE** | **49** | **34** | **13** | **2** | **21** | **13** |
 
-### 🎯 **PROGRESSI SIGNIFICATIVI (10-12 settembre)**
-- **Production Deployment**: ✅ **COMPLETE** (https://nutrifit-user-management.onrender.com)
-- **CI/CD Pipeline**: ✅ **OPERATIONAL** (GitHub Actions + Render auto-deploy)
-- **Production Testing**: ✅ **100% SUCCESS** (22/22 tests pass in production)
-- **Environment Management**: ✅ **IMPLEMENTED** (local/prod profiles)
-- **Parameter Passing Architecture**: ✅ **IMPLEMENTED** (ARCH-011 microservice decoupling pattern)
-- **Overall Progress**: **45% → 67%** (+22% in 2 giorni)
+### 🚨 **PROBLEMI CRITICI IDENTIFICATI (13 settembre)**
+- **Calorie-Balance Service**: ❌ **56% test failure rate** (7/16 test falliti)
+- **Schema Database Mismatch**: ❌ `metabolic_profiles.activity_level` column missing
+- **Codice Legacy**: ❌ Repository User entities non ripulite post cross-schema migration
+- **API Architetturale**: ❌ Parameter Passing pattern not fully implemented
+- **Goals Management**: ❌ 100% failure (3/3 tests) - dependency su schema errato  
+- **Events API**: ❌ 50% failure - validation su campi inesistenti
 
 ---
 
@@ -70,13 +63,15 @@
 | **CODE-001** | 🔧 Code Quality | **CalorieEvent Entity Non Documentata** | ✅ **DOCUMENTATO**: Entities complete nei microservizi implementati | 09/09 |
 | **CODE-002** | 🔧 Code Quality | **Problem.md Scope Limitato** | ✅ **ESPANSO**: Documentazione completa su tutti i microservizi | 08/09 |
 
-### 🆕 **NUOVE ISSUE IDENTIFICATE (12 settembre)**
+### 🆕 **NUOVE ISSUE CRITICHE IDENTIFICATE (13 settembre)**
 
 | **ID** | **Categoria** | **Issue** | **Descrizione** | **Priorità** | **Status** |
 |--------|---------------|-----------|-----------------|--------------|------------|
-| **ARCH-010** | 🏗️ Architettura | **Calorie-Balance Boundary Violation - User Management** | calorie-balance implementava endpoint `/api/v1/users/*` violando principio Single Source of Truth. User data deve essere gestito esclusivamente da user-management service. | **10** | ✅ RISOLTO |
-| **ARCH-011** | 🏗️ Architettura | **Cross-Service User Data Integration Missing** | Manca implementazione per accesso user data da calorie-balance via cross-schema FK o service-to-service calls. **SOLUZIONE SCELTA**: Parameter Passing Pattern - Services accettano user metrics come parametri invece di accedervi direttamente. | **9** | ✅ **IN PROGRESS** |
-| **ARCH-012** | 🏗️ Architettura | **API Documentation Inconsistency** | Documentazione API riportava user management come implementato in calorie-balance, violando architettura microservizi. | **7** | ✅ RISOLTO |
+| **ARCH-013** | 🏗️ Architettura | **Calorie-Balance Schema Database Mismatch** | Tabella `metabolic_profiles` manca campo `activity_level` richiesto dal codice. Causa 500 errors in test metabolici. | **10** | 🚫 CRITICAL |
+| **ARCH-014** | 🏗️ Architettura | **Legacy User Repository Cleanup Missing** | Post cross-schema migration, codice contiene ancora `UserRepository` e `User` entity obsoleti che cercano tabella `users` rimossa. | **9** | 🚫 HIGH |
+| **CODE-003** | 🔧 Code Quality | **Parameter Passing Pattern Incomplete** | API-roadmap dichiara Parameter Passing implementato, ma API cercano ancora dati da database locale rimosso. | **8** | 🚫 HIGH |
+| **CODE-004** | 🔧 Code Quality | **Goals Management 100% Failure** | Tutti i 3 test Goals falliscono per dipendenze su schema User locale e validazioni su campi inesistenti. | **8** | 🚫 HIGH |
+| **DOC-006** | 📚 Documentazione | **Database Schema Documentation Inconsistent** | Documentazione `metabolic_profiles` non allineata con schema reale (campi mancanti: `rmr_calories`, `calculation_method`, `accuracy_score`, etc.) | **7** | 🚫 MEDIUM |
 
 ### 🆕 **NUOVE ISSUE IDENTIFICATE**
 

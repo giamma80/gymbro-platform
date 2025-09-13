@@ -113,15 +113,17 @@ class CalorieGoalResponse(BaseModel):
     class Config:
         from_attributes = True
         json_encoders = {
-            Decimal: str
+            Decimal: str,
+            datetime: lambda v: v.isoformat() if v else None,
+            date: lambda v: v.isoformat() if v else None
         }
 
     @classmethod
     def from_entity(cls, goal: CalorieGoal) -> "CalorieGoalResponse":
         """Create response from CalorieGoal entity."""
         return cls(
-            id=goal.id,
-            user_id=goal.user_id,
+            id=str(goal.id),
+            user_id=str(goal.user_id),
             goal_type=GoalTypeEnum(goal.goal_type.value),
             daily_calorie_target=goal.daily_calorie_target,
             daily_deficit_target=goal.daily_deficit_target,
@@ -137,7 +139,7 @@ class CalorieGoalResponse(BaseModel):
 
 
 class CalorieGoalCreateRequest(BaseModel):
-    """Request schema for creating calorie goal."""
+    """Request schema for creating calorie goal with Parameter Passing support."""
 
     goal_type: GoalTypeEnum
     target_weight_kg: Optional[Decimal] = None
@@ -145,6 +147,12 @@ class CalorieGoalCreateRequest(BaseModel):
     weekly_weight_change_kg: Optional[Decimal] = None
     activity_level: str = "moderate"
     custom_calorie_target: Optional[Decimal] = None
+    
+    # Parameter Passing - User metrics provided by client (optional)
+    user_weight_kg: Optional[Decimal] = Field(None, description="Current weight in kg")
+    user_height_cm: Optional[Decimal] = Field(None, description="Height in cm")
+    user_age: Optional[int] = Field(None, description="Age in years")
+    user_gender: Optional[str] = Field(None, description="Gender: male, female, other")
 
     class Config:
         json_schema_extra = {
@@ -153,7 +161,11 @@ class CalorieGoalCreateRequest(BaseModel):
                 "target_weight_kg": "70.0",
                 "target_date": "2025-12-31",
                 "weekly_weight_change_kg": "0.5",
-                "activity_level": "moderate"
+                "activity_level": "moderate",
+                "user_weight_kg": "80.0",
+                "user_height_cm": "175.0",
+                "user_age": 30,
+                "user_gender": "male"
             }
         }
 

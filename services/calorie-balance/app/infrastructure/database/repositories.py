@@ -6,48 +6,11 @@ from sqlalchemy import select, and_, or_, desc, asc
 from sqlalchemy.orm import selectinload
 
 from ...domain import (
-    User, CalorieGoal, DailyBalance, MetabolicProfile,
-    UserRepository, CalorieGoalRepository, DailyBalanceRepository, MetabolicProfileRepository,
-    ActivityLevel, Gender, GoalType
+    CalorieGoal, DailyBalance, MetabolicProfile,
+    CalorieGoalRepository, DailyBalanceRepository, MetabolicProfileRepository,
+    ActivityLevel, GoalType
 )
-from .models import UserModel, CalorieGoalModel, DailyBalanceModel, MetabolicProfileModel
-
-
-def user_model_to_entity(model: UserModel) -> User:
-    """Convert UserModel to User entity"""
-    return User(
-        id=str(model.id) if model.id is not None else None,
-        username=model.username,
-        email=model.email,
-        full_name=model.full_name,
-        age=model.age,
-        gender=Gender(model.gender) if model.gender else None,
-        height_cm=model.height_cm,
-        weight_kg=model.weight_kg,
-        activity_level=ActivityLevel(model.activity_level) if model.activity_level else None,
-        created_at=model.created_at,
-        updated_at=model.updated_at,
-        is_active=model.is_active
-    )
-
-
-def user_entity_to_model(entity: User) -> UserModel:
-    """Convert User entity to UserModel"""
-    return UserModel(
-        id=entity.id,
-        username=entity.username,
-        email=entity.email,
-        full_name=entity.full_name,
-        age=entity.age,
-        gender=entity.gender.value if entity.gender else None,
-        height_cm=entity.height_cm,
-        weight_kg=entity.weight_kg,
-        activity_level=entity.activity_level.value if entity.activity_level else None,
-        created_at=entity.created_at,
-        updated_at=entity.updated_at,
-        is_active=entity.is_active
-    )
-
+from .models import CalorieGoalModel, DailyBalanceModel, MetabolicProfileModel
 
 def goal_model_to_entity(model: CalorieGoalModel) -> CalorieGoal:
     """Convert CalorieGoalModel to CalorieGoal entity"""
@@ -64,7 +27,6 @@ def goal_model_to_entity(model: CalorieGoalModel) -> CalorieGoal:
         created_at=model.created_at,
         updated_at=model.updated_at
     )
-
 
 def goal_entity_to_model(entity: CalorieGoal) -> CalorieGoalModel:
     """Convert CalorieGoal entity to CalorieGoalModel"""
@@ -83,7 +45,6 @@ def goal_entity_to_model(entity: CalorieGoal) -> CalorieGoalModel:
         updated_at=entity.updated_at
     )
 
-
 def balance_model_to_entity(model: DailyBalanceModel) -> DailyBalance:
     """Convert DailyBalanceModel to DailyBalance entity"""
     return DailyBalance(
@@ -99,7 +60,6 @@ def balance_model_to_entity(model: DailyBalanceModel) -> DailyBalance:
         created_at=model.created_at,
         updated_at=model.updated_at
     )
-
 
 def balance_entity_to_model(entity: DailyBalance) -> DailyBalanceModel:
     """Convert DailyBalance entity to DailyBalanceModel"""
@@ -117,7 +77,6 @@ def balance_entity_to_model(entity: DailyBalance) -> DailyBalanceModel:
         updated_at=entity.updated_at
     )
 
-
 def profile_model_to_entity(model: MetabolicProfileModel) -> MetabolicProfile:
     """Convert MetabolicProfileModel to MetabolicProfile entity"""
     return MetabolicProfile(
@@ -128,7 +87,6 @@ def profile_model_to_entity(model: MetabolicProfileModel) -> MetabolicProfile:
         calculated_at=model.calculated_at,
         valid_until=model.valid_until
     )
-
 
 def profile_entity_to_model(entity: MetabolicProfile) -> MetabolicProfileModel:
     """Convert MetabolicProfile entity to MetabolicProfileModel"""
@@ -141,99 +99,6 @@ def profile_entity_to_model(entity: MetabolicProfile) -> MetabolicProfileModel:
         valid_until=entity.valid_until
     )
 
-
-class SqlUserRepository(UserRepository):
-    """SQLAlchemy implementation of UserRepository"""
-    
-    def __init__(self, session: AsyncSession):
-        self.session = session
-    
-    async def get_by_id(self, id: UUID) -> Optional[User]:
-        """Get user by ID"""
-        stmt = select(UserModel).where(UserModel.id == id)
-        result = await self.session.execute(stmt)
-        model = result.scalar_one_or_none()
-        return user_model_to_entity(model) if model else None
-    
-    async def get_all(self, skip: int = 0, limit: int = 100) -> List[User]:
-        """Get all users with pagination"""
-        stmt = select(UserModel).offset(skip).limit(limit)
-        result = await self.session.execute(stmt)
-        models = result.scalars().all()
-        return [user_model_to_entity(model) for model in models]
-    
-    async def create(self, entity: User) -> User:
-        """Create new user"""
-        model = user_entity_to_model(entity)
-        self.session.add(model)
-        await self.session.flush()
-        return user_model_to_entity(model)
-    
-    async def update(self, entity: User) -> User:
-        """Update existing user"""
-        stmt = select(UserModel).where(UserModel.id == entity.id)
-        result = await self.session.execute(stmt)
-        model = result.scalar_one_or_none()
-        
-        if not model:
-            raise ValueError(f"User {entity.id} not found")
-        
-        # Update fields
-        model.email = entity.email
-        model.full_name = entity.full_name
-        model.age = entity.age
-        # Handle both enum and string values for gender
-        if entity.gender:
-            model.gender = entity.gender.value if hasattr(entity.gender, 'value') else entity.gender
-        else:
-            model.gender = None
-        model.height_cm = entity.height_cm
-        model.weight_kg = entity.weight_kg
-        # Handle both enum and string values for activity_level
-        if entity.activity_level:
-            model.activity_level = entity.activity_level.value if hasattr(entity.activity_level, 'value') else entity.activity_level
-        else:
-            model.activity_level = None
-        model.updated_at = entity.updated_at
-        model.is_active = entity.is_active
-        
-        await self.session.flush()
-        return user_model_to_entity(model)
-    
-    async def delete(self, id: UUID) -> bool:
-        """Delete user by ID"""
-        stmt = select(UserModel).where(UserModel.id == id)
-        result = await self.session.execute(stmt)
-        model = result.scalar_one_or_none()
-        
-        if model:
-            await self.session.delete(model)
-            await self.session.flush()
-            return True
-        return False
-    
-    async def get_by_id(self, user_id: str) -> Optional[User]:
-        """Get user by user ID"""
-        from uuid import UUID
-        try:
-            user_id_uuid = UUID(user_id)
-        except Exception:
-            user_id_uuid = user_id  # fallback, ma dovrebbe essere UUID
-        stmt = select(UserModel).where(UserModel.id == user_id_uuid)
-        result = await self.session.execute(stmt)
-        model = result.scalar_one_or_none()
-        return user_model_to_entity(model) if model else None
-    
-    async def get_by_email(self, email: str) -> Optional[User]:
-        """Get user by email"""
-        stmt = select(UserModel).where(UserModel.email == email)
-        result = await self.session.execute(stmt)
-        model = result.scalar_one_or_none()
-        return user_model_to_entity(model) if model else None
-
-
-class SqlCalorieGoalRepository(CalorieGoalRepository):
-    """SQLAlchemy implementation of CalorieGoalRepository"""
     
     def __init__(self, session: AsyncSession):
         self.session = session
@@ -337,7 +202,6 @@ class SqlCalorieGoalRepository(CalorieGoalRepository):
         
         await self.session.flush()
 
-
 class SqlDailyBalanceRepository(DailyBalanceRepository):
     """SQLAlchemy implementation of DailyBalanceRepository"""
     
@@ -439,7 +303,6 @@ class SqlDailyBalanceRepository(DailyBalanceRepository):
         result = await self.session.execute(stmt)
         models = result.scalars().all()
         return [balance_model_to_entity(model) for model in models]
-
 
 class SqlMetabolicProfileRepository(MetabolicProfileRepository):
     """SQLAlchemy implementation of MetabolicProfileRepository"""

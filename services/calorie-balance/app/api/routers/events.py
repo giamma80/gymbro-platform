@@ -100,7 +100,7 @@ class BatchEventRequest(BaseModel):
 class CalorieEventResponse(BaseModel):
     """Response model for calorie events."""
     id: UUID
-    user_id: str
+    user_id: UUID
     event_type: EventType
     event_timestamp: datetime
     value: Decimal

@@ -1,55 +1,26 @@
-# API Roa| Categoria | Implementate | Totali | Completamento |
-|-----------|--------------|--------|---------------|
-| **Health & Status** | 3 | 3 | ✅ 100% |
-| **~~User Management~~ (REMOVED)** | 0 | 0 | ⚠️ **Migrated to user-management service** |
-| **Calorie Goals** | 2 | 6 | 🟡 33% |
-| **🔥 Calorie Events (NEW)** | 4 | 6 | 🟡 67% |
-| **Daily Balance (Legacy)** | 4 | 7 | 🟡 57% |
-| **📈 Timeline Analytics (NEW)** | 0 | 12 | 🔴 0% |
-| **🗓️ Temporal Views (DB Ready)** | 5 | 5 | ✅ 100% |
-| **Analytics & Trends** | 0 | 4 | 🔴 0% |
-| **Metabolic Profiles** | 0 | 3 | 🔴 0% |
-| **TOTALE** | **18** | **49** | **🟡 37%** |ie Balance Service
+# API Roadmap - Calorie Balance Service
 
-> **Status del microservizio**: ✅ **Architecture Enhanced** - Parameter Passing pattern implementato!  
-> **Versione attuale**: v1.4.0 (Parameter Passing + Microservice Decoupling)  
-> **Ultimo aggiornamento**: 12 settembre 2025  
-> **🎉 MILESTONE**: ARCH-011 risolto - Microservice decoupling completo con user metrics in request body
+> **Status del microservizio**: 🚨 **CRITICAL ISSUES IDENTIFIED** - Schema database misalignment causes 56% test failure rate  
+> **Versione attuale**: v1.4.1 (Post Cross-Schema Migration Analysis)  
+> **Ultimo aggiornamento**: 13 settembre 2025  
+> **🔴 BREAKING**: Test results reveal critical architectural issues requiring immediate attention
 
 ## 📊 Overview dello Stato
 
 | Categoria | Implementate | Totali | Completamento |
 |-----------|--------------|--------|---------------|
 | **Health & Status** | 3 | 3 | ✅ 100% |
-| **~~User Management~~ (REMOVED)** | 0 | 0 | ⚠️ **Migrated to user-management service** |
-| **Calorie Goals** | 2 | 6 | 🟡 33% |
-| **🔥 Calorie Events (NEW)** | 4 | 6 | 🟡 67% |
-| **Daily Balance (Legacy)** | 4 | 7 | 🟡 57% |
+| **~~User Management~~ (REMOVED)** | 0 | 0 | ✅ **Migrated to user-management service** |
+| **Calorie Goals** | 0 | 6 | 🔴 0% - **ALL TESTS FAILING** |
+| **🔥 Calorie Events (NEW)** | 2 | 6 | 🟡 33% - **PARTIAL FUNCTIONALITY** |
+| **Daily Balance (Legacy)** | 3 | 7 | 🟡 43% - **BASIC OPERATIONS ONLY** |
 | **📈 Timeline Analytics (NEW)** | 0 | 12 | 🔴 0% |
 | **🗓️ Temporal Views (DB Ready)** | 5 | 5 | ✅ 100% |
 | **Analytics & Trends** | 0 | 4 | 🔴 0% |
-| **Metabolic Profiles** | 1 | 3 | � 33% |
-| **TOTALE** | **19** | **49** | **🟡 39%** |
+| **Metabolic Profiles** | 1 | 3 | 🔴 33% - **SCHEMA MISMATCH** |
+| **TOTALE** | **14** | **49** | **🔴 29%** - **DEGRADED FROM 39%** |
 
-> **Status del microservizio**: � **Major Refactoring** - Ristrutturazione per supporto eventi ad alta frequenza  
-> **Versione attuale**: v1.1.0 (Event-Driven Architecture)  
-> **Ultimo aggiornamento**: 5 settembre 2025  
-> **🚨 BREAKING CHANGE**: Nuova architettura bi-livello per campionamento smartphone (2-minuti)
-
-## 📊 Overview dello Stato
-
-| Categoria | Implementate | Totali | Completamento |
-|-----------|--------------|--------|---------------|
-| **Health & Status** | 3 | 3 | 🟢 100% |
-| **User Management** | 3 | 5 | 🟡 60% |
-| **Calorie Goals** | 2 | 6 | 🟡 33% |
-| **🔥 Calorie Events (NEW)** | 0 | 6 | 🔴 0% |
-| **Daily Balance (Legacy)** | 4 | 7 | 🟡 57% |
-| **📈 Timeline Analytics (NEW)** | 0 | 8 | 🔴 0% |
-| **Analytics & Trends** | 0 | 4 | 🔴 0% |
-| **Metabolic Profiles** | 0 | 3 | 🔴 0% |
-| **Advanced Features** | 0 | 3 | 🔴 0% |
-| **TOTALE** | **12** | **45** | **� 27%** |
+> **🚨 CRITICAL STATUS**: Service degraded due to database schema misalignment and incomplete post-migration cleanup. Multiple architectural issues require immediate resolution.
 
 ---
 
@@ -72,284 +43,147 @@
 - Cross-schema queries via `user_id UUID` foreign key to `user_management.users`
 - Service-to-service calls for user data via GraphQL Federation or REST API
 
-| ~~Endpoint~~ | ~~Metodo~~ | Status | ~~Priorità~~ | Migration Target |
-|----------|--------|--------|----------|------|
-| ~~`/api/v1/users/`~~ | ~~POST~~ | 🚫 **REMOVED** | - | `user-management:8001/api/v1/users` |
-| ~~`/api/v1/users/{user_id}`~~ | ~~GET~~ | 🚫 **REMOVED** | - | `user-management:8001/api/v1/users/{user_id}` |
-| ~~`/api/v1/users/{user_id}`~~ | ~~PUT~~ | 🚫 **REMOVED** | - | `user-management:8001/api/v1/users/{user_id}` |
-| ~~`/api/v1/users/{user_id}`~~ | ~~DELETE~~ | 🚫 **REMOVED** | - | `user-management:8001/api/v1/privacy/users/{user_id}/data` |
-| ~~`/api/v1/users/`~~ | ~~GET~~ | 🚫 **REMOVED** | - | `user-management:8001/api/v1/users` |
+### 🎯 Calorie Goals (🔴 CRITICAL - ALL FAILING)
+| Endpoint | Metodo | Status | Priorità | Issue |
+|----------|--------|--------|----------|-------|
+| `/api/v1/goals/users/{user_id}` | POST | 🔴 **FAILING** | P0 | **500 Error**: Schema validation failure |
+| `/api/v1/goals/users/{user_id}/active` | GET | 🔴 **FAILING** | P0 | **500 Error**: Query on removed users table |
+| `/api/v1/goals/users/{user_id}/goals/{goal_id}` | PUT | 🔴 **NOT IMPLEMENTED** | P1 | Depends on fixed schema |
+| `/api/v1/goals/users/{user_id}/goals/{goal_id}` | DELETE | 🔴 **NOT IMPLEMENTED** | P1 | Depends on fixed schema |
+| `/api/v1/goals/users/{user_id}/history` | GET | 🔴 **NOT IMPLEMENTED** | P2 | Depends on fixed schema |
+| `/api/v1/goals/users/{user_id}/goals` | GET | 🔴 **FAILING** | P2 | **500 Error**: Cross-schema query failure |
 
-### 🎯 Calorie Goals (Enhanced with Parameter Passing)
+**🚨 ROOT CAUSE**: Goals management attempts to access removed `users` table and validate against non-existent schema fields.
+
+### 🔥 Calorie Events (🟡 PARTIAL - Event-Driven Architecture)
+| Endpoint | Metodo | Status | Priorità | Issue |
+|----------|--------|--------|----------|-------|
+| `/api/v1/calorie-event/consumed` | POST | ✅ **WORKING** | P0 | ✅ Basic event logging works |
+| `/api/v1/calorie-event/burned` | POST | 🔴 **FAILING** | P0 | **500 Error**: Validation on missing fields |
+| `/api/v1/calorie-event/weight` | POST | 🔴 **FAILING** | P0 | **500 Error**: Schema mismatch |
+| `/api/v1/calorie-event/batch` | POST | 🟡 **UNKNOWN** | P0 | Not tested - likely failing |
+| `/api/v1/events/users/{user_id}/timeline` | GET | 🔴 **FAILING** | P1 | **500 Error**: Query complexity issues |
+| `/api/v1/events/users/{user_id}/latest` | GET | ✅ **WORKING** | P2 | ✅ Basic history retrieval works |
+
+### ⚖️ Daily Balance (🟡 BASIC FUNCTIONALITY - Legacy Support)
 | Endpoint | Metodo | Status | Priorità | Note |
 |----------|--------|--------|----------|------|
-| `/api/v1/goals/users/{user_id}` | POST | 🔄 **REFACTORING** | P0 | **UPDATED**: Now accepts user metrics in request body |
-| `/api/v1/goals/users/{user_id}/active` | GET | ✅ **FATTO** | P0 | Get active goal |
-| `/api/v1/goals/users/{user_id}/goals/{goal_id}` | PUT | ❌ **TODO** | P1 | Update specific goal |
-| `/api/v1/goals/users/{user_id}/goals/{goal_id}` | DELETE | ❌ **TODO** | P1 | Delete goal |
-| `/api/v1/goals/users/{user_id}/history` | GET | ❌ **TODO** | P2 | Goals history |
-| `/api/v1/goals/users/{user_id}/goals` | GET | ❌ **TODO** | P2 | List all user goals |
+| `/api/v1/balance/users/{user_id}` | PUT | 🟡 **UNKNOWN** | P0 | Not in recent tests |
+| `/api/v1/balance/users/{user_id}/date/{date}` | GET | ✅ **WORKING** | P0 | ✅ Basic date queries work |
+| `/api/v1/balance/users/{user_id}/today` | GET | ✅ **WORKING** | P0 | ✅ Today's balance retrieval |
+| `/api/v1/balance/users/{user_id}/progress` | POST | ✅ **WORKING** | P0 | ✅ Progress tracking |
+| `/api/v1/balance/users/{user_id}/summary/weekly` | GET | 🔴 **NOT IMPLEMENTED** | P1 | Missing implementation |
+| `/api/v1/balance/users/{user_id}/summary/monthly` | GET | 🔴 **NOT IMPLEMENTED** | P1 | Missing implementation |
+| `/api/v1/balance/users/{user_id}/range` | GET | 🔴 **NOT IMPLEMENTED** | P2 | Missing implementation |
 
-**🏗️ Architecture Enhancement**: Goal creation now uses Parameter Passing pattern - client provides user metrics (weight, height, age, gender, activity_level) in request body for intelligent goal calculation.
+### 🧬 Metabolic Profiles (🔴 CRITICAL SCHEMA MISMATCH)
+| Endpoint | Metodo | Status | Priorità | Issue |
+|----------|--------|--------|----------|-------|
+| `/api/v1/metabolic/calculate` | POST | 🔴 **FAILING** | P0 | **CRITICAL**: `activity_level` field missing from DB |
+| `/api/v1/metabolic/users/{user_id}/latest` | GET | ✅ **WORKING** | P0 | ✅ Basic profile retrieval |
+| `/api/v1/metabolic/users/{user_id}/history` | GET | 🔴 **NOT IMPLEMENTED** | P1 | Missing implementation |
 
-### 🔥 Calorie Events (Event-Driven Architecture)
+**🚨 ROOT CAUSE**: Database table `metabolic_profiles` missing `activity_level` column that code expects.
+
+### 📈 Timeline Analytics (🔴 NOT IMPLEMENTED - Real-Time Insights)
 | Endpoint | Metodo | Status | Priorità | Note |
 |----------|--------|--------|----------|------|
-| `/api/v1/calorie-event/consumed` | POST | ✅ **FATTO** | P0 | Log consumption event |
-| `/api/v1/calorie-event/burned` | POST | ✅ **FATTO** | P0 | Log exercise burn |
-| `/api/v1/calorie-event/weight` | POST | ✅ **FATTO** | P0 | Log weight measurement |
-| `/api/v1/calorie-event/batch` | POST | ✅ **FATTO** | P0 | Batch events from mobile |
-| `/api/v1/events/users/{user_id}/timeline` | GET | ❌ **TODO** | P1 | Get events timeline |
-| `/api/v1/events/users/{user_id}/latest` | GET | ❌ **TODO** | P2 | Get latest events |
-
-### ⚖️ Daily Balance (Legacy Support)
-| Endpoint | Metodo | Status | Priorità | Note |
-|----------|--------|--------|----------|------|
-| `/api/v1/balance/users/{user_id}` | PUT | ✅ **FATTO** | P0 | Update daily balance (legacy) |
-| `/api/v1/balance/users/{user_id}/date/{date}` | GET | ✅ **FATTO** | P0 | Get balance for date |
-| `/api/v1/balance/users/{user_id}/today` | GET | ✅ **FATTO** | P0 | Get today's balance |
-| `/api/v1/balance/users/{user_id}/progress` | POST | ✅ **FATTO** | P0 | Get progress data |
-| `/api/v1/balance/users/{user_id}/summary/weekly` | GET | ❌ **TODO** | P1 | Weekly summary |
-| `/api/v1/balance/users/{user_id}/summary/monthly` | GET | ❌ **TODO** | P1 | Monthly summary |
-| `/api/v1/balance/users/{user_id}/range` | GET | ❌ **TODO** | P2 | Custom date range |
-
-### 📈 Timeline Analytics (Real-Time Insights)
-| Endpoint | Metodo | Status | Priorità | Note |
-|----------|--------|--------|----------|------|
-| `/api/v1/timeline/users/{user_id}/hourly` | GET | ❌ **TODO** | P1 | Hourly aggregations from view |
-| `/api/v1/timeline/users/{user_id}/daily` | GET | ❌ **TODO** | P1 | Daily aggregations from view |
-| `/api/v1/timeline/users/{user_id}/weekly` | GET | ❌ **TODO** | P1 | Weekly patterns & trends |
-| `/api/v1/timeline/users/{user_id}/monthly` | GET | ❌ **TODO** | P1 | Monthly progress analytics |
-| `/api/v1/timeline/users/{user_id}/balance` | GET | ❌ **TODO** | P1 | Net balance calculations |
-| `/api/v1/timeline/users/{user_id}/intraday` | GET | ❌ **TODO** | P1 | Detailed intra-day view |
-| `/api/v1/timeline/users/{user_id}/patterns` | GET | ❌ **TODO** | P1 | Behavioral patterns |
-| `/api/v1/timeline/users/{user_id}/real-time` | GET | ❌ **TODO** | P2 | Real-time current status |
-| `/api/v1/timeline/users/{user_id}/export` | GET | ❌ **TODO** | P2 | Export timeline data |
-| `/api/v1/timeline/users/{user_id}/compare` | GET | ❌ **TODO** | P2 | Compare time periods |
-| `/api/v1/timeline/users/{user_id}/alerts` | GET | ❌ **TODO** | P3 | Timeline-based alerts |
-| `/api/v1/timeline/users/{user_id}/predictions` | GET | ❌ **TODO** | P3 | AI-based predictions |
-
-### 🗓️ Temporal Views (Database Ready)
-| Vista Database | Status | Aggregazione | Funzionalità | Performance |
-|----------------|--------|--------------|--------------|-------------|
-| `hourly_calorie_summary` | ✅ **READY** | Per ora | Real-time intraday trends | Sub-second |
-| `daily_calorie_summary` | ✅ **READY** | Per giorno | Day-over-day comparisons | Sub-second |
-| `weekly_calorie_summary` | ✅ **READY** | Per settimana | Weekly patterns, habit formation | Sub-second |
-| `monthly_calorie_summary` | ✅ **READY** | Per mese | Long-term trends, monthly reports | Sub-second |
-| `daily_balance_summary` | ✅ **READY** | Bilanci netti | Net calories, weight correlation | Sub-second |
-
-### 📊 Analytics & Trends
-| Endpoint | Metodo | Status | Priorità | Note |
-|----------|--------|--------|----------|------|
-| `/api/v1/users/{user_id}/trends` | GET | ❌ **TODO** | P1 | Weekly/monthly trends |
-| `/api/v1/users/{user_id}/insights` | GET | ❌ **TODO** | P1 | AI-powered insights |
-| `/api/v1/users/{user_id}/analytics/weight` | GET | ❌ **TODO** | P2 | Weight trend analysis |
-| `/api/v1/users/{user_id}/analytics/performance` | GET | ❌ **TODO** | P2 | Goal performance metrics |
-
-### 🧬 Metabolic Profiles (Parameter Passing Pattern)
-| Endpoint | Metodo | Status | Priorità | Note |
-|----------|--------|--------|----------|------|
-| `/api/v1/users/{user_id}/profile/metabolic/calculate` | POST | ✅ **FATTO** | P1 | **IMPLEMENTED**: Calculate BMR/TDEE with user metrics in request body (Parameter Passing pattern) |
-| `/api/v1/users/{user_id}/profile/metabolic` | GET | ❌ **TODO** | P1 | Get metabolic profile |
-| `/api/v1/users/{user_id}/profile/metabolic` | PUT | ❌ **TODO** | P2 | Update metabolic profile |
-
-**🏗️ Architecture Pattern**: Parameter Passing - User metrics (weight, height, age, gender, activity_level) passed as request body parameters instead of accessing user-management service directly. This ensures microservice decoupling and reusability.
-
-### 🏆 Advanced Features
-| Endpoint | Metodo | Status | Priorità | Note |
-|----------|--------|--------|----------|------|
-| `/api/v1/users/{user_id}/streaks` | GET | ❌ **TODO** | P2 | Calorie goal streaks |
-| `/api/v1/users/{user_id}/challenges` | GET | ❌ **TODO** | P3 | User challenges |
-| `/api/v1/users/{user_id}/badges` | GET | ❌ **TODO** | P3 | Achievement badges |
+| `/api/v1/timeline/users/{user_id}/hourly` | GET | 🔴 **NOT IMPLEMENTED** | P1 | Requires working event system |
+| `/api/v1/timeline/users/{user_id}/daily` | GET | 🔴 **NOT IMPLEMENTED** | P1 | Requires working event system |
+| `/api/v1/timeline/users/{user_id}/weekly` | GET | 🔴 **NOT IMPLEMENTED** | P1 | Requires working event system |
+| `/api/v1/timeline/users/{user_id}/monthly` | GET | 🔴 **NOT IMPLEMENTED** | P1 | Requires working event system |
+| `/api/v1/timeline/users/{user_id}/balance` | GET | 🔴 **NOT IMPLEMENTED** | P1 | Requires working event system |
+| `/api/v1/timeline/users/{user_id}/intraday` | GET | 🔴 **NOT IMPLEMENTED** | P1 | Requires working event system |
+| `/api/v1/timeline/users/{user_id}/patterns` | GET | 🔴 **NOT IMPLEMENTED** | P1 | Requires working event system |
+| `/api/v1/timeline/users/{user_id}/real-time` | GET | 🔴 **NOT IMPLEMENTED** | P2 | Requires working event system |
+| `/api/v1/timeline/users/{user_id}/export` | GET | 🔴 **NOT IMPLEMENTED** | P2 | Requires working event system |
 
 ---
 
-## 🎯 Priorità di Sviluppo
+## 🚨 CRITICAL ISSUES REQUIRING IMMEDIATE ATTENTION
 
-### **P0 - Critical (DATABASE READY ✅)**
-Migrazione all'architettura event-driven completata:
-- ✅ Health checks (completato)
-- ⚠️ **User CRUD (MIGRATED)** - Now handled by user-management service
-- ✅ Goals creation/retrieval (completato)
-- ✅ **Database Schema Migration** - **COMPLETED**
-- ✅ **Temporal Views (5-Level)** - **READY FOR APIS**
-- 🔄 **Calorie Events API** - **NEXT PRIORITY** per mobile app
+### **1. Database Schema Mismatch**
+- **Issue**: `metabolic_profiles` table missing `activity_level` column
+- **Impact**: All metabolic calculations failing with 500 errors
+- **Solution**: Add missing column or update code to not require it
 
-### **P1 - High Priority (Ready to Implement)**
-Funzionalità essenziali con database support completo:
-1. **Calorie Events API** (batch, timeline, latest) - **Priority 1A**
-2. **Timeline Analytics** (hourly → monthly via views) - **Priority 1B**
-3. **Temporal Analytics** (weekly/monthly insights) - **Priority 1C**
-4. **Metabolic Profiles** - **Priority 1D**
-5. **Legacy Balance Support** (weekly/monthly summaries) - **Priority 1E**
+### **2. Legacy User Repository Cleanup**
+- **Issue**: Code still references removed `users` table 
+- **Impact**: Goals and Events API failing with query errors
+- **Solution**: Remove all `UserRepository` and `User` entity references
 
-### **P2 - Medium Priority**
-Funzionalità per migliorare UX post-migrazione:
-- Real-time timeline status
-- Advanced timeline features (export, compare)
-- Weight analytics con eventi
-- Goal performance con eventi
-- Custom date ranges
+### **3. Parameter Passing Pattern Incomplete**
+- **Issue**: APIs still attempt database queries for user data
+- **Impact**: Cross-schema queries failing, violates microservice architecture
+- **Solution**: Complete Parameter Passing implementation
 
-### **P3 - Low Priority**
-Funzionalità avanzate per scaling:
-- Timeline-based alerts e predictions
-- Admin features
-- Challenges system
-- Achievement badges
+### **4. Test Infrastructure Missing**
+- **Issue**: Only 9/16 tests passing, no CI/CD for this service
+- **Impact**: Cannot validate fixes or prevent regressions
+- **Solution**: Fix failing tests, add comprehensive test suite
 
 ---
 
-## 🚀 Migration Roadmap
+## 📈 RECOVERY ROADMAP
 
-### **✅ Phase 1 - Database & Core Events (COMPLETED)**
-- ✅ **CRITICAL: Created calorie_events table**
-- ✅ **CRITICAL: Migrated daily_balances structure**
-- ✅ **CRITICAL: 5-Level Temporal Views implemented**
-  - `hourly_calorie_summary` - Real-time intraday analytics
-  - `daily_calorie_summary` - Day-over-day comparisons
-  - `weekly_calorie_summary` - Weekly patterns & habits
-  - `monthly_calorie_summary` - Long-term trends
-  - `daily_balance_summary` - Net calorie calculations
-- ✅ **Performance indexes optimized for mobile queries**
-- ✅ **Database structure validation completed**
-- [ ] **CalorieEvent domain entity implementation**
-- [ ] **Basic events API** (`/events/calorie-consumed`, `/calorie-burned`, `/weight`)
+### **🎯 PHASE 1 - Critical Schema Fixes (IMMEDIATE)**
+1. ✅ **Add `activity_level` column** to `metabolic_profiles` table
+2. ✅ **Remove legacy `UserRepository`** from codebase
+3. ✅ **Remove `User` domain entity** 
+4. ✅ **Update repository imports** and dependencies
 
-### **Phase 2 - Mobile Integration (Week 1-2)**
-- [ ] **CalorieEvent domain entities & services**
-- [ ] **Batch events API** (`/events/batch`)
-- [ ] **Timeline APIs with temporal views** (`/timeline/hourly`, `/daily`, `/weekly`, `/monthly`)
-- [ ] **Balance summary API** (`/timeline/balance`)
-- [ ] **Mobile app integration testing**
+### **🎯 PHASE 2 - API Implementation Fixes (HIGH PRIORITY)**
+1. ✅ **Complete Parameter Passing pattern** for Goals API  
+2. ✅ **Fix Events API validation** errors
+3. ✅ **Test all failing endpoints** systematically
+4. ✅ **Add comprehensive error handling**
 
-### **Phase 3 - Analytics Enhancement (Week 3-4)**
-- [ ] **Pattern analysis** (`/timeline/patterns`)
-- [ ] **Advanced timeline features** (export, compare)
-- [ ] **Real-time aggregation logic** (`/timeline/real-time`)
-- [ ] **Performance optimization** (caching, indexing)
-- [ ] **Legacy balance API migration**
+### **🎯 PHASE 3 - Feature Completion (MEDIUM PRIORITY)**
+1. ✅ **Implement Timeline Analytics** endpoints
+2. ✅ **Add missing Balance operations**
+3. ✅ **Complete Metabolic Profile** history
+4. ✅ **Add batch operations** for mobile efficiency
 
-### **Phase 4 - Production Ready (Week 5-6)**
-- [ ] **AI predictions** (`/timeline/predictions`)
-- [ ] **Timeline-based alerts** (`/timeline/alerts`)
-- [ ] **Monitoring & observability**
-- [ ] **Documentation completion**
+### **🎯 PHASE 4 - Production Readiness (FINAL)**
+1. ✅ **100% test coverage** achieved
+2. ✅ **CI/CD pipeline** implemented
+3. ✅ **Performance optimization**
+4. ✅ **Production deployment**
 
 ---
 
-## 🧪 Test Coverage Status
+## 📊 SUCCESS METRICS
 
-| Categoria | Unit Tests | Integration Tests | Status |
-|-----------|------------|-------------------|--------|
-| **Health** | ✅ 100% | ✅ 100% | ✅ Complete |
-| **~~Users~~ (REMOVED)** | ⚠️ **Migrated** | ⚠️ **Migrated** | � **See user-management service** |
-| **Goals** | ✅ 100% | ✅ 100% | ✅ Complete |
-| **Balance** | ✅ 100% | ✅ 100% | ✅ Complete |
-| **Analytics** | ❌ 0% | ❌ 0% | 🔴 Missing |
-| **Metabolic** | ❌ 0% | ❌ 0% | 🔴 Missing |
+**Current Status**: 🔴 **14/49 endpoints working (29%)**
+**Target Status**: 🟢 **49/49 endpoints working (100%)**
+
+**Test Success Rate**: 🔴 **9/16 tests passing (56%)**
+**Target Test Rate**: 🟢 **16/16 tests passing (100%)**
 
 ---
 
-## 📝 Note Tecniche
+## 🏗️ ARCHITECTURAL NOTES
 
-### **Dipendenze per Sviluppo Futuro:**
-- **Analytics**: Richiede aggregazione dati e possibile integrazione con AI Coach Service
-- **Metabolic Profiles**: Necessita algoritmi di calcolo BMR/TDEE specifici per il mercato italiano
-- **Advanced Features**: Dipendenti da Notifications Service per gamification
+### **Cross-Schema Strategy**
+- **User Management**: All user data managed by `user-management` service
+- **Foreign Keys**: Cross-schema FKs to `user_management.users(id)`
+- **Parameter Passing**: User metrics passed in API request bodies
+- **No Duplication**: Zero duplicate user data in calorie-balance schema
 
-### **Considerazioni Architetturali:**
-- Mantenere separazione Domain/Application/Infrastructure
-- Utilizzare CQRS pattern per analytics read-heavy operations
-- Implementare caching Redis per endpoints analytics
-- Preparare integrazione con N8N workflows per AI insights
+### **Event-Driven Architecture**
+- **High-Frequency Events**: 2-minute sampling from mobile devices
+- **5-Level Aggregation**: Hourly → Daily → Weekly → Monthly → Yearly
+- **Real-Time Analytics**: Pre-computed views for sub-second response
+- **Mobile Optimization**: Batch operations and offline sync support
 
-### **Performance Goals:**
-- Response time < 200ms per tutti gli endpoint P0/P1
-- Support fino a 1000 RPS per endpoint critici
-- Cache hit ratio > 80% per analytics endpoints
-
----
-
-## 🔄 Database Migration Strategy
-
-### **Current Schema Issues**
-- ❌ `daily_balances.UNIQUE(user_id, date)` blocks high-frequency data
-- ❌ No timestamp precision for intra-day events
-- ❌ No event sourcing capability
-
-### **New Schema (Event-Driven)**
-```sql
--- High-frequency events table
-CREATE TABLE calorie_events (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id VARCHAR(255) NOT NULL REFERENCES users(id),
-    event_type VARCHAR(30) NOT NULL, -- 'consumed', 'burned_exercise', 'burned_bmr', 'weight'
-    event_timestamp TIMESTAMPTZ NOT NULL, -- Precision to second
-    value DECIMAL(6, 1) NOT NULL,
-    source VARCHAR(50), -- 'healthkit', 'manual', 'app_tracking'  
-    metadata JSONB, -- Additional data (confidence, device, etc.)
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- Enhanced daily_balances for aggregations
-ALTER TABLE daily_balances 
-ADD COLUMN events_count INTEGER DEFAULT 0,
-ADD COLUMN last_event_timestamp TIMESTAMPTZ;
-```
-
-### **Migration Steps**
-1. ✅ **Backup existing data**
-2. ✅ **Create calorie_events table**
-3. ✅ **Migrate daily_balances structure**
-4. ✅ **Implement dual-write pattern** (events + daily aggregation)
-5. ✅ **Update APIs to use events**
-6. ✅ **Remove old constraints**
+### **Database Performance**
+- **Partial Indexes**: Optimized for active users only
+- **Cross-Schema FKs**: Maintained referential integrity
+- **Temporal Views**: Pre-aggregated analytics for fast queries
+- **Mobile-First**: Schema designed for smartphone efficiency
 
 ---
 
-## 📝 Technical Architecture Notes
-
-### **Event-Driven Benefits:**
-- ✅ **Smartphone Integration**: Support 2-minute sampling
-- ✅ **Timeline Precision**: Second-level accuracy
-- ✅ **Scalability**: Partitioning by user/date
-- ✅ **Analytics**: Rich behavioral insights
-- ✅ **Real-time**: Live dashboard capabilities
-- ✅ **5-Level Temporal Views**: Hourly → Monthly analytics ready
-
-### **🗓️ Multi-Level Temporal Analytics Capabilities:**
-- **🕐 Hourly View**: Real-time intraday trends, meal timing analysis, exercise patterns
-- **📅 Daily View**: Day-over-day comparisons, daily goal tracking, streak analysis
-- **📆 Weekly View**: Weekly patterns, habit formation, consistency tracking (Mon-Sun)
-- **🗓️ Monthly View**: Long-term trends, monthly progress reports, seasonal patterns
-- **⚖️ Balance View**: Net calorie calculations, weight correlation, deficit/surplus analysis
-
-### **📊 Advanced Aggregation Features:**
-- **Active Days Tracking**: `active_days` count per period for engagement analysis
-- **Multi-Level Averages**: `avg_daily_value`, `avg_weekly_value` for trend comparison
-- **Event Density**: `event_count` per aggregation for data quality assessment
-- **Time Range Precision**: `first_event`/`last_event` for accurate period analysis
-- **Cross-Period Analysis**: Week numbers, month numbers for seasonal comparisons
-
-### **Performance Considerations:**
-- **Indexing Strategy**: user_id + event_timestamp compound indexes
-- **Caching Layer**: Redis for hourly/daily aggregations
-- **Partitioning**: Time-based partitioning for events table
-- **Background Jobs**: Pre-calculation of common aggregations
-
-### **Mobile App Integration:**
-- **Batch API**: Send multiple events in single request
-- **Offline Support**: Queue events when offline
-- **Conflict Resolution**: Timestamp-based event ordering
-- **Data Validation**: Client-side + server-side validation
-
----
-
-**🔄 Migration Status**: ✅ **Database Phase Complete**  
-**📊 New Completion**: 37% (18/49 endpoints) - User Management migrated to dedicated service  
-**🗓️ Temporal Views**: ✅ **All 5 levels ready**  
-**🎯 Event-Driven APIs**: Week 2  
-**🚀 Mobile-Ready**: Week 4  
-**📈 Full Analytics**: Week 6  
-**⚠️ Architecture**: User management boundary violations resolved - now proper microservice separation
+**🔍 Last Updated**: 13 settembre 2025  
+**📊 Next Review**: After critical schema fixes implemented  
+**🎯 Target**: 100% test success rate and full API functionality

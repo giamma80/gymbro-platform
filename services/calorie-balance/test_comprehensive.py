@@ -1,53 +1,438 @@
 #!/usr/bin/env python3
 """
-Calorie Balance Service - Comprehensive Test Suite
-=================================================
-Service: calorie-balance  
-Schema: calorie_balance
-Date: 12 settembre 2025
-
-This script runs a comprehensive test suite for the calorie balance service,
-including database connectivity, API endpoints, temporal analytics, and event processing.
-
-Usage:
-    python test_comprehensive.py [local|prod]
-    
-    local: Test against localhost:8001 (default)
-    prod:  Test against production URL when deployed
+Comprehensive Test Suite - Calorie Balance Service
+Tests all API endpoints with detailed diagnostics and proper authentication
 """
 
-import asyncio
-import sys
-import time
-from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
-from uuid import UUID, uuid4
-
 import requests
-from dotenv import load_dotenv
-
-load_dotenv()
-
-# Environment Configuration
-ENVIRONMENTS = {
-    "local": "http://localhost:8002",
-    "prod": "https://nutrifit-calorie-balance.onrender.com"  # Update when deployed
-}
-
-# Determine environment from command line argument
-if len(sys.argv) > 1:
-    env_profile = sys.argv[1].lower()
-    if env_profile not in ENVIRONMENTS:
-        print(f"❌ Invalid profile: {env_profile}")
-        print(f"Available profiles: {', '.join(ENVIRONMENTS.keys())}")
-        sys.exit(1)
-else:
-    env_profile = "local"
+import sys
+from datetime import datetime, date
 
 # Test Configuration
-BASE_URL = ENVIRONMENTS[env_profile]
-TEST_USER_ID = str(uuid4())  # Generate test user ID
-TEST_EMAIL = "test-calorie@nutrifit.com"
+BASE_URL = "http://localhost:8002"
+API_BASE = f"{BASE_URL}/api/v1"
+
+# Use existing test user ID from database
+TEST_USER_ID = "00000000-0000-0000-0000-000000000001"
+
+
+class CalorieBalanceAPITester:
+    def __init__(self):
+        self.session = requests.Session()
+        # Add authentication header for all requests
+        self.session.headers.update({
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': f'Bearer {TEST_USER_ID}'
+        })
+        
+        self.test_results = []
+        
+    def log_test(self, test_name: str, success: bool, details: str):
+        """Log test result with detailed diagnostics."""
+        status = "✅" if success else "❌"
+        print(f"{status} {test_name}")
+        if not success or details:
+            print(f"  Details: {details}")
+        
+        self.test_results.append({
+            'test': test_name,
+            'success': success,
+            'details': details
+        })
+
+    # ========== Health Check Tests ==========
+    def test_health_endpoints(self):
+        """Test basic health endpoints."""
+        endpoints = [
+            ("/health", "Basic health check"),
+            ("/health/ready", "Readiness check with DB"),
+            ("/health/live", "Liveness check")
+        ]
+        
+        for endpoint, description in endpoints:
+            try:
+                response = self.session.get(f"{BASE_URL}{endpoint}")
+                success = response.status_code == 200
+                details = (f"Status: {response.status_code}, "
+                          f"Response: {response.text[:80]}...")
+                self.log_test(f"Health: {description}", success, details)
+            except Exception as e:
+                self.log_test(f"Health: {description}", False, str(e))
+
+    # ========== Metabolic Profile Tests (Parameter Passing) ==========
+    def test_metabolic_profile_flow(self):
+        """Test metabolic profile calculation - Parameter Passing pattern."""
+        
+        # 1. Calculate metabolic profile with user data from request
+        profile_request = {
+            "weight_kg": 75.0,
+            "height_cm": 175,
+            "age": 30,
+            "gender": "male",
+            "activity_level": "moderate"
+        }
+        
+        try:
+            # URL corretto senza doppio prefix
+            url = f"{API_BASE}/users/{TEST_USER_ID}/profile/metabolic/calculate"
+            response = self.session.post(url, json=profile_request)
+            success = response.status_code == 201
+            
+            if success:
+                profile_data = response.json()
+                bmr = profile_data.get('bmr')
+                tdee = profile_data.get('tdee')
+                details = f"BMR: {bmr}, TDEE: {tdee}"
+            else:
+                details = (f"Status: {response.status_code}, "
+                          f"Response: {response.text[:200]}...")
+                
+            self.log_test(
+                "Metabolic: Calculate profile (Parameter Passing)",
+                success, details
+            )
+        except Exception as e:
+            self.log_test("Metabolic: Calculate profile", False, str(e))
+        
+        # 2. Get latest metabolic profile
+        try:
+            # URL corretto senza doppio prefix
+            url = f"{API_BASE}/users/{TEST_USER_ID}/profile/metabolic"
+            response = self.session.get(url)
+            success = response.status_code in [200, 404]
+            profile_exists = response.status_code == 200
+            details = f"Profile exists: {profile_exists}"
+            if not success:
+                details += f", Response: {response.text[:200]}..."
+                
+            self.log_test(
+                "Metabolic: Get latest profile",
+                success, details
+            )
+        except Exception as e:
+            self.log_test("Metabolic: Get latest profile", False, str(e))
+
+    # ========== Goals Management Tests ==========
+    def test_goals_management_flow(self):
+        """Test complete goals management workflow."""
+        
+        # 1. Create a calorie goal
+        goal_request = {
+            "goal_type": "weight_loss",
+            "target_calories_per_day": 1800,
+            "start_date": date.today().isoformat(),
+            "target_weight_kg": 70.0,
+            "weekly_weight_loss_kg": 0.5,
+            "description": "Test weight loss goal"
+        }
+        
+        goal_id = None
+        try:
+            response = self.session.post(f"{API_BASE}/goals/", 
+                                       json=goal_request)
+            success = response.status_code == 201
+            if success:
+                goal_data = response.json()
+                goal_id = goal_data.get('goal_id')
+                details = f"Goal ID: {goal_id}"
+            else:
+                details = (f"Status: {response.status_code}, "
+                          f"Response: {response.text[:200]}...")
+                
+            self.log_test("Goals: Create calorie goal", success, details)
+        except Exception as e:
+            self.log_test("Goals: Create calorie goal", False, str(e))
+        
+        # 2. Get all goals
+        try:
+            response = self.session.get(f"{API_BASE}/goals/")
+            success = response.status_code == 200
+            if success:
+                goals_count = len(response.json())
+                details = f"Goals count: {goals_count}"
+            else:
+                details = (f"Status: {response.status_code}, "
+                          f"Response: {response.text[:200]}...")
+                
+            self.log_test("Goals: Get all goals", success, details)
+        except Exception as e:
+            self.log_test("Goals: Get all goals", False, str(e))
+        
+        # 3. Get current active goal
+        try:
+            response = self.session.get(f"{API_BASE}/goals/current")
+            success = response.status_code in [200, 404]
+            has_active_goal = response.status_code == 200
+            details = f"Has active goal: {has_active_goal}"
+            if not success:
+                details += f", Response: {response.text[:200]}..."
+                
+            self.log_test("Goals: Get current active goal", success, details)
+        except Exception as e:
+            self.log_test("Goals: Get current active goal", False, str(e))
+        
+        # 4. Update goal (if we created one)
+        if goal_id:
+            update_request = {
+                "target_calories_per_day": 1750,
+                "description": "Updated test goal"
+            }
+            
+            try:
+                response = self.session.put(
+                    f"{API_BASE}/goals/{goal_id}",
+                    json=update_request
+                )
+                success = response.status_code == 200
+                details = f"Status: {response.status_code}"
+                if not success:
+                    details += f", Response: {response.text[:200]}..."
+                    
+                self.log_test("Goals: Update goal", success, details)
+            except Exception as e:
+                self.log_test("Goals: Update goal", False, str(e))
+
+    # ========== Events API Tests (Core Priority 1) ==========
+    def test_calorie_events_flow(self):
+        """Test complete calorie events workflow."""
+        
+        # 1. Record calorie consumption
+        consume_payload = {
+            "calories": 450.5,
+            "source": "manual",
+            "timestamp": datetime.now().isoformat(),
+            "metadata": {
+                "meal": "lunch",
+                "food_items": ["pasta", "chicken"]
+            }
+        }
+        
+        try:
+            response = self.session.post(
+                f"{API_BASE}/calorie-event/consumed",
+                json=consume_payload
+            )
+            success = response.status_code == 201
+            if success:
+                event_id = response.json().get('event_id')
+                details = f"Event ID: {event_id}"
+            else:
+                details = (f"Status: {response.status_code}, "
+                          f"Response: {response.text[:200]}...")
+                          
+            self.log_test("Events: Record calorie consumption", 
+                         success, details)
+        except Exception as e:
+            self.log_test("Events: Record calorie consumption", False, str(e))
+        
+        # 2. Record calories burned
+        burn_payload = {
+            "calories": 200.0,
+            "activity_type": "cardio",
+            "duration_minutes": 30,
+            "source": "fitness_tracker",
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        try:
+            response = self.session.post(
+                f"{API_BASE}/calorie-event/burned",
+                json=burn_payload
+            )
+            success = response.status_code == 201
+            details = f"Status: {response.status_code}"
+            if not success:
+                details += f", Response: {response.text[:200]}..."
+                
+            self.log_test("Events: Record calories burned", success, details)
+        except Exception as e:
+            self.log_test("Events: Record calories burned", False, str(e))
+        
+        # 3. Record weight update
+        weight_payload = {
+            "weight_kg": 72.5,
+            "source": "smart_scale",
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        try:
+            response = self.session.post(
+                f"{API_BASE}/calorie-event/weight",
+                json=weight_payload
+            )
+            success = response.status_code == 201
+            details = f"Status: {response.status_code}"
+            if not success:
+                details += f", Response: {response.text[:200]}..."
+                
+            self.log_test("Events: Record weight update", success, details)
+        except Exception as e:
+            self.log_test("Events: Record weight update", False, str(e))
+        
+        # 4. Get events timeline
+        try:
+            today = date.today().isoformat()
+            response = self.session.get(
+                f"{API_BASE}/calorie-event/timeline",
+                params={
+                    "user_id": TEST_USER_ID,
+                    "start_date": today,
+                    "end_date": today
+                }
+            )
+            success = response.status_code == 200
+            if success:
+                events_count = len(response.json().get('events', []))
+                details = f"Events found: {events_count}"
+            else:
+                details = (f"Status: {response.status_code}, "
+                          f"Response: {response.text[:200]}...")
+                          
+            self.log_test("Events: Get timeline", success, details)
+        except Exception as e:
+            self.log_test("Events: Get timeline", False, str(e))
+        
+        # 5. Get events history
+        try:
+            today = date.today().isoformat()
+            response = self.session.get(
+                f"{API_BASE}/calorie-event/history",
+                params={
+                    "user_id": TEST_USER_ID,
+                    "start_date": today,
+                    "end_date": today,
+                    "limit": 10
+                }
+            )
+            success = response.status_code == 200
+            details = f"Status: {response.status_code}"
+            if not success:
+                details += f", Response: {response.text[:200]}..."
+                
+            self.log_test("Events: Get history", success, details)
+        except Exception as e:
+            self.log_test("Events: Get history", False, str(e))
+
+    # ========== Balance & Analytics Tests ==========
+    def test_balance_analytics_flow(self):
+        """Test balance tracking and analytics endpoints."""
+        
+        # 1. Get today's balance
+        try:
+            response = self.session.get(f"{API_BASE}/balance/today")
+            success = response.status_code in [200, 404]
+            has_data = response.status_code == 200
+            
+            if has_data:
+                balance_data = response.json()
+                net_calories = balance_data.get('net_calories', 0)
+                details = f"Net calories: {net_calories}"
+            else:
+                details = "No data for today"
+                if response.status_code not in [200, 404]:
+                    details += f", Response: {response.text[:200]}..."
+                
+            self.log_test("Balance: Get today's balance", success, details)
+        except Exception as e:
+            self.log_test("Balance: Get today's balance", False, str(e))
+        
+        # 2. Get daily balance for specific date
+        try:
+            today = date.today().isoformat()
+            response = self.session.get(f"{API_BASE}/balance/daily/{today}")
+            success = response.status_code in [200, 404]
+            details = f"Status: {response.status_code}"
+            if not success:
+                details += f", Response: {response.text[:200]}..."
+                
+            self.log_test("Balance: Get daily balance for date", 
+                         success, details)
+        except Exception as e:
+            self.log_test("Balance: Get daily balance for date", False, str(e))
+        
+        # 3. Get progress tracking
+        try:
+            response = self.session.get(
+                f"{API_BASE}/balance/progress",
+                params={"days": 7}
+            )
+            success = response.status_code in [200, 404]
+            details = f"Status: {response.status_code}"
+            if not success:
+                details += f", Response: {response.text[:200]}..."
+                
+            self.log_test("Balance: Get progress tracking", success, details)
+        except Exception as e:
+            self.log_test("Balance: Get progress tracking", False, str(e))
+
+    # ========== Main Test Execution ==========
+    def run_all_tests(self):
+        """Execute all test suites in logical order."""
+        print("🚀 Starting Comprehensive Calorie Balance API Tests\n")
+        print(f"Base URL: {BASE_URL}")
+        print(f"Test User ID: {TEST_USER_ID}\n")
+        
+        # 1. Health checks first
+        print("📊 Testing Health Endpoints...")
+        self.test_health_endpoints()
+        
+        # 2. Parameter Passing pattern (create base data)
+        print("\n⚡ Testing Metabolic Profiles (Parameter Passing)...")
+        self.test_metabolic_profile_flow()
+        
+        # 3. Goals management (create goals before tracking)
+        print("\n🎯 Testing Goals Management...")
+        self.test_goals_management_flow()
+        
+        # 4. Core event-driven functionality
+        print("\n🔥 Testing Events API (Priority 1)...")
+        self.test_calorie_events_flow()
+        
+        # 5. Analytics and balance tracking (after events created)
+        print("\n📈 Testing Balance & Analytics...")
+        self.test_balance_analytics_flow()
+        
+        # Results summary
+        print("\n" + "="*60)
+        print("📋 TEST RESULTS SUMMARY")
+        print("="*60)
+        
+        passed = sum(1 for result in self.test_results if result['success'])
+        total = len(self.test_results)
+        
+        print(f"Total Tests: {total}")
+        print(f"Passed: {passed}")
+        print(f"Failed: {total - passed}")
+        print(f"Success Rate: {(passed/total)*100:.1f}%")
+        
+        if total - passed > 0:
+            print("\n❌ Failed Tests:")
+            for result in self.test_results:
+                if not result['success']:
+                    print(f"  - {result['test']}: {result['details']}")
+        else:
+            print("\n✅ All tests passed!")
+        
+        return passed == total
+
+
+if __name__ == "__main__":
+    tester = CalorieBalanceAPITester()
+    
+    try:
+        all_passed = tester.run_all_tests()
+        exit_code = 0 if all_passed else 1
+        
+        print(f"\n🏁 Testing completed with exit code {exit_code}")
+        sys.exit(exit_code)
+        
+    except KeyboardInterrupt:
+        print("\n⏹️ Testing interrupted by user")
+        sys.exit(130)
+    except Exception as e:
+        print(f"\n💥 Unexpected error: {e}")
+        sys.exit(1)
 
 # Test data for calorie tracking
 TEST_DATA = {

@@ -158,51 +158,63 @@
 - ✅ **Cross-Schema Foreign Keys**: Solo UUID references a `user_management.users`
 - ✅ **Microservice Decoupling**: Zero dipendenze dirette a user-management
 - ✅ **Event-Driven Architecture**: Ready per eventi cross-microservice
+- ✅ **End_date Intelligence**: Calcolo automatico timeline basato su obiettivi peso
+- ✅ **JSON Serialization**: Supporto completo datetime, Decimal, UUID, enum types
 
 ### **📂 Files Modificati**
 - `sql/006_fix_schema_task_1_1.sql` → Creato (schema fix)
 - `app/application/commands.py` → User classes e handlers rimossi 
 - `app/infrastructure/database/repositories.py` → SqlUserRepository eliminato
+- `app/application/services.py` → Goals service con end_date calculation ✅
+- `app/api/calorie_schemas.py` → JSON serialization per tutti i tipi ✅
 - `app/domain/entities.py` → Già pulito (verificato)
 - `app/core/dependencies.py` → Già pulito (verificato)
 
-### **🚀 Ready for FASE 2**
-**Prossimo Obiettivo**: Riparare Goals API (3 test) e Events API (6 test) per raggiungere ~80% test success rate.
+### **🚀 Ready for FASE 2 - Events API**
+**Prossimo Obiettivo**: Riparare Events API (6 test) - Task 2.3 e 2.4 per completare FASE 2 e raggiungere 80% test success rate.
 
 ---
 
 ## 🚨 CRITICAL DEPENDENCIES & BLOCKERS
 
 ### **Current Blockers**
-1. **❌ `activity_level` column missing** → Blocks all metabolic calculations
-2. **❌ Legacy User code** → Blocks Goals and Events APIs  
-3. **❌ Cross-schema queries failing** → Blocks data retrieval
-4. **❌ Parameter Passing incomplete** → Violates microservice architecture
+1. ✅ **~~`activity_level` column missing~~** → ✅ RESOLVED (SQL script ready)
+2. ✅ **~~Legacy User code~~** → ✅ RESOLVED (completely removed)  
+3. ✅ **~~Cross-schema queries failing~~** → ✅ RESOLVED (UUID conversion working)
+4. ✅ **~~Parameter Passing incomplete~~** → ✅ RESOLVED (Goals API implemented)
+5. 🟡 **Events API validation errors** → ⏳ NEXT (Task 2.3)
+6. 🟡 **Events timeline cross-schema** → ⏳ TODO (Task 2.4)
 
 ### **Task Dependencies**
-- **1.2, 1.3, 1.4** → Sequential (User cleanup)
-- **2.1, 2.2** → Depends on 1.2-1.4 complete
-- **2.3, 2.4** → Can run parallel with 2.1-2.2
-- **3.x** → Depends on 1.1 (schema fix)
-- **4.x** → Depends on all previous phases
+- ✅ **1.2, 1.3, 1.4** → Sequential (User cleanup) → **COMPLETED**
+- ✅ **2.1, 2.2** → Depends on 1.2-1.4 complete → **COMPLETED**
+- 🟡 **2.3, 2.4** → Can run parallel with 2.1-2.2 → **IN PROGRESS**
+- ⏳ **3.x** → Depends on 1.1 (schema fix) → READY
+- ⏳ **4.x** → Depends on all previous phases → WAITING
 
 ---
 
 ## 🎯 TASK ASSIGNMENT READY
 
 **Priority Order for Execution**:
-1. **Start with 1.1** (Database schema fix)
-2. **Continue with 1.2-1.4** (Legacy cleanup)  
-3. **Parallel execution** of 2.1-2.4 (API fixes)
-4. **Sequential execution** of 3.1-3.3 (Feature alignment)
-5. **Final execution** of 4.1-4.4 (Testing & deployment)
+1. ✅ **Start with 1.1** (Database schema fix) → **COMPLETED**
+2. ✅ **Continue with 1.2-1.4** (Legacy cleanup) → **COMPLETED**  
+3. 🟡 **Parallel execution** of 2.1-2.4 (API fixes) → **2/4 COMPLETED**
+   - ✅ Task 2.1: Goals API Parameter Passing → **DONE**
+   - ✅ Task 2.2: Goals Queries + End_date → **DONE**  
+   - 🟡 Task 2.3: Events API Validation → **NEXT**
+   - ⏳ Task 2.4: Events Timeline → **READY**
+4. ⏳ **Sequential execution** of 3.1-3.3 (Feature alignment) → WAITING
+5. ⏳ **Final execution** of 4.1-4.4 (Testing & deployment) → WAITING
 
-**Ready to begin**: ✅ All tasks defined and scoped  
-**Blockers identified**: ✅ Clear resolution path  
-**Success criteria**: ✅ Measurable outcomes defined
+**Current Status**: ✅ 6/15 tasks completed (40%) | 🟡 2.3 Events API validation NEXT  
+**Blockers remaining**: 🟢 0 critical blockers | 🟡 2 Events API issues  
+**Success criteria**: ✅ Goals API 100% working | ⏳ Events API validation pending
 
 ---
 
 **📅 Created**: 13 settembre 2025  
+**📅 Updated**: 14 settembre 2025 - 00:23  
 **👤 Owner**: Development Team  
-**🎯 Goal**: Calorie Balance Service Recovery to Production Quality
+**🎯 Goal**: Calorie Balance Service Recovery to Production Quality  
+**📊 Progress**: 40% Complete (6/15 tasks) → Next: Events API fixes

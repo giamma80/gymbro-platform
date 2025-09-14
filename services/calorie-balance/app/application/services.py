@@ -48,14 +48,15 @@ class CalorieEventService:
         user_id: str,
         calories: Decimal,
         source: EventSource = EventSource.MANUAL,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
+        timestamp: Optional[datetime] = None
     ) -> CalorieEvent:
         """Record calorie consumption event - optimized for mobile."""
         event = CalorieEvent(
             id=uuid4(),
             user_id=user_id,
             event_type=EventType.CONSUMED,
-            event_timestamp=datetime.utcnow(),
+            event_timestamp=timestamp or datetime.utcnow(),
             value=calories,
             source=source,
             confidence_score=Decimal("1.0"),
@@ -82,14 +83,15 @@ class CalorieEventService:
         user_id: str,
         calories: Decimal,
         source: EventSource = EventSource.FITNESS_TRACKER,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
+        timestamp: Optional[datetime] = None
     ) -> CalorieEvent:
         """Record exercise calorie burn event."""
         event = CalorieEvent(
             id=uuid4(),
             user_id=user_id,
             event_type=EventType.BURNED_EXERCISE,
-            event_timestamp=datetime.utcnow(),
+            event_timestamp=timestamp or datetime.utcnow(),
             value=calories,
             source=source,
             confidence_score=Decimal("0.85"),  # Exercise tracking less precise
@@ -112,14 +114,15 @@ class CalorieEventService:
         user_id: str,
         weight_kg: Decimal,
         source: EventSource = EventSource.SMART_SCALE,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
+        timestamp: Optional[datetime] = None
     ) -> CalorieEvent:
         """Record weight measurement event."""
         event = CalorieEvent(
             id=uuid4(),
             user_id=user_id,
             event_type=EventType.WEIGHT,
-            event_timestamp=datetime.utcnow(),
+            event_timestamp=timestamp or datetime.utcnow(),
             value=weight_kg,
             source=source,
             confidence_score=Decimal("0.95"),  # Weight scales quite accurate

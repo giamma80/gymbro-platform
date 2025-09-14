@@ -142,7 +142,8 @@ async def record_calorie_consumed(
             user_id=user_id,
             calories=request.calories,
             source=request.source,
-            metadata=request.metadata or {}
+            metadata=request.metadata or {},
+            timestamp=request.timestamp
         )
         
         return CalorieEventResponse.from_orm(event)
@@ -177,7 +178,8 @@ async def record_calorie_burned(
             user_id=user_id,
             calories=request.calories,
             source=request.source,
-            metadata=request.metadata or {}
+            metadata=request.metadata or {},
+            timestamp=request.timestamp
         )
         
         return CalorieEventResponse.from_orm(event)
@@ -212,7 +214,8 @@ async def record_weight_measurement(
             user_id=user_id,
             weight_kg=request.weight_kg,
             source=request.source,
-            metadata=request.metadata or {}
+            metadata=request.metadata or {},
+            timestamp=request.timestamp
         )
         
         return CalorieEventResponse.from_orm(event)

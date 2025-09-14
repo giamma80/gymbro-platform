@@ -470,7 +470,30 @@ class CalorieGoalService:
     
     async def get_active_goal(self, user_id: str) -> Optional[CalorieGoal]:
         """Get user's currently active goal."""
-        return await self.goal_repo.get_active_goal(user_id)
+        try:
+            # Convert user_id to UUID for repository compatibility
+            from uuid import UUID
+            try:
+                user_uuid = UUID(user_id)
+            except ValueError:
+                # Generate same deterministic UUID as create_goal
+                import hashlib
+                user_hash = hashlib.md5(user_id.encode()).hexdigest()
+                formatted_hash = (
+                    f"{user_hash[:8]}-{user_hash[8:12]}-"
+                    f"{user_hash[12:16]}-{user_hash[16:20]}-{user_hash[20:32]}"
+                )
+                user_uuid = UUID(formatted_hash)
+            
+            return await self.goal_repo.get_active_goal(user_uuid)
+            
+        except Exception as e:
+            logger.error(f"Failed to get active goal for {user_id}: {e}")
+            raise
+    
+    async def get_current_goal(self, user_id: str) -> Optional[CalorieGoal]:
+        """Get current active goal for user - alias for get_active_goal."""
+        return await self.get_active_goal(user_id)
     
     async def optimize_goal_ai(self, user_id: str) -> Optional[CalorieGoal]:
         """AI-optimize existing goal based on progress data."""

@@ -1,4 +1,16 @@
-# 🚀 Calorie-Balance Service - TASKS & ROADMAP
+### **Current Status** (Aggiornato: 14 settembre 2025 - 12:55)
+- **Test Success Rate**: 📊 **14/16 (87.5%)** → MIGLIORATO! Goals fix ha aumentato +6.3%
+- **API Endpoints Working**: 🚀 **Goals API 99% + Events API 5/6 + Metabolic working ✅** 
+- **Critical Blockers**: 🟡 **1 active** → **Solo Events timeline rimane**
+- **Schema Database**: 🟢 **ALIGNED** → Cross-service UUID patterns standardizzati
+- **Microservice Decoupling**: 🟢 **COMPLETE** → User dependencies completamente rimosse  
+- **UUID Validation**: 🟢 **IMPROVED** → Schema consistency UUID4→UUID, mapping fixes applicati*Current Status** (Aggiornato: 14 settembre 2025 - 12:45)
+- **Test Success Rate**: � **13/16 (81.2%)** → Target: Goals activation fix porterà a ~88%
+- **API Endpoints Working**: �🚀 **Goals API 95% + Events API 5/6 + Metabolic working ✅** 
+- **Critical Blockers**: 🟡 **2 active** → **Goals activation + Events timeline**
+- **Schema Database**: 🟢 **ALIGNED** → Cross-service UUID patterns standardizzati
+- **Microservice Decoupling**: 🟢 **COMPLETE** → User dependencies completamente rimosse  
+- **UUID Validation**: 🟢 **IMPROVED** → Schema consistency UUID4→UUID, mapping fixes applicatirie-Balance Service - TASKS & ROADMAP
 
 ### **Current Status** (Aggiornato: 15 gennaio 2025 - 09:00)
 - **Test Success Rate**: 📊 **12/16 (75%)** → Target: UUID fixes migliorano validazione
@@ -11,10 +23,10 @@
 | **Fase** | **Tasks** | **Completati** | **Tempo Stimato** | **Priorità** | **Status** |
 |----------|-----------|----------------|-------------------|--------------|------------|
 | **FASE 1** | 4 | 4 | 2-3 ore | 🔴 CRITICAL | ✅ **COMPLETED** |
-| **FASE 2** | 4 | 3.5 | 4-5 ore | 🟡 HIGH | 🟡 **85% DONE** |
+| **FASE 2** | 5 | 3.5 | 5-6 ore | 🟡 HIGH | 🟡 **70% DONE** |
 | **FASE 3** | 3 | 0 | 2-3 ore | 🟢 MEDIUM | ⏳ PENDING |
 | **FASE 4** | 4 | 0 | 3-4 ore | 🔵 FINAL | ⏳ PENDING |
-| **TOTALE** | **15** | **7.5** | **11-15 ore** | | **🎯 50% COMPLETE** |
+| **TOTALE** | **16** | **7.5** | **12-16 ore** | | **🎯 47% COMPLETE** |
 - **Test Success Rate**: � **11/16 (68.8%)** → Target: Fase 2 quasi completa, verso ~85%
 - **API Endpoints Working**: � **Goals API 100% + Events API 5/6 ✅** → Solo Events Timeline rimane (Task 2.6)
 - **Critical Blockers**: 🟢 **0 active** (erano 4) → **FASE 1 + 2.3 eliminati tutti!**
@@ -72,7 +84,9 @@
 | **2.1** | Fix Goals API - Parameter Passing | ✅ Implementato vero Parameter Passing per Goals | `api/endpoints/goals.py`, `services/goals_service.py` | ✅ 90 min | ✅ **DONE** | ✅ `Goals: Create calorie goal` |
 | **2.2** | Fix Goals Queries | ✅ API completamente funzionante + End_date calculation | Goals service methods | ✅ 60 min | ✅ **DONE** | ✅ `Goals: Get all/active goals` |
 | **2.3** | Fix Events API Validation | ✅ Enum event_source allineato con codice Python | `sql/007_fix_event_source_enum.sql`, `domain/entities.py` | ✅ 90 min | ✅ **DONE** | ✅ `Events: burned/weight/consumed` |
-| **2.4** | Fix Metabolic UUID Validation | ⚠️ Schema UUID consistency + mapping fixes | `api/schemas.py`, `repositories.py` | ✅ 90 min | 🟡 **85% DONE** | ⚠️ UUID4→UUID fixed, validation improved |
+| **2.4** | Fix Metabolic UUID Validation | 🟢 Schema UUID consistency + mapping fixes | `api/schemas.py`, `repositories.py` | ✅ 90 min | ✅ **DONE** | ✅ UUID4→UUID fixed, tests passing |
+| **2.5** | Fix Goals Activation Logic | ✅ Router calls get_current_goal() method implementato correttamente | `application/services.py`, `api/routers/goals.py` | ✅ 60 min | ✅ **DONE** | ✅ get_current_goal() now works |
+| **2.6** | Fix Events Timeline API | � Timeline endpoint returns 500 error 'Failed to retrieve event timeline' | `api/endpoints/events.py`, timeline service | 90 min | 🟡 **IN PROGRESS** | Investigating 500 error |
 
 **🎯 RISULTATI COMPLETATI**:
 - ✅ **Goals CREATE API**: Funziona perfettamente con Parameter Passing Pattern

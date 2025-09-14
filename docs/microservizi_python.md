@@ -6,21 +6,23 @@ Implementazione completa dei **6 microservizi Python 3.11** per la piattaforma N
 
 **Architettura Confermata:**
 - ✅ **6 Microservizi Python 3.11** atomici e indipendenti con **User Management Service** centralizzato
-- ✅ **Strategia Database Ibrida**: Supabase Client (real-time) + PostgreSQL Direct (analytics)
+- ✅ **Supabase Client Unificato**: Tutti i servizi utilizzano Supabase Client per consistency e semplicità
 - ✅ **Domain-Driven Design** con Value Objects constraint-aware
 - ✅ **N8N Cloud orchestration** per workflow complessi
 - ✅ **Docker multi-stage** per compatibilità locale/Render
 - ✅ **MCP Server** per microservizi con AI/ML capabilities
 
-**Database Connection Matrix:**
-- 🔄 **Supabase Client**: user-management, meal-tracking, health-monitor, notifications
-- ⚡ **PostgreSQL Direct**: calorie-balance, ai-coach
+**Database Connection Strategy:**
+- 🔄 **Supabase Client Universale**: Tutti i 6 microservizi utilizzano Supabase Client
+- 🎯 **Schema-based Segregation**: Isolamento via schema dedicati (user_management, calorie_balance, etc.)
+- ⚡ **Real-time + Analytics**: Supabase Client supporta entrambi i use case efficacemente
+- 🏗️ **Cross-Schema Foreign Keys**: Integrità referenziale tra schema diversi
 
 **Schema Management Pattern:**
 - 🎯 **Schema SQL Dedicato**: Ogni microservizio opera su schema isolato
 - ⚙️ **Configurazione via .env**: `DATABASE_SCHEMA=nome_schema_microservizio`
 - 🏗️ **SchemaManager Class**: Centralizza accesso a tabelle con type-safety
-- 🔄 **Backward Compatibility**: Helper functions per codice esistente
+- 🔄 **Unified Connection**: Supabase Client condiviso con schema-specific queries
 
 ---
 
@@ -32,45 +34,107 @@ Tutti i template per sviluppare microservizi si trovano in **`templates/microser
 
 ```
 templates/microservice-template/
-├── 📋 DATABASE_CONNECTION_STRATEGY.md    # Strategia ibrida database
-├── 🎯 SCHEMA_MANAGEMENT_PATTERN.md       # Pattern gestione schema SQL dedicato
-├── 📊 API-roadmap-template.md            # Template roadmap API 
-├── 🔄 supabase-client-template/          # Template per servizi real-time
+├── 📋 API-roadmap-template.md            # Template roadmap API 
+├── 🔄 supabase-client-template/          # Template unificato per tutti i servizi
 │   └── COMPLETE_TEMPLATE.md              # Setup completo Supabase Client
-└── ⚡ postgresql-direct-template/        # Template per servizi analytics  
-    └── COMPLETE_TEMPLATE.md              # Setup completo PostgreSQL Direct
+├── 📊 DEPRECATED_postgresql-direct/      # Template legacy (non più utilizzato)
+│   └── README_DEPRECATED.md              # Spiegazione della deprecazione
+└── 🛠️ MIGRATION_GUIDE.md                # Guida migrazione da PostgreSQL Direct
 ```
 
-### 🎯 Quale Template Usare?
+### 🎯 Template da Utilizzare
 
-**Prima di iniziare** un nuovo microservizio, consulta [`DATABASE_CONNECTION_STRATEGY.md`](../templates/microservice-template/DATABASE_CONNECTION_STRATEGY.md) per scegliere l'approccio corretto.
+**Tutti i microservizi** utilizzano ora il template Supabase Client unificato per consistency:
 
-| **Tipo Servizio** | **Template da Usare** | **Quando Usarlo** |
+| **Qualsiasi Servizio** | **Template da Usare** | **Quando Usarlo** |
 |-------------------|----------------------|------------------|
-| **Real-time, Auth, Mobile Sync** | [`supabase-client-template/`](../templates/microservice-template/supabase-client-template/COMPLETE_TEMPLATE.md) | user-management, meal-tracking, health-monitor, notifications |
-| **Analytics, AI/ML, Performance** | [`postgresql-direct-template/`](../templates/microservice-template/postgresql-direct-template/COMPLETE_TEMPLATE.md) | calorie-balance, ai-coach |
+| **Tutti i 6 microservizi** | [`supabase-client-template/`](../templates/microservice-template/supabase-client-template/COMPLETE_TEMPLATE.md) | user-management, calorie-balance, meal-tracking, health-monitor, notifications, ai-coach |
 
 ### 🛠️ Come Utilizzare i Template
 
-1. **Scegli il template** appropriato dalla tabella sopra
+1. **Utilizza il template unificato** [`supabase-client-template/`](../templates/microservice-template/supabase-client-template/COMPLETE_TEMPLATE.md)
 2. **Copia la struttura** del template nel tuo nuovo microservizio
 3. **Sostituisci i placeholder** (es. `{service-name}`) con i valori specifici
-4. **Segui l'API roadmap** per implementare gli endpoint
-5. **Usa il COMPLETE_TEMPLATE.md** per setup completo di pyproject.toml, config, database, ecc.
+4. **Configura lo schema dedicato** nel file .env (`DATABASE_SCHEMA=schema_name`)
+5. **Segui l'API roadmap** per implementare gli endpoint
+6. **Usa il COMPLETE_TEMPLATE.md** per setup completo di pyproject.toml, config, database, ecc.
 
 ### 📋 API Roadmap Template
 
 Ogni microservizio deve seguire il template [`API-roadmap-template.md`](../templates/microservice-template/API-roadmap-template.md) per:
 - Tracciare il progresso di sviluppo
 - Definire priorità degli endpoint
-- Configurare il database appropriato  
+- Configurare il database schema appropriato  
 - Pianificare testing e deployment
 
 ---
 
-## 1. Architettura Microservizi con Database Segregation
+## 🚀 Gestione dello Sviluppo
 
-### 6 Microservizi Atomici con Strategia Database Ibrida
+### ⚡ Development Scripts (OBBLIGATORI)
+
+**Ogni microservizio DEVE avere script di sviluppo per gestire il lifecycle del servizio:**
+
+| Script | Scopo | Utilizzo |
+|--------|-------|----------|
+| `start-dev.sh` | Start/Stop/Restart/Status del servizio | `./start-dev.sh [start\|stop\|restart\|status]` |
+| `stop-dev.sh` | Stop rapido del servizio | `./stop-dev.sh` |
+
+### 🎯 Workflow di Sviluppo Standard
+
+```bash
+# 1. Navigare nel servizio
+cd services/[nome-servizio]
+
+# 2. Prima volta: rendere eseguibili gli script
+chmod +x start-dev.sh stop-dev.sh
+
+# 3. Configurare l'ambiente
+cp .env.template .env
+# Editare .env con configurazioni reali
+
+# 4. Avviare il servizio (gestisce automaticamente tutto)
+./start-dev.sh
+
+# 5. Durante sviluppo:
+./start-dev.sh restart    # Dopo modifiche
+./start-dev.sh status     # Controllo stato
+tail -f /tmp/[service]-port.log  # View logs in tempo reale
+
+# 6. Stop del servizio
+./stop-dev.sh
+```
+
+### 🔧 Funzionalità degli Script
+
+Gli script di sviluppo forniscono automaticamente:
+
+- ✅ **Environment Management**: Setup automatico Python venv + Poetry
+- ✅ **Dependency Installation**: `poetry install` automatico
+- ✅ **Port Management**: Cleanup automatico processi su porta
+- ✅ **PID Management**: Tracking processo per start/stop/restart
+- ✅ **Health Checks**: Verifica `/health` endpoint con retry logic
+- ✅ **Structured Logging**: Log file separati per ogni servizio
+- ✅ **Hot Reload**: Auto-reload durante development
+- ✅ **Status Monitoring**: Controllo stato servizio e health
+- ✅ **Colorized Output**: Output visuale per debugging
+
+### 🎯 Port Assignment Standard
+
+| **Service** | **Port** | **Script Usage** |
+|-------------|----------|------------------|
+| user-management | 8001 | `./start-dev.sh` (logs: `/tmp/user-management-8001.log`) |
+| calorie-balance | 8002 | `./start-dev.sh` (logs: `/tmp/calorie-balance-8002.log`) |
+| meal-tracking | 8003 | `./start-dev.sh` (logs: `/tmp/meal-tracking-8003.log`) |
+| health-monitor | 8004 | `./start-dev.sh` (logs: `/tmp/health-monitor-8004.log`) |
+| notifications | 8005 | `./start-dev.sh` (logs: `/tmp/notifications-8005.log`) |
+| ai-coach | 8006 | `./start-dev.sh` (logs: `/tmp/ai-coach-8006.log`) |
+
+---
+
+## 1. Architettura Microservizi con Schema-based Segregation
+
+### 6 Microservizi Atomici con Supabase Client Unificato
 
 ```mermaid
 graph TB
@@ -90,14 +154,61 @@ graph TB
         UM[User Management<br/>Service + Supabase Client]
     end
     
-    subgraph "Real-time Services (Supabase Client)"
-        MT[Meal Tracking<br/>Service + Real-time]
-        HM[Health Monitor<br/>Service + Real-time]
-        NS[Notifications<br/>Service + Real-time]
+    subgraph "Business Services (All Supabase Client)"
+        CB[Calorie Balance<br/>Service + Schema Isolation]
+        MT[Meal Tracking<br/>Service + Schema Isolation]
+        HM[Health Monitor<br/>Service + Schema Isolation]
+        NS[Notifications<br/>Service + Schema Isolation]
+        AI[AI Coach<br/>Service + Schema Isolation]
     end
     
-    subgraph "Analytics Services (PostgreSQL Direct)"
-        CB[Calorie Balance<br/>Service + Analytics]
+    subgraph "Supabase Database"
+        DB[(Supabase PostgreSQL<br/>Schema-based Segregation)]
+        SCH1[user_management schema]
+        SCH2[calorie_balance schema]
+        SCH3[meal_tracking schema]
+        SCH4[health_monitor schema]
+        SCH5[notifications schema]
+        SCH6[ai_coach schema]
+    end
+    
+    FLUTTER --> GATEWAY
+    GATEWAY --> UM
+    GATEWAY --> CB
+    GATEWAY --> MT
+    GATEWAY --> HM
+    GATEWAY --> NS
+    GATEWAY --> AI
+    
+    N8N --> AI
+    N8N --> MT
+    N8N --> HM
+    
+    UM --> DB
+    CB --> DB
+    MT --> DB
+    HM --> DB
+    NS --> DB
+    AI --> DB
+    
+    DB --> SCH1
+    DB --> SCH2
+    DB --> SCH3
+    DB --> SCH4
+    DB --> SCH5
+    DB --> SCH6
+```
+
+### Database Architecture - Schema-based Isolation
+
+| **Microservizio** | **Schema** | **Connection Type** | **MCP Server** | **Specialization** |
+|-------------------|------------|---------------------|----------------|-------------------|
+| **user-management** | `user_management` | **Supabase Client**: Auth + profiles | ❌ Solo auth/profiles | Authentication |
+| **calorie-balance** | `calorie_balance` | **Supabase Client**: Events + analytics | ✅ Per AI workflows | Business logic |
+| **meal-tracking** | `meal_tracking` | **Supabase Client**: Food data + ML | ✅ Per food analysis | Business logic |
+| **health-monitor** | `health_monitor` | **Supabase Client**: Health data sync | ❌ Solo data sync | Business logic |
+| **notifications** | `notifications` | **Supabase Client**: Push notifications | ❌ Solo messaging | Business logic |
+| **ai-coach** | `ai_coach` | **Supabase Client**: AI conversations | ✅ Primary AI service | Business logic |
         AI[AI Nutrition Coach<br/>Service + Vector DB]
     end
     
@@ -159,12 +270,11 @@ graph TB
 
 ### ⚡ Template Setup Rapido
 
-**Per sviluppatori:** Invece di copiare il codice da questa documentazione, usa i template completi:
+**Per sviluppatori:** Utilizza il template unificato per tutti i microservizi:
 
-- **Supabase Client Services** → [`templates/microservice-template/supabase-client-template/COMPLETE_TEMPLATE.md`](../templates/microservice-template/supabase-client-template/COMPLETE_TEMPLATE.md)
-- **PostgreSQL Direct Services** → [`templates/microservice-template/postgresql-direct-template/COMPLETE_TEMPLATE.md`](../templates/microservice-template/postgresql-direct-template/COMPLETE_TEMPLATE.md)
+- **Tutti i Microservizi** → [`templates/microservice-template/supabase-client-template/COMPLETE_TEMPLATE.md`](../templates/microservice-template/supabase-client-template/COMPLETE_TEMPLATE.md)
 
-I template includono **tutto il codice necessario** già pronto per copy-paste: pyproject.toml, config.py, database.py, main.py, .env.example, migrations, ecc.
+Il template include **tutto il codice necessario** già pronto per copy-paste: pyproject.toml, config.py, database.py, main.py, .env.example, migrations, ecc.
 
 ### Core Framework Stack per Tutti i Microservizi
 
@@ -180,24 +290,25 @@ authors = ["NutriFit Team <dev@nutrifit.com>"]
 python = "^3.11"
 
 # Core Framework
-fastapi = "^0.104.1"              # Modern async API framework
-uvicorn = {extras = ["standard"], version = "^0.24.0"}  # ASGI server development
+fastapi = "^0.100.0"              # Modern async API framework
+uvicorn = {extras = ["standard"], version = "^0.23.0"}  # ASGI server development
 gunicorn = "^21.2.0"              # Production WSGI server per Render
 
 # Database & Supabase Integration
-supabase = "^2.3.0"               # Supabase Python client
-asyncpg = "^0.29.0"               # PostgreSQL async driver  
-sqlalchemy = "^2.0.23"            # Modern async ORM
-pydantic = {extras = ["email"], version = "^2.4.0"}   # Data validation
+supabase = "2.6.0"               # Supabase Python client
+postgrest = "^0.16.0"            # PostgREST client
+gotrue = "2.4.2"                 # Supabase Auth client
+sqlalchemy = "^2.0.23"           # Modern async ORM (optional)
+pydantic = {extras = ["email"], version = "^2.3.0"}   # Data validation
 
 # HTTP & External APIs  
-httpx = "^0.25.2"                 # Modern async HTTP client
-aiofiles = "^23.2.1"              # Async file operations
+httpx = "^0.24.0"                # Modern async HTTP client
+requests = "^2.32.5"             # Sync HTTP client (compatibility)
 
 # Model Context Protocol (per servizi AI)
-mcp = "^1.0.0"                    # MCP server implementation
-openai = "^1.3.0"                 # OpenAI API client (se needed)
-strawberry-graphql = "^0.211.0"   # GraphQL per FastAPI, supporto federation
+mcp = "^1.0.0"                   # MCP server implementation (optional)
+openai = "^1.3.0"                # OpenAI API client (se needed)
+strawberry-graphql = {extras = ["fastapi"], version = "^0.209.0"}   # GraphQL support
 ```
 
 ---

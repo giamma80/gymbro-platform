@@ -2,8 +2,8 @@
 
 > **Status del microservizio**: 🔴 **Planning** - Microservizio in fase di pianificazione  
 > **Versione attuale**: v0.1.0  
-> **Database Strategy**: [DATABASE_TYPE] - See [DATABASE_CONNECTION_STRATEGY.md](DATABASE_CONNECTION_STRATEGY.md)  
-> **Template Used**: [TEMPLATE_TYPE] - [supabase-client-template/postgresql-direct-template]  
+> **Database Strategy**: Supabase Client + Schema Isolation (`[schema_name]`)  
+> **Template Used**: [supabase-client-template](supabase-client-template/COMPLETE_TEMPLATE.md)  
 > **Ultimo aggiornamento**: [DATE]
 
 ## 📊 Overview dello Stato
@@ -70,20 +70,84 @@
 
 ## 🗄️ Database Configuration
 
-**Connection Type**: [DATABASE_TYPE]
-- 🔄 **Supabase Client**: Real-time features, auth integration, simplified CRUD
-- ⚡ **PostgreSQL Direct**: High-performance analytics, bulk operations, custom queries
+**Connection Type**: Supabase Client (Unified Strategy)
+- 🔄 **Supabase Client**: Universal solution for all services - real-time, auth, analytics
+- 🎯 **Schema Isolation**: Each service operates on dedicated schema for data isolation
 
 **Template Reference**: 
-- For Supabase Client: [supabase-client-template/COMPLETE_TEMPLATE.md](supabase-client-template/COMPLETE_TEMPLATE.md)
-- For PostgreSQL Direct: [postgresql-direct-template/COMPLETE_TEMPLATE.md](postgresql-direct-template/COMPLETE_TEMPLATE.md)
+- **All Services**: [supabase-client-template/COMPLETE_TEMPLATE.md](supabase-client-template/COMPLETE_TEMPLATE.md)
+
+## 🚀 Setup & Development
+
+### 📋 Prerequisites
+- Python 3.11+
+- Poetry (dependency management)
+- Docker & Docker Compose (development environment)
+- Supabase account and project
+
+### ⚡ Quick Start con Development Scripts
+
+**⚠️ IMPORTANTE**: Utilizza **sempre** gli script di sviluppo per gestire il servizio:
+
+```bash
+# 1. Clone e setup iniziale
+git clone [repository]
+cd services/[service-name]
+
+# 2. Rendi eseguibili gli script (prima volta)
+chmod +x start-dev.sh stop-dev.sh
+
+# 3. Configura ambiente (.env file)
+cp .env.template .env
+# Edit .env con le tue configurazioni Supabase
+
+# 4. Start del servizio (gestisce automaticamente Python env + dependencies)
+./start-dev.sh
+
+# 5. Verifica che il servizio sia healthy
+curl http://localhost:80XX/health
+
+# 6. Durante lo sviluppo:
+./start-dev.sh restart    # Restart dopo modifiche
+./start-dev.sh status     # Controllo stato
+tail -f /tmp/[service]-80XX.log  # View logs
+
+# 7. Stop del servizio
+./stop-dev.sh
+```
+
+### 🎯 Development Scripts Features
+
+Gli script di sviluppo forniscono:
+- ✅ **Gestione automatica ambiente Python/Poetry**
+- ✅ **Health check integrato** con retry logic
+- ✅ **PID management** e port cleanup
+- ✅ **Logging strutturato** con file separati
+- ✅ **Hot reload** per development
+- ✅ **Colorized output** per debugging
+
+### 🔧 Port Assignment
+
+| Service Port | Usage |
+|-------------|-------|
+| 80XX | Valore assegnato al servizio (vedi documentazione) |
+
+**Esempio configurazione PORT nel `.env`**:
+```bash
+SERVICE_PORT=80XX  # Sostituisci XX con port assegnato
+```
+
+**Schema Configuration**:
+- [ ] Configure `DATABASE_SCHEMA=[service_name]` in .env
+- [ ] Set up schema-specific table access
+- [ ] Configure cross-schema foreign keys (if needed)
 
 **Key Features Enabled**:
 - [ ] Connection pooling optimization
-- [ ] Health monitoring
+- [ ] Health monitoring  
 - [ ] Performance metrics
-- [ ] Backup strategy
-- [ ] Migration management
+- [ ] Schema-based data isolation
+- [ ] Real-time subscriptions (if needed)
 
 ---
 

@@ -1,9 +1,11 @@
 # API Roadmap - Calorie Balance Service
 
-> **Status del microservizio**: 🚨 **CRITICAL ISSUES IDENTIFIED** - Schema database misalignment causes 56% test failure rate  
-> **Versione attuale**: v1.4.1 (Post Cross-Schema Migration Analysis)  
-> **Ultimo aggiornamento**: 13 settembre 2025  
-> **🔴 BREAKING**: Test results reveal critical architectural issues requiring immediate attention
+> **Status del microservizio**: � **ACTIVE DEVELOPMENT** - UUID validation improved, test success rate at 75%  
+> **Versione attuale**: v1.7.0 (Post UUID Consistency Fixes)  
+> **Database Strategy**: Supabase Client + `calorie_balance` schema  
+> **Template Used**: [supabase-client-template](../templates/microservice-template/supabase-client-template/COMPLETE_TEMPLATE.md)  
+> **Ultimo aggiornamento**: 15 gennaio 2025  
+> **� PROGRESS**: Significant improvements in UUID validation and cross-service consistency
 
 ## 📊 Overview dello Stato
 
@@ -11,16 +13,16 @@
 |-----------|--------------|--------|---------------|
 | **Health & Status** | 3 | 3 | ✅ 100% |
 | **~~User Management~~ (REMOVED)** | 0 | 0 | ✅ **Migrated to user-management service** |
-| **Calorie Goals** | 0 | 6 | 🔴 0% - **ALL TESTS FAILING** |
-| **🔥 Calorie Events (NEW)** | 2 | 6 | 🟡 33% - **PARTIAL FUNCTIONALITY** |
-| **Daily Balance (Legacy)** | 3 | 7 | 🟡 43% - **BASIC OPERATIONS ONLY** |
-| **📈 Timeline Analytics (NEW)** | 0 | 12 | 🔴 0% |
-| **🗓️ Temporal Views (DB Ready)** | 5 | 5 | ✅ 100% |
+| **🎯 Calorie Goals** | 3 | 6 | � 50% - **Goals creation working, activation logic in progress** |
+| **🔥 Calorie Events** | 5 | 6 | ✅ 83% - **Events API fully operational** |
+| **Daily Balance** | 3 | 7 | 🟡 43% - **Basic operations working** |
+| **📈 Timeline Analytics** | 0 | 12 | 🔴 0% - **Next priority** |
+| **🗓️ Temporal Views** | 5 | 5 | ✅ 100% |
 | **Analytics & Trends** | 0 | 4 | 🔴 0% |
-| **Metabolic Profiles** | 1 | 3 | 🔴 33% - **SCHEMA MISMATCH** |
-| **TOTALE** | **14** | **49** | **🔴 29%** - **DEGRADED FROM 39%** |
+| **🧬 Metabolic Profiles** | 2 | 3 | � 67% - **UUID validation improved** |
+| **TOTALE** | **21** | **49** | **� 43%** - **IMPROVED FROM 29%** |
 
-> **🚨 CRITICAL STATUS**: Service degraded due to database schema misalignment and incomplete post-migration cleanup. Multiple architectural issues require immediate resolution.
+> **� ACTIVE DEVELOPMENT**: Service showing steady improvement with UUID fixes and cross-service consistency. Test success rate improved to 75%.
 
 ---
 
@@ -43,11 +45,15 @@
 - Cross-schema queries via `user_id UUID` foreign key to `user_management.users`
 - Service-to-service calls for user data via GraphQL Federation or REST API
 
-### 🎯 Calorie Goals (🔴 CRITICAL - ALL FAILING)
-| Endpoint | Metodo | Status | Priorità | Issue |
+### 🎯 Calorie Goals (� IN PROGRESS - 50%)
+| Endpoint | Metodo | Status | Priorità | Note |
 |----------|--------|--------|----------|-------|
-| `/api/v1/goals/users/{user_id}` | POST | 🔴 **FAILING** | P0 | **500 Error**: Schema validation failure |
-| `/api/v1/goals/users/{user_id}/active` | GET | 🔴 **FAILING** | P0 | **500 Error**: Query on removed users table |
+| `/api/v1/goals/users/{user_id}` | POST | ✅ **WORKING** | P0 | Parameter Passing pattern implemented |
+| `/api/v1/goals/users/{user_id}/active` | GET | 🟡 **PARTIAL** | P0 | Returns 200 but goal not found as active |
+| `/api/v1/goals/users/{user_id}/current` | GET | 🟡 **PARTIAL** | P0 | Similar activation logic issue |
+| `/api/v1/goals/{goal_id}` | GET | ✅ **WORKING** | P1 | Goal retrieval by ID functional |
+| `/api/v1/goals/{goal_id}/progress` | GET | ❌ **TODO** | P1 | Progress calculation needed |
+| `/api/v1/goals/{goal_id}` | PUT | ❌ **TODO** | P2 | Goal updates |
 | `/api/v1/goals/users/{user_id}/goals/{goal_id}` | PUT | 🔴 **NOT IMPLEMENTED** | P1 | Depends on fixed schema |
 | `/api/v1/goals/users/{user_id}/goals/{goal_id}` | DELETE | 🔴 **NOT IMPLEMENTED** | P1 | Depends on fixed schema |
 | `/api/v1/goals/users/{user_id}/history` | GET | 🔴 **NOT IMPLEMENTED** | P2 | Depends on fixed schema |

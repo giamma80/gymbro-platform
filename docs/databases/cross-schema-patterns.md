@@ -162,6 +162,137 @@ WHERE user_id IN (
 CREATE INDEX idx_<table_name>_user_date ON <schema>.<table_name>(user_id, created_at);
 ```
 
+## 🏛️ Repository Pattern & Schema Manager
+
+### ⚠️ CRITICAL: Common Schema Manager Mistakes
+
+**❌ WRONG - Common Error Pattern:**
+```python
+class WrongRepository:
+    def __init__(self):
+        self.client = get_supabase_client()
+        # ❌ ERROR: Using string table name without schema
+        self.table = "calorie_events"  # This hits public schema!
+        
+    async def get_data(self):
+        # ❌ ERROR: Double table() call 
+        return self.client.table(self.table).select("*").execute()
+```
+
+**✅ CORRECT - Schema Manager Pattern:**
+```python
+class CorrectRepository:
+    def __init__(self):
+        self.client = get_supabase_client()
+        self.schema_manager = get_schema_manager()
+        # ✅ CORRECT: Schema manager returns configured table object
+        self.table = self.schema_manager.calorie_events
+        
+    async def get_data(self):
+        # ✅ CORRECT: Direct table object usage
+        return self.table.select("*").execute()
+```
+
+### Schema Manager Implementation
+
+```python
+# app/core/schema_tables.py
+class SchemaManager:
+    def __init__(self, client: Client = None):
+        self._client = client or get_supabase_client()
+        self._settings = get_settings()
+        self._schema_name = self._settings.database_schema  # e.g., "calorie_balance"
+    
+    def table(self, table_name: str) -> Any:
+        """Get table with correct schema configuration."""
+        return self._client.schema(self._schema_name).table(table_name)
+    
+    @property
+    def calorie_events(self) -> Any:
+        """Pre-configured calorie_events table with schema."""
+        return self.table('calorie_events')
+```
+
+### Repository Best Practices
+
+#### 1. Initialization Pattern
+```python
+def __init__(self):
+    """ALWAYS follow this exact pattern."""
+    self.client = get_supabase_client()           # For direct client access if needed
+    self.schema_manager = get_schema_manager()    # Schema configuration
+    self.table = self.schema_manager.table_name   # Pre-configured table object
+```
+
+#### 2. Query Execution Pattern
+```python
+async def query_method(self):
+    """Use self.table directly - NOT self.client.table()"""
+    # ✅ CORRECT: Direct table usage
+    response = self.table.select("*").eq("user_id", user_id).execute()
+    
+    # ❌ WRONG: Don't do this!
+    # response = self.client.table(self.table).select("*")...
+```
+
+#### 3. Error-Prone Scenarios to Avoid
+
+**Scenario A: Mixed Schema Access**
+```python
+# ❌ WRONG: This breaks schema isolation
+self.events_table = "calorie_events"  # Hits public.calorie_events
+self.goals_table = self.schema_manager.calorie_goals  # Hits calorie_balance.calorie_goals
+```
+
+**Scenario B: String Concatenation**
+```python
+# ❌ WRONG: Manual schema handling
+self.table = f"{schema_name}.table_name"  # Fragile and error-prone
+```
+
+**Scenario C: Incomplete Initialization**
+```python
+# ❌ WRONG: Missing schema manager
+def __init__(self):
+    self.client = get_supabase_client()
+    # Missing: self.schema_manager = get_schema_manager()
+    self.table = "table_name"  # Will hit public schema!
+```
+
+### Debugging Schema Issues
+
+#### Common Error Messages:
+1. **`Could not find table 'public.table_name'`** 
+   - **Cause**: Using string table name instead of schema manager
+   - **Fix**: Use `self.table = self.schema_manager.table_name`
+
+2. **`<postgrest._sync.request_builder.SyncRequestBuilder object>`**
+   - **Cause**: Calling `self.client.table(self.table)` when `self.table` is already a table object
+   - **Fix**: Use `self.table.select()` directly
+
+3. **`'Repository' object has no attribute 'client'`**
+   - **Cause**: Missing `self.client = get_supabase_client()` in `__init__`
+   - **Fix**: Always initialize client first
+
+#### Quick Debugging Commands:
+```python
+# Check what type self.table is
+print(f"Table type: {type(self.table)}")
+print(f"Table repr: {repr(self.table)}")
+
+# Check schema configuration
+print(f"Schema: {self.schema_manager.schema_name}")
+```
+
+### Migration Checklist for Existing Repositories
+
+- [ ] ✅ `self.client = get_supabase_client()` in `__init__`
+- [ ] ✅ `self.schema_manager = get_schema_manager()` in `__init__`  
+- [ ] ✅ `self.table = self.schema_manager.table_name` (not string)
+- [ ] ✅ Direct table usage: `self.table.select()` (not `self.client.table()`)
+- [ ] ✅ Test with `curl` to verify correct schema access
+- [ ] ✅ Check logs for schema error messages
+
 ## 🛡️ Data Safety & Soft Delete
 
 ### Soft Delete Strategy

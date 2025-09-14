@@ -303,7 +303,7 @@ async def get_event_timeline(
                 "latest": events[0].event_timestamp.isoformat()
             }
         else:
-            date_range = {"earliest": None, "latest": None}
+            date_range = {"earliest": "", "latest": ""}
         
         return TimelineResponse(
             events=[CalorieEventResponse.from_orm(event) for event in events],

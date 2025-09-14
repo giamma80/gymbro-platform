@@ -3,6 +3,14 @@ Supabase Repository Implementations - Calorie Balance Service
 
 Concrete implementations of domain repository interfaces using Supabase
 for the event-driven calorie tracking system.
+
+⚠️  SCHEMA MANAGER PATTERN - MUST FOLLOW:
+   1. self.client = get_supabase_client()
+   2. self.schema_manager = get_schema_manager()  
+   3. self.table = self.schema_manager.table_name  # Pre-configured object!
+   4. Use: self.table.select() (NOT self.client.table(self.table))
+   
+   See docs/databases/cross-schema-patterns.md for complete guide.
 """
 
 from typing import List, Optional, Dict, Any
@@ -42,6 +50,7 @@ class SupabaseCalorieEventRepository(ICalorieEventRepository):
     
     def __init__(self):
         """Initialize with Supabase client optimized for high-frequency ops."""
+        self.client = get_supabase_client()
         self.schema_manager = get_schema_manager()
         self.table = self.schema_manager.calorie_events
         # Index hints for high-frequency queries
@@ -144,11 +153,49 @@ class SupabaseCalorieEventRepository(ICalorieEventRepository):
     ) -> List[CalorieEvent]:
         """Get most recent events for timeline display."""
         try:
-            response = self.client.table(self.table).select("*").eq(
+            response = self.table.select("*").eq(
                 "user_id", user_id
             ).order("event_timestamp", desc=True).limit(limit).execute()
             
-            return [CalorieEvent(**data) for data in response.data]
+            # Convert database records to CalorieEvent entities
+            events = []
+            for data in response.data:
+                try:
+                    # Convert string user_id to UUID
+                    if isinstance(data.get('user_id'), str):
+                        data['user_id'] = UUID(data['user_id'])
+                    
+                    # Convert string event_type to EventType enum
+                    if isinstance(data.get('event_type'), str):
+                        from app.domain.entities import EventType
+                        data['event_type'] = EventType(data['event_type'])
+                    
+                    # Convert string source to EventSource enum
+                    if isinstance(data.get('source'), str):
+                        from app.domain.entities import EventSource
+                        data['source'] = EventSource(data['source'])
+                    
+                    # Convert string value to Decimal
+                    if (data.get('value') and
+                            not isinstance(data['value'], Decimal)):
+                        data['value'] = Decimal(str(data['value']))
+                    
+                    # Convert confidence_score to Decimal if present
+                    if (data.get('confidence_score') and
+                            not isinstance(data['confidence_score'], Decimal)):
+                        data['confidence_score'] = Decimal(
+                            str(data['confidence_score'])
+                        )
+                    
+                    events.append(CalorieEvent(**data))
+                    
+                except Exception as conversion_error:
+                    logger.error(
+                        f"Failed to convert event data: {conversion_error}"
+                    )
+                    continue
+                    
+            return events
             
         except Exception as e:
             logger.error(f"Failed to get recent events for {user_id}: {e}")

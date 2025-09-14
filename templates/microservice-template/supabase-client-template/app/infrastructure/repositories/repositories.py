@@ -1,14 +1,33 @@
 """
-Supabase repository implementations for {service-name} service.
+Supabase repository implementations f    
+    def __init__(self):
+        """Initialize repository with proper schema manager pattern."""
+        self.client = get_supabase_client()
+        self.schema_manager = get_schema_manager()
+        # Replace with actual table: self.table = self.schema_manager.table_name
+        self.table = self.schema_manager.{table_name}  # TODO: Replace {table_name}service-name} service.
 
 This module contains concrete implementations of repository interfaces
 using Supabase as the database provider.
+
+⚠️  CRITICAL: Schema Manager Pattern MUST be followed exactly:
+   
+   def __init__(self):
+       self.client = get_supabase_client()
+       self.schema_manager = get_schema_manager()
+       self.table = self.schema_manager.table_name  # Pre-configured object
+   
+   async def method(self):
+       return self.table.select("*").execute()  # Direct usage
+   
+   See docs/databases/cross-schema-patterns.md for complete guide.
 """
 
 from typing import List, Optional, Any, Dict
 from app.domain.interfaces import I{ServiceName}Repository
 from app.domain.entities import {ServiceName}Entity
 from app.core.database import get_supabase_client
+from app.core.schema_tables import get_schema_manager  # REQUIRED for schema support
 import logging
 
 logger = logging.getLogger(__name__)
@@ -17,6 +36,11 @@ logger = logging.getLogger(__name__)
 class Supabase{ServiceName}Repository(I{ServiceName}Repository):
     """
     Supabase implementation of the {ServiceName} repository.
+    
+    TEMPLATE NOTES:
+    - Follow Schema Manager pattern exactly as documented
+    - Replace {table_name} with actual table name
+    - Test schema access with curl after implementation
     
     This class handles all database operations for {service-name} entities
     using Supabase as the backend.

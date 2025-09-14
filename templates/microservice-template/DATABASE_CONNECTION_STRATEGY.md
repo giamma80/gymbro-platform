@@ -3,6 +3,25 @@
 **Last Updated:** 7 settembre 2025  
 **Strategy:** Hybrid Supabase Client + PostgreSQL Direct
 
+## ⚠️ CRITICAL: Schema Manager Pattern Required
+
+**ALL Supabase client connections MUST follow the Schema Manager pattern to avoid accessing wrong schemas.**
+
+See [Cross-Schema Patterns Guide](../../docs/databases/cross-schema-patterns.md) for complete implementation.
+
+### Quick Reference:
+```python
+# Repository __init__:
+self.client = get_supabase_client()
+self.schema_manager = get_schema_manager()
+self.table = self.schema_manager.table_name  # Pre-configured
+
+# Repository methods:
+return self.table.select("*").execute()  # Direct usage
+```
+
+---
+
 ## 📊 Database Connection Matrix
 
 | **Microservizio** | **Connection Type** | **Primary Library** | **Use Case** |

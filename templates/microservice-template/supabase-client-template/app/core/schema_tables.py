@@ -1,6 +1,21 @@
 """
 Schema-aware database access for {service-name} service.
 Centralized schema management with configurable schema name.
+
+⚠️  CRITICAL: Schema Manager Usage Pattern
+   
+   Repository __init__:
+       self.client = get_supabase_client()
+       self.schema_manager = get_schema_manager()
+       self.table = self.schema_manager.table_name  # Pre-configured object
+   
+   Repository methods:
+       return self.table.select("*").execute()  # Direct usage
+       
+   ❌ WRONG: self.client.table("table_name") - hits public schema
+   ✅ CORRECT: self.schema_manager.table_name - hits configured schema
+   
+   See docs/databases/cross-schema-patterns.md for complete examples.
 """
 
 from typing import Any

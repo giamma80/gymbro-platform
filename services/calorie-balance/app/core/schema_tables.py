@@ -1,6 +1,11 @@
 """
 Schema-aware database access for calorie-balance service.
 Centralized schema management with configurable schema name.
+
+⚠️  CRITICAL USAGE PATTERN:
+   - In repositories: self.table = self.schema_manager.table_name
+   - Then use: self.table.select() (NOT self.client.table())
+   - See docs/databases/cross-schema-patterns.md for full guide
 """
 
 from typing import Any
@@ -11,7 +16,20 @@ from app.core.config import get_settings
 
 
 class SchemaManager:
-    """Centralized schema management for database operations."""
+    """
+    Centralized schema management for database operations.
+    
+    CRITICAL: This returns pre-configured table objects, not strings!
+    
+    Usage in repositories:
+    ✅ CORRECT:
+        self.table = self.schema_manager.calorie_events
+        response = self.table.select("*").execute()
+    
+    ❌ WRONG:
+        self.table = "calorie_events"  # Missing schema!
+        response = self.client.table(self.table).execute()
+    """
     
     def __init__(self, client: Client = None):
         """Initialize schema manager with optional client."""

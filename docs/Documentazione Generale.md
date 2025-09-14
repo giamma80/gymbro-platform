@@ -133,12 +133,13 @@ import uuid
 from datetime import datetime
 
 class DataSource(Enum):
+    """Event source enumeration aligned with production database schema"""
+    MANUAL = "manual"
+    FITNESS_TRACKER = "fitness_tracker"  
+    SMART_SCALE = "smart_scale"
+    NUTRITION_SCAN = "nutrition_scan"
     HEALTHKIT = "healthkit"
-    GOOGLE_HEALTH = "google_health"
-    OPENFOODFACTS = "openfoodfacts"
-    AI_ANALYSIS = "ai_analysis"
-    MANUAL_ENTRY = "manual_entry"
-    SUPABASE_SYNC = "supabase_sync"
+    GOOGLE_FIT = "google_fit"
 
 @dataclass(frozen=True)
 class CloudDataAttribution:
@@ -1934,15 +1935,17 @@ height="6.299212598425197in"}
 
 -   ✅ Database schema implementation con constraint handling
 
-**Sprint 3-4: Core Microservices**
+**Sprint 3-4: Core Microservices** (In Progress)
 
--   ✅ Calorie Balance Service con precision management
+-   ✅ **User Management Service**: Production deployed (100% test success) - https://nutrifit-user-management.onrender.com
 
--   ✅ Meal Tracking Service con OpenFoodFacts integration
+-   🟡 **Calorie Balance Service**: 68.8% complete (Task 2.3 Events API fixed, Goals API working)
 
--   ✅ Health Monitor Service con HealthKit constraint handling
+-   ⏳ **Meal Tracking Service**: Planning phase con OpenFoodFacts integration
 
--   ✅ Base n8n workflows per data processing
+-   ⏳ **Health Monitor Service**: Planning phase con HealthKit constraint handling
+
+-   ⏳ **Base n8n workflows**: Data processing automation pipeline
 
 **Sprint 5-6: iOS App MVP**
 

@@ -86,17 +86,28 @@ make deploy-staging
 
 ## 🚀 Project Status
 
-### Current Phase: Foundation Development
-- ✅ Architettura cloud-native definita
-- ✅ Tech stack e patterns finalizzati  
+### Current Phase: Foundation Development (Q3 2025)
+- ✅ Architettura cloud-native definita e documentata
+- ✅ Tech stack e patterns finalizzati (FastAPI + PostgreSQL + Docker)
 - ✅ Documentazione strategica completa
-- 🚧 MVP microservizi development
-- 🚧 Flutter mobile app foundation
+- ✅ User Management Service - Production ready (100% test success)
+- 🟡 Calorie Balance Service - 68.8% test success (in progress)
+- � MVP microservizi core development
+- ⏳ Flutter mobile app foundation (planned)
+
+### Development Progress
+- **User Management**: 🟢 **PRODUCTION DEPLOYED** - https://nutrifit-user-management.onrender.com
+- **Calorie Balance**: 🟡 **ACTIVE DEVELOPMENT** - Events API fixed, Goals API complete
+- **Meal Tracking**: ⏳ Planning phase
+- **Health Monitor**: ⏳ Planning phase  
+- **Notifications**: ⏳ Planning phase
+- **AI Nutrition Coach**: ⏳ Planning phase
 
 ### Next Milestones
-- **Q1 2025**: MVP completion con AI coach base
-- **Q2 2025**: Production launch iOS + Android
-- **Q3 2025**: Enterprise features e scaling
+- **Q4 2025**: Core microservizi MVP completion
+- **Q1 2026**: AI nutrition coach integration + mobile POC
+- **Q2 2026**: Production launch iOS + Android
+- **Q3 2026**: Enterprise features e scaling
 
 ## 🤝 Contributing
 

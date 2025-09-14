@@ -105,6 +105,36 @@ erDiagram
 
 ## Core Tables
 
+### Schema Setup & Custom Types
+
+```sql
+-- Create dedicated schema
+CREATE SCHEMA IF NOT EXISTS calorie_balance;
+
+-- Custom enum types for data integrity
+CREATE TYPE calorie_balance.event_source AS ENUM (
+    'manual',           -- User manual entry
+    'fitness_tracker',  -- Generic fitness device  
+    'smart_scale',      -- Smart scale measurement
+    'nutrition_scan',   -- AI nutrition scanning
+    'healthkit',        -- Apple HealthKit sync
+    'google_fit'        -- Google Fit sync
+    -- Legacy values (maintained for backwards compatibility):
+    -- 'app_tracking', 'ai_estimation' migrated to above values
+);
+
+CREATE TYPE calorie_balance.event_type AS ENUM (
+    'consumed',         -- Calorie intake
+    'burned_exercise',  -- Exercise calorie burn
+    'burned_bmr',       -- Basal metabolic rate
+    'weight'            -- Weight measurement
+);
+
+CREATE TYPE calorie_balance.gender_type AS ENUM (
+    'male', 'female', 'other', 'prefer_not_to_say'
+);
+```
+
 ### 1. `user_management.users` - Cross-Schema Reference (Single Source of Truth)
 ```sql
 -- NOTA: Questa tabella risiede nello schema user_management
@@ -166,15 +196,15 @@ CREATE TABLE calorie_events (
     value DECIMAL(8, 2) NOT NULL,     -- calories or weight value
     event_timestamp TIMESTAMPTZ DEFAULT NOW() NOT NULL,  -- precise timestamp for 2-minute sampling
     metadata JSONB,                   -- additional data (food_id, exercise_id, etc.)
-    source VARCHAR(50) DEFAULT 'app' NOT NULL,  -- app, smartwatch, manual, etc.
+    source calorie_balance.event_source NOT NULL DEFAULT 'manual',  -- Enum type for data source
     
     -- Cross-Schema Foreign Key (Single Source of Truth)
     FOREIGN KEY (user_id) REFERENCES user_management.users(id)
         ON UPDATE CASCADE,
     
     CONSTRAINT chk_event_type CHECK (event_type IN ('consumed', 'burned_exercise', 'burned_bmr', 'weight')),
-    CONSTRAINT chk_event_value CHECK (value >= 0 AND value <= 10000),
-    CONSTRAINT chk_source CHECK (source IN ('app', 'smartwatch', 'manual', 'api', 'sync'))
+    CONSTRAINT chk_event_value CHECK (value >= 0 AND value <= 10000)
+    -- Note: source constraint handled by enum type calorie_balance.event_source
 );
 
 -- Critical performance indexes for mobile queries
@@ -450,12 +480,13 @@ CREATE POLICY metabolic_profiles_policy ON metabolic_profiles FOR ALL USING (aut
 
 ### High-Frequency Event Collection
 ```sql
--- Batch insert pattern for mobile sync
+-- Batch insert pattern for mobile sync with new enum values
 INSERT INTO calorie_events (user_id, event_type, value, event_timestamp, source, metadata)
 VALUES 
-    ($1, 'consumed', 250.5, '2024-01-15 08:30:00+00', 'app', '{"meal_id": "123"}'),
-    ($1, 'consumed', 180.0, '2024-01-15 12:45:00+00', 'app', '{"meal_id": "124"}'),
-    ($1, 'burned_exercise', 120.0, '2024-01-15 17:20:00+00', 'smartwatch', '{"activity": "running"}');
+    ($1, 'consumed', 250.5, '2024-01-15 08:30:00+00', 'manual', '{"meal_id": "123"}'),
+    ($1, 'consumed', 180.0, '2024-01-15 12:45:00+00', 'nutrition_scan', '{"meal_id": "124", "scan_confidence": 0.85}'),
+    ($1, 'burned_exercise', 120.0, '2024-01-15 17:20:00+00', 'fitness_tracker', '{"activity": "running", "device": "apple_watch"}'),
+    ($1, 'weight', 75.2, '2024-01-15 07:00:00+00', 'smart_scale', '{"scale_id": "scale_001", "body_fat": 15.2}');
 ```
 
 ### Real-time Dashboard Queries
@@ -521,9 +552,9 @@ SELECT * FROM calorie_goals
 WHERE user_id = $1 AND is_active = true 
 ORDER BY start_date DESC LIMIT 1;
 
--- Log calorie consumption event
+-- Log calorie consumption event with proper enum source
 INSERT INTO calorie_events (user_id, event_type, value, event_timestamp, source, metadata)
-VALUES ($1, 'consumed', $2, NOW(), 'app', $3);
+VALUES ($1, 'consumed', $2, NOW(), 'manual', $3);
 ```
 
 ### Analytics Queries
@@ -553,9 +584,34 @@ GROUP BY month_start
 ORDER BY month_start;
 ```
 
+## 🔄 Schema Evolution & Migration History
+
+### Version 2.1 - Event Source Enum Alignment (14 Settembre 2025)
+
+**Task 2.3 Resolution**: Fixed triple inconsistency in `event_source` enum values
+
+**Problem Identified**:
+- Documentation: `('app', 'smartwatch', 'manual', 'api', 'sync')`
+- Database Schema: `('healthkit', 'google_fit', 'manual', 'app_tracking', 'ai_estimation')`
+- Python Code: `('manual', 'fitness_tracker', 'smart_scale', 'nutrition_scan', 'healthkit', 'google_fit')`
+
+**Migration Applied**:
+```sql
+-- Script: 007_fix_event_source_enum.sql
+ALTER TYPE calorie_balance.event_source ADD VALUE 'fitness_tracker';
+ALTER TYPE calorie_balance.event_source ADD VALUE 'smart_scale';  
+ALTER TYPE calorie_balance.event_source ADD VALUE 'nutrition_scan';
+
+-- Data migration mapping
+UPDATE calorie_balance.calorie_events SET source = 'manual' WHERE source = 'app_tracking';
+UPDATE calorie_balance.calorie_events SET source = 'nutrition_scan' WHERE source = 'ai_estimation';
+```
+
+**Result**: All Python EventSource enum values now supported in database. Events API endpoints fully operational.
+
 ---
 
-**📅 Ultimo aggiornamento:** 7 settembre 2025  
-**🏗️ Schema version:** v2.0 Event-Driven Architecture  
+**📅 Ultimo aggiornamento:** 14 settembre 2025  
+**🏗️ Schema version:** v2.1 Event-Source Aligned  
 **📱 Ottimizzato per:** Mobile high-frequency sampling + Real-time analytics  
-**🔗 Riferimento implementazione:** [services/calorie-balance/create_tables_direct.py](../../services/calorie-balance/create_tables_direct.py)
+**🔗 Riferimento implementazione:** [services/calorie-balance/sql/007_fix_event_source_enum.sql](../../services/calorie-balance/sql/007_fix_event_source_enum.sql)

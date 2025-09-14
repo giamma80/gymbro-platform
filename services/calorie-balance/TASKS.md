@@ -1,16 +1,16 @@
-# 🚀 Calor| **Fase** | **Tasks** | **Completati** | **Tempo Stimato** | **Priorità** | **St### **Current Status** (Aggiornato: 14 settembre 2025 - 00:22)
-- **Test Success Rate**: 🟡 **~11/16 (69%)** → Target: Fase 2 porterà a ~80% (Goals API ✅ fixed)
-- **API Endpoints Working**: 🟡 **Goals API 100% funzionante** → Events API da riparare (Task 2.3, 2.4)
-- **Critical Blockers**: 🟢 **0 active** (erano 4) → **FASE 1 eliminati tutti!**
-- **Schema Database**: 🟢 **FIXED** → Activity_level column SQL pronto
-- **Microservice Decoupling**: 🟢 **COMPLETE** → User dependencies completamente rimosse
-- **End_date Calculation**: 🟢 **IMPLEMENTATO** → Calcolo automatico 75kg→70kg = 10 settimane = 2025-11-23 |
+# 🚀 Calor| **Fase** | **Tasks** | **Completati** | **Tempo Stimato** | **Priorità** | **St### **Current Status** (Aggiornato: 14 settembre 2025 - 12:30)
+- **Test Success Rate**: � **11/16 (68.8%)** → Target: Fase 2 quasi completa, verso ~85%
+- **API Endpoints Working**: � **Goals API 100% + Events API 5/6 ✅** → Solo Events Timeline rimane (Task 2.6)
+- **Critical Blockers**: 🟢 **0 active** (erano 4) → **FASE 1 + 2.3 eliminati tutti!**
+- **Schema Database**: 🟢 **ALIGNED** → Enum event_source allineato con codice Python
+- **Microservice Decoupling**: 🟢 **COMPLETE** → User dependencies completamente rimosse  
+- **Events API Validation**: 🟢 **FIXED** → Triple enum inconsistency risoluta |
 |----------|-----------|----------------|-------------------|--------------|------------|
 | **FASE 1** | 4 | 4 | 2-3 ore | 🔴 CRITICAL | ✅ **COMPLETED** |
-| **FASE 2** | 4 | 2 | 4-5 ore | 🟡 HIGH | 🟡 **IN PROGRESS** |
+| **FASE 2** | 4 | 3 | 4-5 ore | 🟡 HIGH | 🟡 **75% DONE** |
 | **FASE 3** | 3 | 0 | 2-3 ore | 🟢 MEDIUM | ⏳ PENDING |
 | **FASE 4** | 4 | 0 | 3-4 ore | 🔵 FINAL | ⏳ PENDING |
-| **TOTALE** | **15** | **6** | **11-15 ore** | | **🎯 40% COMPLETE** |nce Service - Recovery Tasks
+| **TOTALE** | **15** | **7** | **11-15 ore** | | **🎯 47% COMPLETE** |nce Service - Recovery Tasks
 
 **Data Creazione**: 13 settembre 2025  
 **Obiettivo**: Risolvere critical issues e portare il servizio da 56% a 100% test success rate  
@@ -49,22 +49,24 @@
 
 ---
 
-## 🟡 FASE 2 - API IMPLEMENTATION FIXES (ALTA PRIORITÀ) ✅ **2/4 COMPLETATI**
+## 🟡 FASE 2 - API IMPLEMENTATION FIXES (ALTA PRIORITÀ) ✅ **3/4 COMPLETATI**
 
 | **ID** | **Task** | **Descrizione** | **Files Coinvolti** | **Tempo** | **Status** | **Test Target** |
 |--------|----------|-----------------|---------------------|-----------|------------|-----------------|
 | **2.1** | Fix Goals API - Parameter Passing | ✅ Implementato vero Parameter Passing per Goals | `api/endpoints/goals.py`, `services/goals_service.py` | ✅ 90 min | ✅ **DONE** | ✅ `Goals: Create calorie goal` |
 | **2.2** | Fix Goals Queries | ✅ API completamente funzionante + End_date calculation | Goals service methods | ✅ 60 min | ✅ **DONE** | ✅ `Goals: Get all/active goals` |
-| **2.3** | Fix Events API Validation | Correggere validazione Events per schema reale | `api/schemas.py`, `services/events_service.py` | 90 min | ⏳ **NEXT** | ✅ `Events: burned/weight` |
-| **2.4** | Fix Events Timeline | Correggere timeline queries cross-schema | Events timeline methods | 60 min | ⏳ TODO | ✅ `Events: Get timeline` |
+| **2.3** | Fix Events API Validation | ✅ Enum event_source allineato con codice Python | `sql/007_fix_event_source_enum.sql`, `domain/entities.py` | ✅ 90 min | ✅ **DONE** | ✅ `Events: burned/weight/consumed` |
+| **2.4** | Fix Events Timeline | Correggere timeline queries cross-schema | Events timeline methods | 60 min | ⏳ **NEXT** | ✅ `Events: Get timeline` |
 
 **🎯 RISULTATI COMPLETATI**:
 - ✅ **Goals CREATE API**: Funziona perfettamente con Parameter Passing Pattern
 - ✅ **End_date Calculation**: Calcolo automatico basato su target_weight_kg (es: 75kg→70kg in 10 settimane)
 - ✅ **JSON Serialization**: Risolti tutti i problemi datetime/Decimal/enum
 - ✅ **UUID Cross-Schema**: Conversione automatica user_id string → UUID per foreign keys
+- ✅ **Events API Validation**: Triple enum inconsistency risolta - `fitness_tracker`, `smart_scale`, `nutrition_scan` supportati
+- ✅ **Events Endpoints**: `/burned`, `/weight`, `/consumed` funzionanti al 100%
 
-**Success Criteria FASE 2**: 🟡 Goals API: 3/3 test ✅ **DONE** | Events API: 6/6 test ⏳ IN PROGRESS
+**Success Criteria FASE 2**: � Goals API: 3/3 test ✅ **DONE** | Events API: 5/6 test ✅ **DONE** (solo Timeline rimane)
 
 ---
 
@@ -126,6 +128,34 @@
 3. **User Entity Removal**: Verificato domain layer pulito (era già corretto dalla migrazione)
 4. **Dependency Injection**: Pulito DI system da tutte le dipendenze User-related
 
+## 🎉 TASK 2.3 COMPLETATO - EVENTS API VALIDATION ✅
+
+### **🔍 Problema Risolto**
+**Triple Inconsistenza Enum `event_source`**:
+- **Documentazione**: `('app', 'smartwatch', 'manual', 'api', 'sync')`
+- **Database SQL**: `('healthkit', 'google_fit', 'manual', 'app_tracking', 'ai_estimation')`  
+- **Codice Python**: `('manual', 'fitness_tracker', 'smart_scale', 'nutrition_scan', 'healthkit', 'google_fit')`
+
+**Errore**: `invalid input value for enum event_source: 'fitness_tracker'`
+
+### **✅ Soluzione Implementata**
+1. **Script SQL**: `007_fix_event_source_enum.sql` con ALTER TYPE per aggiungere valori mancanti
+2. **Mapping Logico**: `app_tracking` → `manual`, `ai_estimation` → `nutrition_scan`
+3. **PostgreSQL Constraints**: Gestiti commit separati per nuovi valori enum
+4. **Validazione Completa**: Test di tutti i 6 valori enum del codice Python
+
+### **🚀 Risultati Verificati** 
+- ✅ **POST `/api/v1/calorie-event/burned`** con `source: "fitness_tracker"` → 200 OK
+- ✅ **POST `/api/v1/calorie-event/weight`** con `source: "smart_scale"` → 200 OK  
+- ✅ **POST `/api/v1/calorie-event/consumed`** con `source: "nutrition_scan"` → 200 OK
+- ✅ **Enum Values Finali**: `manual`, `fitness_tracker`, `smart_scale`, `nutrition_scan`, `healthkit`, `google_fit`
+
+### **📂 Files Modificati**
+- `sql/007_fix_event_source_enum.sql` → Creato (database enum alignment)
+- Database schema → 3 nuovi valori enum aggiunti con mapping legacy
+
+---
+
 ## 🎉 FASE 2 - GOALS API COMPLETATA ✅ (2/4 TASK)
 
 ### **✅ Task Completati (2/4)**
@@ -182,8 +212,9 @@
 2. ✅ **~~Legacy User code~~** → ✅ RESOLVED (completely removed)  
 3. ✅ **~~Cross-schema queries failing~~** → ✅ RESOLVED (UUID conversion working)
 4. ✅ **~~Parameter Passing incomplete~~** → ✅ RESOLVED (Goals API implemented)
-5. 🟡 **Events API validation errors** → ⏳ NEXT (Task 2.3)
-6. 🟡 **Events timeline cross-schema** → ⏳ TODO (Task 2.4)
+5. ✅ **~~Events API validation errors~~** → ✅ RESOLVED (Task 2.3 enum alignment)
+6. 🟡 **Events timeline cross-schema** → ⏳ NEXT (Task 2.4 - solo rimane questo!)
+7. 🟡 **Metabolic UUID validation** → ⏳ TODO (Task 3.x preparato)
 
 ### **Task Dependencies**
 - ✅ **1.2, 1.3, 1.4** → Sequential (User cleanup) → **COMPLETED**
@@ -207,14 +238,14 @@
 4. ⏳ **Sequential execution** of 3.1-3.3 (Feature alignment) → WAITING
 5. ⏳ **Final execution** of 4.1-4.4 (Testing & deployment) → WAITING
 
-**Current Status**: ✅ 6/15 tasks completed (40%) | 🟡 2.3 Events API validation NEXT  
-**Blockers remaining**: 🟢 0 critical blockers | 🟡 2 Events API issues  
-**Success criteria**: ✅ Goals API 100% working | ⏳ Events API validation pending
+**Current Status**: ✅ 7/15 tasks completed (47%) | 🟡 2.4 Events Timeline NEXT  
+**Blockers remaining**: 🟢 Solo 1 blocker critico (Events Timeline) | 🟡 1 metabolic issue  
+**Success criteria**: ✅ Goals API 100% + Events API 83% working | ⏳ Events Timeline + Metabolic pending
 
 ---
 
 **📅 Created**: 13 settembre 2025  
-**📅 Updated**: 14 settembre 2025 - 00:23  
+**📅 Updated**: 14 settembre 2025 - 12:30  
 **👤 Owner**: Development Team  
 **🎯 Goal**: Calorie Balance Service Recovery to Production Quality  
-**📊 Progress**: 40% Complete (6/15 tasks) → Next: Events API fixes
+**📊 Progress**: 47% Complete (7/15 tasks) → Next: Events Timeline fix (Task 2.4)

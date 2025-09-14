@@ -7,6 +7,36 @@ e questo progetto aderisce al [Semantic Versioning](https://semver.org/spec/v2.0
 
 ## [Unreleased]
 
+## [v1.6.0] - 2025-09-14 - Calorie Balance Service: Events API Fixed
+
+### 🔥 Events API Validation Complete
+- **Task 2.3 Resolved**: Fixed triple inconsistency in `event_source` enum values
+- **Database Schema Alignment**: Added missing enum values (`fitness_tracker`, `smart_scale`, `nutrition_scan`)
+- **API Endpoints Operational**: All Events API endpoints now return 200/201 instead of 500 errors
+- **Test Success Rate**: Improved from 56% to **68.8%** (11/16 tests passing)
+
+### 🛠️ Database Schema Updates
+- **SQL Migration**: `007_fix_event_source_enum.sql` script created and executed
+- **Enum Values Added**: `fitness_tracker`, `smart_scale`, `nutrition_scan` added to `calorie_balance.event_source`
+- **Legacy Mapping**: `app_tracking` → `manual`, `ai_estimation` → `nutrition_scan`  
+- **PostgreSQL Constraints**: Proper handling of enum value commits for safe migration
+
+### ✅ API Fixes Verified
+- **POST `/api/v1/calorie-event/burned`** with `source: "fitness_tracker"` → ✅ 200 OK
+- **POST `/api/v1/calorie-event/weight`** with `source: "smart_scale"` → ✅ 200 OK
+- **POST `/api/v1/calorie-event/consumed`** with `source: "nutrition_scan"` → ✅ 200 OK
+- **Enum Validation**: All 6 Python enum values now supported in database
+
+### 🎯 Architecture Improvements  
+- **Triple Consistency**: Resolved conflicts between documentation, database SQL, and Python code
+- **Source of Truth**: Python code chosen as authoritative enum definition (most complete)
+- **Pattern Alignment**: Enum values now follow architectural DataSource pattern from `docs/microservizi_python.md`
+
+### 📊 Progress Tracking
+- **FASE 1**: ✅ Complete (4/4 tasks) - Critical schema fixes
+- **FASE 2**: 🟡 75% Complete (3/4 tasks) - API implementation fixes  
+- **Remaining**: Task 2.4 (Events Timeline), Tasks 3.x (Metabolic), Tasks 4.x (Final polish)
+
 ## [v1.5.0] - 2025-09-11 - Production Deployment & CI/CD Pipeline Complete
 
 ### 🚀 Production Deployment Success

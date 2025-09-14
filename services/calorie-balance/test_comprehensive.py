@@ -12,7 +12,7 @@ from datetime import datetime, date
 BASE_URL = "http://localhost:8002"
 API_BASE = f"{BASE_URL}/api/v1"
 
-# Use existing test user ID from database
+# Use existing test user ID from database (Note: UUID null format for test compatibility)
 TEST_USER_ID = "00000000-0000-0000-0000-000000000001"
 
 

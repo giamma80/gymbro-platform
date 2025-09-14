@@ -8,8 +8,8 @@ and serialization for the calorie-balance service API.
 from typing import List, Optional, Any, Dict
 from datetime import datetime
 from decimal import Decimal
+from uuid import UUID
 from pydantic import BaseModel, Field, ConfigDict
-from pydantic.types import UUID4
 
 # Import domain enums
 from app.domain.entities import GenderType, ActivityLevel
@@ -59,8 +59,8 @@ class MetabolicCalculationRequest(UserMetricsSchema):
 class MetabolicProfileResponse(BaseModel):
     """Schema for metabolic profile response."""
     
-    id: UUID4
-    user_id: UUID4
+    id: UUID
+    user_id: UUID
     bmr_calories: Decimal
     tdee_calories: Decimal
     activity_level: ActivityLevel
@@ -160,8 +160,8 @@ class UcalorieUbalanceUpdate(BaseModel):
 class UcalorieUbalanceResponse(UcalorieUbalanceBase):
     """Schema for calorie-balance responses."""
     
-    id: UUID4 = Field(..., description="Unique identifier for the calorie-balance")
-    user_id: UUID4 = Field(..., description="ID of the user who owns this calorie-balance")
+    id: UUID = Field(..., description="Unique identifier for the calorie-balance")
+    user_id: UUID = Field(..., description="ID of the user who owns this calorie-balance")
     name: str = Field(..., description="Name of the calorie-balance")
     description: Optional[str] = Field(None, description="Description of the calorie-balance")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")

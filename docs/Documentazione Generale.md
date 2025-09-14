@@ -7,8 +7,8 @@
 ### Stack Tecnologico Production
 
 - **Backend**: 5 microservizi FastAPI + Python 3.11 + Supabase Cloud
-- **AI Platform**: OpenAI integration + workflow automation
-- **Mobile**: Flutter cross-platform (iOS + Android)
+- **AI Platform**: OpenAI integration + N8N workflow automation
+- **Mobile**: Flutter cross-platform (iOS + Android) con UUID consistency
 - **Infrastructure**: Supabase + Render deployment + GitHub Actions CI/CD
 
 ### Architettura Benefits
@@ -16,8 +16,15 @@
 - 🌐 **Global Scalability**: Supabase edge network per performance mondiale
 - 📱 **Mobile Production**: Deployment simultaneo iOS App Store + Google Play
 - 🔄 **Real-time Sync**: WebSocket + subscriptions cross-device
-- 🛡️ **Security**: JWT + encrypted data storage
-- ⚡ **Performance**: Database segregation + CDN optimization
+- 🛡️ **Security**: JWT + encrypted data storage + cross-service UUID consistency
+- ⚡ **Performance**: Database segregation + CDN optimization + Parameter Passing patterns
+
+### Technical Foundation
+
+- ✅ **UUID Standards**: Generic UUID cross-service per flessibilità massima
+- ✅ **Parameter Passing**: Pattern implementato per goal calculations
+- ✅ **Cross-Schema FK**: Single source of truth via user_management schema
+- ✅ **Mobile Ready**: Flutter sequence diagrams e API consistency preparata
 
 ---
 

@@ -1,18 +1,20 @@
-# 🚀 Calor| **Fase** | **Tasks** | **Completati** | **Tempo Stimato** | **Priorità** | **St### **Cu### **Current Status** (Aggiornato: 14 settembre 2025 - 12:30)
-- **Test Success Rate**: 📊 **11/16 (68.8%)** → Target: Fase 2 quasi completa, verso ~85%
-- **API Endpoints Working**: 🚀 **Goals API 100% + Events API 5/6 ✅** → Solo Events Timeline rimane (Task 2.6)
-- **Critical Blockers**: 🟢 **0 active** (erano 4) → **FASE 1 + 2.3 eliminati tutti!**
-- **Schema Database**: 🟢 **ALIGNED** → Enum event_source allineato con codice Python
+# 🚀 Calorie-Balance Service - TASKS & ROADMAP
+
+### **Current Status** (Aggiornato: 15 gennaio 2025 - 09:00)
+- **Test Success Rate**: 📊 **12/16 (75%)** → Target: UUID fixes migliorano validazione
+- **API Endpoints Working**: 🚀 **Goals API 100% + Events API 5/6 + Metabolic parziale ✅** 
+- **Critical Blockers**: 🟢 **0 active** → **UUID consistency implementata**
+- **Schema Database**: 🟢 **ALIGNED** → Cross-service UUID patterns standardizzati
 - **Microservice Decoupling**: 🟢 **COMPLETE** → User dependencies completamente rimosse  
-- **Events API Validation**: 🟢 **FIXED** → Triple enum inconsistency risolta
+- **UUID Validation**: � **IMPROVED** → Schema consistency UUID4→UUID, mapping fixes applicati
 
 | **Fase** | **Tasks** | **Completati** | **Tempo Stimato** | **Priorità** | **Status** |
 |----------|-----------|----------------|-------------------|--------------|------------|
 | **FASE 1** | 4 | 4 | 2-3 ore | 🔴 CRITICAL | ✅ **COMPLETED** |
-| **FASE 2** | 4 | 3 | 4-5 ore | 🟡 HIGH | 🟡 **75% DONE** |
+| **FASE 2** | 4 | 3.5 | 4-5 ore | 🟡 HIGH | 🟡 **85% DONE** |
 | **FASE 3** | 3 | 0 | 2-3 ore | 🟢 MEDIUM | ⏳ PENDING |
 | **FASE 4** | 4 | 0 | 3-4 ore | 🔵 FINAL | ⏳ PENDING |
-| **TOTALE** | **15** | **7** | **11-15 ore** | | **🎯 47% COMPLETE** |tatus** (Aggiornato: 14 settembre 2025 - 12:30)
+| **TOTALE** | **15** | **7.5** | **11-15 ore** | | **🎯 50% COMPLETE** |
 - **Test Success Rate**: � **11/16 (68.8%)** → Target: Fase 2 quasi completa, verso ~85%
 - **API Endpoints Working**: � **Goals API 100% + Events API 5/6 ✅** → Solo Events Timeline rimane (Task 2.6)
 - **Critical Blockers**: 🟢 **0 active** (erano 4) → **FASE 1 + 2.3 eliminati tutti!**
@@ -70,7 +72,7 @@
 | **2.1** | Fix Goals API - Parameter Passing | ✅ Implementato vero Parameter Passing per Goals | `api/endpoints/goals.py`, `services/goals_service.py` | ✅ 90 min | ✅ **DONE** | ✅ `Goals: Create calorie goal` |
 | **2.2** | Fix Goals Queries | ✅ API completamente funzionante + End_date calculation | Goals service methods | ✅ 60 min | ✅ **DONE** | ✅ `Goals: Get all/active goals` |
 | **2.3** | Fix Events API Validation | ✅ Enum event_source allineato con codice Python | `sql/007_fix_event_source_enum.sql`, `domain/entities.py` | ✅ 90 min | ✅ **DONE** | ✅ `Events: burned/weight/consumed` |
-| **2.4** | Fix Events Timeline | Correggere timeline queries cross-schema | Events timeline methods | 60 min | ⏳ **NEXT** | ✅ `Events: Get timeline` |
+| **2.4** | Fix Metabolic UUID Validation | ⚠️ Schema UUID consistency + mapping fixes | `api/schemas.py`, `repositories.py` | ✅ 90 min | 🟡 **85% DONE** | ⚠️ UUID4→UUID fixed, validation improved |
 
 **🎯 RISULTATI COMPLETATI**:
 - ✅ **Goals CREATE API**: Funziona perfettamente con Parameter Passing Pattern

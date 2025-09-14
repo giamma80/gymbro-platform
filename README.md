@@ -1,10 +1,6 @@
 # 🏋️ NutriFit Platform
 
-> **Piattaforma f### 📚 Docs Principali
-- **[🏗️ Architettura](docs/architettura.md)** - Microservizi, sequence diagrams, pattern
-- **[🐍 Microservizi Python](docs/microservizi_python.md)** - FastAPI patterns, DDD, tech stack dettagliato
-- **[📋 Docs Generale](docs/Documentazione%20Generale.md)** - Business strategy, use cases
-- **[🗄️ Database](docs/databases/)** - Schema, ER diagrams, migrationsss-nutrizionale con AI per il bilanciamento calorico intelligente**
+> **Piattaforma fitness-nutrizionale con AI per il bilanciamento calorico intelligente**
 
 ## 🎯 Overview
 
@@ -26,27 +22,12 @@
 4. **Health Monitor** - Sync dati salute e quality scoring
 5. **Notifications** - Notifiche smart e coaching
 
-**Frontend**: Flutter cross-platform
-
-> 📋 **Dettagli completi**: [Microservizi Python Guide](docs/microservizi_python.md) - FastAPI patterns, DDD, tech stack per ogni servizio
-
-## 📖 Documentazione
-
-### 🚀 Quick Start
-```bash
-git clone https://github.com/giamma80/gymbro-platform.git
-cd gymbro-platform
-
-# Setup ambiente completo
-make setup-dev
-
-# Start all services
-make dev-up
-```
+**Frontend**: Flutter cross-platform con UUID cross-service consistency
 
 ### 📚 Docs Principali
 - **[🏗️ Architettura](docs/architettura.md)** - Microservizi, sequence diagrams, pattern
-- **[� Docs Generale](docs/Documentazione%20Generale.md)** - Business strategy, use cases
+- **[🐍 Microservizi Python](docs/microservizi_python.md)** - FastAPI patterns, DDD, tech stack dettagliato
+- **[📋 Docs Generale](docs/Documentazione%20Generale.md)** - Business strategy, use cases
 - **[🗄️ Database](docs/databases/)** - Schema, ER diagrams, migrations
 
 ### 🎯 Development
@@ -63,10 +44,17 @@ Ogni microservizio segue **Domain-Driven Design** con FastAPI + Repository patte
 
 ### Development Progress
 - **User Management**: 🟢 **PRODUCTION** - [Live Service](https://nutrifit-user-management.onrender.com) (100% tests)
-- **Calorie Balance**: 🟡 **DEVELOPMENT** - 68.8% test success, Events API operational
+- **Calorie Balance**: 🟡 **DEVELOPMENT** - 75% test success, UUID validation fixed
 - **Meal Tracking**: ⏳ **PLANNED** - Food recognition + AI integration
 - **Health Monitor**: ⏳ **PLANNED** - HealthKit/Health Connect sync  
-- **Mobile App**: ⏳ **PLANNED** - Flutter cross-platform
+- **Mobile App**: ⏳ **PLANNED** - Flutter cross-platform with UUID standards
+
+### Technical Achievements
+- ✅ UUID cross-service consistency established
+- ✅ Parameter Passing pattern implemented
+- ✅ Events API validation complete
+- 🔧 Metabolic profile validation improved
+- 📱 Mobile client architecture prepared
 
 ### Next Milestones
 - **Q4 2024**: Calorie Balance completion (90%+ tests), Mobile app MVP

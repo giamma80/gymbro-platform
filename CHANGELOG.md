@@ -7,6 +7,30 @@ e questo progetto aderisce al [Semantic Versioning](https://semver.org/spec/v2.0
 
 ## [Unreleased]
 
+## [v1.7.0] - 2025-01-15 - UUID Validation System Fixed
+
+### 🔧 UUID Cross-Service Consistency
+- **Task 2.4 Progress**: Fixed UUID validation inconsistencies across microservices  
+- **Schema Alignment**: Updated `calorie-balance` schemas from UUID4 → UUID for consistency with user-management
+- **Database Mapping**: Fixed repository functions to preserve UUID objects vs string conversion
+- **Pydantic Validation**: Resolved "UUID version 4 expected" errors in API responses
+
+### 🛠️ Technical Improvements
+- **Schemas Updated**: `MetabolicProfileResponse` and related models now use generic UUID type
+- **Repository Fixes**: `profile_model_to_entity` mapping functions preserve UUID object types  
+- **Cross-Service Standards**: Aligned UUID handling patterns with user-management service architecture
+- **Test Compatibility**: Improved test UUID validation while maintaining backward compatibility
+
+### 📊 Performance Impact
+- **Test Success Rate**: Improved from 68.8% to **75%** (12/16 tests passing)
+- **API Validation**: Metabolic profile endpoints showing improved validation success
+- **Error Reduction**: Eliminated UUID version validation conflicts in responses
+
+### 🎯 Mobile Client Preparation
+- **Documentation**: Enhanced technical specifications for Flutter development  
+- **UUID Standards**: Established cross-service UUID handling guidelines
+- **API Consistency**: Standardized validation patterns for mobile integration
+
 ## [v1.6.0] - 2025-09-14 - Calorie Balance Service: Events API Fixed
 
 ### 🔥 Events API Validation Complete

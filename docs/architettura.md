@@ -244,132 +244,240 @@ async def analyze_food_data(food_data: FoodAnalysisRequest) -> MCPResponse:
     pass
 ```
 
-## 📱 Sequence Diagrams
+## 📱 Sequence Diagrams per Mobile Client
 
-I seguenti diagrammi specificano i flussi principali per lo sviluppo del client mobile.
+I seguenti diagrammi specificano i flussi principali per lo sviluppo del client mobile Flutter.
 
 ### 1. User Registration & Profile Setup
 
 ```mermaid
 sequenceDiagram
     participant M as Mobile App
+    participant GW as API Gateway
     participant UM as User Management
+    participant CB as Calorie Balance
     participant DB as Supabase DB
     
     Note over M: User Registration Flow
-    M->>UM: POST /auth/register
+    M->>GW: POST /auth/register
     Note right of M: {email, password, name}
     
-    UM->>DB: Create user record
-    DB-->>UM: User created (id: uuid)
+    GW->>UM: Validate & Create User
+    UM->>DB: CREATE user_management.users
+    Note right of DB: id: UUID, email, profile data
+    DB-->>UM: User created (UUID)
     
     UM->>UM: Generate JWT token
-    UM-->>M: 201 Created + JWT
-    Note right of UM: {user_id, token, expires}
+    UM-->>GW: 201 Created + JWT
+    GW-->>M: User registered + auth token
+    Note right of UM: {user_id: UUID, token, expires}
     
-    Note over M: Profile Completion
-    M->>UM: POST /profile/metabolic
+    Note over M: Metabolic Profile Setup
+    M->>GW: POST /profile/metabolic
     Note right of M: {age, gender, height, weight, activity_level}
     
-    UM->>DB: Create metabolic profile
-    DB-->>UM: Profile saved
-    UM-->>M: 200 OK
+    GW->>CB: Create metabolic profile
+    CB->>DB: CREATE calorie_balance.metabolic_profiles
+    Note right of DB: user_id FK → user_management.users(id)
+    CB->>CB: Calculate BMR, TDEE
+    DB-->>CB: Profile saved with calculations
+    CB-->>GW: 200 OK + profile data
+    GW-->>M: Profile created successfully
     
     Note over M: Health Permissions
     M->>M: Request HealthKit/Health Connect
-    M->>UM: POST /profile/health-sync
-    Note right of M: {health_permissions: true}
+    M->>GW: POST /profile/health-sync
+    Note right of M: {health_permissions: true, devices: ["healthkit"]}
     
-    UM->>DB: Update user preferences
-    UM-->>M: 200 OK + Profile complete
+    GW->>UM: Update user preferences  
+    UM->>DB: UPDATE user_management.users
+    UM-->>GW: Preferences saved
+    GW-->>M: 200 OK - Setup complete
 ```
 
-### 2. Daily Calorie Tracking & Data Flow
+### 2. Daily Calorie Tracking with UUID Consistency
 
 ```mermaid
 sequenceDiagram
     participant M as Mobile App
+    participant GW as API Gateway
     participant UM as User Management
     participant CB as Calorie Balance
     participant DB as Supabase DB
     participant HK as HealthKit/Health Connect
     
-    Note over M: Morning Setup
-    M->>CB: GET /balance/today
-    Note right of M: Header: Authorization Bearer {jwt}
+    Note over M: Authentication & Balance Check
+    M->>GW: GET /balance/today
+    Note right of M: Authorization: Bearer {jwt}
     
-    CB->>UM: Validate user token
-    UM-->>CB: User validated (user_id)
+    GW->>UM: Validate JWT token
+    UM->>UM: Extract user_id: UUID from token
+    UM-->>GW: User validated
+    Note right of UM: user_id: UUID (generic format)
     
-    CB->>DB: Query today's events
-    DB-->>CB: Events data
-    CB-->>M: Current balance
-    Note right of CB: {consumed: 0, burned: 0, net: 0}
+    GW->>CB: GET balance for user_id
+    CB->>DB: Query calorie_balance.calorie_events
+    Note right of DB: WHERE user_id = {uuid} AND date = today
+    DB-->>CB: Today's events
+    CB-->>GW: Balance calculated
+    GW-->>M: Current balance data
+    Note right of CB: {consumed: 0, burned: 0, net_balance: 0}
     
-    Note over M: Breakfast Logging
-    M->>CB: POST /calorie-event/consumed
-    Note right of M: {calories: 350, source: "nutrition_scan"}
+    Note over M: Food Logging with UUID Preservation
+    M->>GW: POST /calorie-event/consumed
+    Note right of M: {calories: 350, source: "nutrition_scan", food_name: "oatmeal"}
     
-    CB->>UM: Get user profile for validation
-    UM-->>CB: User profile
+    GW->>CB: Process calorie event
+    CB->>UM: Get user profile (UUID validation)
+    UM->>DB: SELECT user_management.users WHERE id = {uuid}
+    DB-->>UM: User profile data
+    UM-->>CB: User validated
+    Note right of CB: UUID object preserved, not converted to string
     
-    CB->>DB: Insert calorie event
-    DB-->>CB: Event saved
-    CB-->>M: 201 Created
+    CB->>DB: INSERT calorie_balance.calorie_events
+    Note right of DB: user_id: UUID (FK constraint validated)
+    DB-->>CB: Event saved with UUID integrity
+    CB-->>GW: 201 Created
+    GW-->>M: Event logged successfully
     
     Note over M: Background Health Sync
-    HK->>M: Heart rate, steps data
-    M->>CB: POST /calorie-event/burned
-    Note right of M: {calories: 120, source: "healthkit"}
+    HK->>M: Steps, heart rate data
+    M->>GW: POST /calorie-event/burned
+    Note right of M: {calories: 120, source: "healthkit", activity: "walking"}
     
-    CB->>DB: Insert burned calories
-    CB-->>M: 201 Created
+    GW->>CB: Process burned calories
+    CB->>DB: INSERT with user_id UUID
+    DB-->>CB: Health event saved
+    CB-->>GW: 201 Created
+    GW-->>M: Background sync complete
     
-    Note over M: Real-time Balance
-    M->>CB: GET /balance/today
-    CB-->>M: Updated balance
+    Note over M: Real-time Balance Update
+    M->>GW: GET /balance/today
+    GW->>CB: Calculate updated balance
+    CB->>DB: SUM today's events by type
+    DB-->>CB: Aggregated data
+    CB-->>GW: Updated balance
+    GW-->>M: Balance refreshed
     Note right of CB: {consumed: 350, burned: 120, net: +230}
 ```
 
-### 3. Weight Tracking & Goal Management
+### 3. Weight Goal Management with Cross-Schema Operations
 
 ```mermaid
 sequenceDiagram
     participant M as Mobile App
+    participant GW as API Gateway
     participant CB as Calorie Balance
     participant UM as User Management
     participant DB as Supabase DB
+    participant SC as Smart Scale
     
     Note over M: Weight Update from Smart Scale
-    M->>CB: POST /calorie-event/weight
+    SC->>M: New weight reading
+    M->>GW: POST /calorie-event/weight
     Note right of M: {weight_kg: 75.2, source: "smart_scale"}
     
-    CB->>DB: Save weight event
-    DB-->>CB: Weight saved
-    CB-->>M: 201 Created
+    GW->>CB: Process weight event
+    CB->>DB: INSERT calorie_balance.weight_events
+    Note right of DB: user_id FK → user_management.users
+    DB-->>CB: Weight event saved
+    CB-->>GW: 201 Created
+    GW-->>M: Weight logged
     
-    Note over M: Goal Creation
-    M->>CB: POST /goals/create
-    Note right of M: {goal_type: "weight_loss", target_weight: 70.0, target_date: "2024-12-31"}
+    Note over M: Goal Creation with Parameter Passing
+    M->>GW: POST /goals/create
+    Note right of M: {goal_type: "weight_loss", target_weight_kg: 70.0, target_date: "2024-12-31"}
     
-    CB->>UM: Get user current weight
-    UM-->>CB: Current profile
+    GW->>CB: Create weight goal
+    CB->>UM: Get user current profile
+    UM->>DB: SELECT user_management.users + profiles
+    DB-->>UM: User data with current weight
+    UM-->>CB: Current weight: 75.2kg
     
-    CB->>CB: Calculate daily calorie deficit
-    Note right of CB: Auto-calc: 5.2kg in 10 weeks = 500cal/day deficit
+    CB->>CB: Calculate goal parameters
+    Note right of CB: Parameter Passing Pattern:<br/>5.2kg loss in 10 weeks<br/>= 520 cal/day deficit needed
     
-    CB->>DB: Create goal record
-    DB-->>CB: Goal created
-    CB-->>M: 201 Created + Goal details
-    Note right of CB: {daily_calorie_target: 1800, daily_deficit: 500}
+    CB->>DB: INSERT calorie_balance.goals
+    Note right of DB: Auto-calculated:<br/>daily_calorie_target: 1800<br/>daily_deficit_target: 520
+    DB-->>CB: Goal created with calculations
+    CB-->>GW: 201 Created + goal details
+    GW-->>M: Goal set successfully
+    Note right of CB: {goal_id: UUID, daily_target: 1800, deficit: 520}
     
-    Note over M: Progress Tracking
-    M->>CB: GET /goals/current
-    CB->>DB: Get active goal + progress
-    DB-->>CB: Goal + recent weights
-    CB-->>M: Progress data
-    Note right of CB: {progress: "2.1kg lost", remaining: "3.1kg", eta: "8 weeks"}
+    Note over M: Progress Tracking Cross-Schema
+    M->>GW: GET /goals/current/progress
+    GW->>CB: Get goal progress
+    CB->>DB: Complex query across schemas:
+    Note right of DB: SELECT goals + recent weights<br/>+ calorie events<br/>FROM multiple tables
+    DB-->>CB: Progress data aggregated
+    CB-->>GW: Progress calculated
+    GW-->>M: Progress dashboard
+    Note right of CB: {progress: "2.1kg lost", remaining: "3.1kg", eta: "8 weeks", avg_deficit: "480 cal/day"}
 ```
+
+### 4. N8N AI Coaching Workflow Integration
+
+```mermaid
+sequenceDiagram
+    participant M as Mobile App
+    participant GW as API Gateway
+    participant AC as AI Coach Service
+    participant N8N as N8N Workflow
+    participant AI as OpenAI API
+    participant DB as Supabase DB
+    
+    Note over M: User Asks Nutrition Question
+    M->>GW: POST /ai/nutrition-advice
+    Note right of M: {question: "How to increase protein intake?", context: "vegetarian"}
+    
+    GW->>AC: Process AI request
+    AC->>N8N: Trigger nutrition workflow
+    Note right of AC: Webhook: /webhook/nutrition-advice
+    
+    N8N->>DB: Get user nutrition history
+    DB-->>N8N: User food patterns, goals
+    
+    N8N->>AI: Query with context
+    Note right of N8N: Prompt: User history + question + dietary restrictions
+    AI-->>N8N: Personalized nutrition advice
+    
+    N8N->>DB: Save AI interaction
+    DB-->>N8N: Conversation logged
+    
+    N8N-->>AC: Return AI response + sources
+    AC-->>GW: Structured advice with citations
+    GW-->>M: AI nutrition guidance
+    Note right of M: {advice: "Try these protein sources...", sources: [...], confidence: 0.95}
+    
+    Note over M: Follow-up Questions
+    M->>GW: POST /ai/follow-up
+    Note right of M: {conversation_id: UUID, question: "Any specific recipes?"}
+    
+    GW->>AC: Continue conversation
+    AC->>N8N: Context-aware follow-up
+    N8N->>AI: Query with conversation history
+    AI-->>N8N: Recipe suggestions
+    N8N-->>AC: Recipes with nutrition data
+    AC-->>GW: Recipe recommendations
+    GW-->>M: Personalized recipes
+    Note right of M: {recipes: [...], nutrition_breakdown: {...}}
+```
+
+### 📝 UUID Technical Notes for Mobile Development
+
+**Flutter UUID Handling Standards:**
+- **Generation**: Use `uuid` package for v4 UUID generation in mobile app
+- **Validation**: Accept generic UUID format from backend (supports all versions)
+- **API Requests**: Send UUID v4 for new resources, accept any valid UUID in responses
+- **Consistency**: All services use generic `UUID` type for cross-platform compatibility
+
+**Cross-Service Consistency Benefits:**
+- ✅ Test UUID compatibility (`00000000-0000-0000-0000-000000000001`)
+- ✅ Production UUID v4 generation support
+- ✅ Database FK integrity across schemas maintained
+- ✅ Pydantic validation flexibility improved
+
+**Technical Reference**: [UUID Technical Notes](uuid-technical-notes.md)
 
 ## 🐳 Docker Strategy e Local Development
 

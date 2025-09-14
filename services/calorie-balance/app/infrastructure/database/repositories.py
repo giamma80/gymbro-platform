@@ -80,8 +80,8 @@ def balance_entity_to_model(entity: DailyBalance) -> DailyBalanceModel:
 def profile_model_to_entity(model: MetabolicProfileModel) -> MetabolicProfile:
     """Convert MetabolicProfileModel to MetabolicProfile entity"""
     return MetabolicProfile(
-        id=str(model.id) if model.id is not None else None,
-        user_id=str(model.user_id) if model.user_id is not None else None,
+        id=model.id,
+        user_id=model.user_id,
         bmr=model.bmr,
         tdee=model.tdee,
         calculated_at=model.calculated_at,

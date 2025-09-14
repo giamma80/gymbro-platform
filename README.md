@@ -1,65 +1,77 @@
 # 🏋️ NutriFit Platform
 
-> **Piattaforma fitness-nutrizionale enterprise con AI per il bilanciamento calorico intelligente e tracking nutrizionale precision-aware**
+> **Piattaforma f### 📚 Docs Principali
+- **[🏗️ Architettura](docs/architettura.md)** - Microservizi, sequence diagrams, pattern
+- **[🐍 Microservizi Python](docs/microservizi_python.md)** - FastAPI patterns, DDD, tech stack dettagliato
+- **[📋 Docs Generale](docs/Documentazione%20Generale.md)** - Business strategy, use cases
+- **[🗄️ Database](docs/databases/)** - Schema, ER diagrams, migrationsss-nutrizionale con AI per il bilanciamento calorico intelligente**
 
-## 🎯 Overview del Progetto
+## 🎯 Overview
 
-**NutriFit** è una piattaforma completa per il monitoraggio della salute e nutrizione, progettata per il mercato italiano con focus su precisione e integrazione AI. Combina un'architettura a microservizi Python con una mobile app Flutter cross-platform.
+**NutriFit** combina microservizi Python 3.11 + FastAPI con mobile app Flutter per un tracking nutrizionale preciso e intelligente.
 
-### ✨ Caratteristiche Principali
+### ✨ Features Core
 
-- 🔥 **Bilanciamento Calorico Intelligente** - Calcoli precision-aware con accuratezza ±20g
-- 🍎 **Food Recognition AI** - Riconoscimento alimenti tramite GPT-4V e OpenFoodFacts
-- 📊 **Health Data Integration** - Sync automatico con HealthKit/Health Connect
-- 🤖 **AI Nutrition Coach** - Coaching personalizzato via RAG system
-- 📱 **Mobile Cross-Platform** - App Flutter per iOS e Android simultaneo
-- 🏗️ **Architettura Enterprise** - 5 microservizi Python con Domain-Driven Design
+- 🔥 **Bilanciamento Calorico AI** - Calcoli precision-aware con accuratezza ±20g
+- 🍎 **Food Recognition** - Riconoscimento alimenti tramite GPT-4V + OpenFoodFacts
+- 📊 **Health Integration** - Sync HealthKit/Health Connect automatico
+- 📱 **Cross-Platform** - Flutter iOS + Android simultaneo
 
-### 🏗️ Architettura Tecnica
+### 🏗️ Architettura
 
-**Backend Microservizi (Python 3.11 + FastAPI)**:
-1. **User Management Service** - Autenticazione centralizzata, profili utente, GDPR compliance
-2. **Calorie Balance Service** - Metabolismo energetico e bilanciamento
-3. **Meal Tracking Service** - Tracking pasti e riconoscimento food  
-4. **Health Monitor Service** - Sync HealthKit e quality scoring
-5. **Notifications Service** - Notifiche smart e coaching prompts
-6. **AI Nutrition Coach Service** - Sistema RAG e AI conversazionale
+**Backend**: 5 microservizi Python (FastAPI + PostgreSQL/Supabase)
+1. **User Management** - Auth, profili, GDPR compliance
+2. **Calorie Balance** - Metabolismo e bilanciamento energetico  
+3. **Meal Tracking** - Pasti e riconoscimento food
+4. **Health Monitor** - Sync dati salute e quality scoring
+5. **Notifications** - Notifiche smart e coaching
 
-- **API Gateway GraphQL Federation** - Aggregazione microservizi tramite Apollo Federation e Strawberry GraphQL ([vedi dettagli](docs/architettura.md#api-gateway-e-graphql-federation))
+**Frontend**: Flutter cross-platform
 
-**Frontend**: Flutter cross-platform (POC per validazione simultanea iOS/Android)
+> 📋 **Dettagli completi**: [Microservizi Python Guide](docs/microservizi_python.md) - FastAPI patterns, DDD, tech stack per ogni servizio
 
-**Infrastructure**: Docker containerization + Render deployment + PostgreSQL + Redis
+## 📖 Documentazione
 
-## 📖 Documentazione e Setup
+### 🚀 Quick Start
+```bash
+git clone https://github.com/giamma80/gymbro-platform.git
+cd gymbro-platform
 
-### � Quick Start per Developer
-> **Prima di iniziare**: Leggi le **[GitHub Instructions Complete](.github/instructions/instructions.md)** per setup e best practices
+# Setup ambiente completo
+make setup-dev
 
-### 📚 Documentazione Completa
-La documentazione tecnica è organizzata nella [cartella docs/](docs/):
+# Start all services
+make dev-up
+```
 
-#### Database Documentation
-- **[🗄️ User Management Database](docs/databases/user-management-db.md)** - Authentication schema, user profiles, sessions, GDPR compliance
-- **[🗄️ Calorie Balance Database](docs/databases/calorie-balance-db.md)** - Event-driven schema, 5-level temporal analytics, mobile optimization
-- **[🗄️ Database Architecture & Models](docs/database-architecture.md)** - Struttura, ER diagrammi, viste aggregate e datamodel di tutti i microservizi
+### 📚 Docs Principali
+- **[🏗️ Architettura](docs/architettura.md)** - Microservizi, sequence diagrams, pattern
+- **[� Docs Generale](docs/Documentazione%20Generale.md)** - Business strategy, use cases
+- **[🗄️ Database](docs/databases/)** - Schema, ER diagrams, migrations
 
-#### Core Documentation
-- **[📋 Documentazione Generale](docs/Documentazione%20Generale.md)** - Business strategy, ROI analysis, competitive positioning
-- **[🏗️ Architettura Cloud-Native](docs/architettura.md)** - Microservizi, database design, diagrammi Mermaid
-- **[🐍 Microservizi Python](docs/microservizi_python.md)** - FastAPI patterns, DDD, tech stack
+### 🎯 Development
+- **[User Management](docs/databases/user-management-db.md)** - Auth schema, profili
+- **[Calorie Balance](docs/databases/calorie-balance-db.md)** - Eventi, analytics temporali
+- **[API Reference](docs/API_DOCUMENTATION.md)** - REST endpoints *(in development)*
 
-#### Development & Operations  
-- **[💻 Development Workflow](docs/DEVELOPMENT_WORKFLOW.md)** - Git flow, standards, CI/CD
-- **[🚀 Deployment Guide](docs/DEPLOYMENT.md)** - Render deployment, monitoring, scaling
-- **[🧪 Testing Guide](docs/TESTING_GUIDE.md)** - Unit tests, integration tests, coverage *(da creare)*
+### 🏗️ Microservizi Details
+Ogni microservizio segue **Domain-Driven Design** con FastAPI + Repository pattern:
+- **[📋 Python Microservizi Guide](docs/microservizi_python.md)** - Architettura completa, patterns, esempi
+- **[🔧 Development Workflow](docs/DEVELOPMENT_WORKFLOW.md)** - Git flow, testing, deployment
 
-#### Platform Specific
-- **[📱 Flutter Strategy](docs/flutter.md)** - Mobile development, cross-platform deployment
-- **[📡 API Documentation](docs/API_DOCUMENTATION.md)** - REST endpoints, GraphQL schema *(da creare)*
+## 🚀 Status Progetto
 
-#### Project Management
-- **[📝 Changelog](CHANGELOG.md)** - Project history, releases, major updates
+### Development Progress
+- **User Management**: 🟢 **PRODUCTION** - [Live Service](https://nutrifit-user-management.onrender.com) (100% tests)
+- **Calorie Balance**: 🟡 **DEVELOPMENT** - 68.8% test success, Events API operational
+- **Meal Tracking**: ⏳ **PLANNED** - Food recognition + AI integration
+- **Health Monitor**: ⏳ **PLANNED** - HealthKit/Health Connect sync  
+- **Mobile App**: ⏳ **PLANNED** - Flutter cross-platform
+
+### Next Milestones
+- **Q4 2024**: Calorie Balance completion (90%+ tests), Mobile app MVP
+- **Q1 2025**: Health integration, AI coaching features
+- **Q2 2025**: Production launch iOS + Android
 
 ### 💻 Comandi di Sviluppo
 

@@ -1,26 +1,23 @@
-# Documentazione Generale - Piattaforma NutriFit Production
+# Documentazione Generale - NutriFit Platform
 
 ## Executive Summary
 
-Questo documento definisce l'architettura completa per **NutriFit**, la piattaforma fitness nutrizionale enterprise basata su microservizi cloud-native, con focus sul bilanciamento calorico intelligente e tracking nutrizionale avanzato per il mercato globale. L'architettura integra **Supabase Cloud** per database management, **N8N Cloud** per workflow automation, e **Model Context Protocol (MCP)** per AI-enhanced experiences.
+**NutriFit** è una piattaforma fitness-nutrizionale basata su microservizi cloud-native con focus su bilanciamento calorico intelligente e tracking nutrizionale avanzato.
 
-### Stack Tecnologico Production Cloud-Native:
+### Stack Tecnologico Production
 
 - **Backend**: 5 microservizi FastAPI + Python 3.11 + Supabase Cloud
-- **AI Platform**: MCP Server + OpenAI + N8N AI workflow orchestration
-- **Infrastructure**: Supabase Cloud + N8N Cloud + Render deployment
-- **Mobile**: Flutter cross-platform production (iOS + Android)
-- **CI/CD**: GitHub Actions automated deployment pipeline
-- **Development**: Poetry + Docker multi-stage + cloud-first development
+- **AI Platform**: OpenAI integration + workflow automation
+- **Mobile**: Flutter cross-platform (iOS + Android)
+- **Infrastructure**: Supabase + Render deployment + GitHub Actions CI/CD
 
-### Architettura Cloud-Native Benefits:
+### Architettura Benefits
 
-- **🌐 Global Scalability**: Supabase global edge network per performance mondiale
-- **🤖 AI-First Design**: N8N orchestration per AI workflows complex automation
-- **📱 Mobile Production**: Flutter deployment simultaneo iOS App Store + Google Play
-- **🔄 Real-time Sync**: WebSocket + real-time subscriptions cross-device
-- **🛡️ Enterprise Security**: Supabase Auth + JWT + encrypted data storage
-- **⚡ Performance**: Database segregation + CDN + edge functions optimization
+- 🌐 **Global Scalability**: Supabase edge network per performance mondiale
+- 📱 **Mobile Production**: Deployment simultaneo iOS App Store + Google Play
+- 🔄 **Real-time Sync**: WebSocket + subscriptions cross-device
+- 🛡️ **Security**: JWT + encrypted data storage
+- ⚡ **Performance**: Database segregation + CDN optimization
 
 ---
 

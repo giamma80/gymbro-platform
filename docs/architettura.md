@@ -244,6 +244,133 @@ async def analyze_food_data(food_data: FoodAnalysisRequest) -> MCPResponse:
     pass
 ```
 
+## 📱 Sequence Diagrams
+
+I seguenti diagrammi specificano i flussi principali per lo sviluppo del client mobile.
+
+### 1. User Registration & Profile Setup
+
+```mermaid
+sequenceDiagram
+    participant M as Mobile App
+    participant UM as User Management
+    participant DB as Supabase DB
+    
+    Note over M: User Registration Flow
+    M->>UM: POST /auth/register
+    Note right of M: {email, password, name}
+    
+    UM->>DB: Create user record
+    DB-->>UM: User created (id: uuid)
+    
+    UM->>UM: Generate JWT token
+    UM-->>M: 201 Created + JWT
+    Note right of UM: {user_id, token, expires}
+    
+    Note over M: Profile Completion
+    M->>UM: POST /profile/metabolic
+    Note right of M: {age, gender, height, weight, activity_level}
+    
+    UM->>DB: Create metabolic profile
+    DB-->>UM: Profile saved
+    UM-->>M: 200 OK
+    
+    Note over M: Health Permissions
+    M->>M: Request HealthKit/Health Connect
+    M->>UM: POST /profile/health-sync
+    Note right of M: {health_permissions: true}
+    
+    UM->>DB: Update user preferences
+    UM-->>M: 200 OK + Profile complete
+```
+
+### 2. Daily Calorie Tracking & Data Flow
+
+```mermaid
+sequenceDiagram
+    participant M as Mobile App
+    participant UM as User Management
+    participant CB as Calorie Balance
+    participant DB as Supabase DB
+    participant HK as HealthKit/Health Connect
+    
+    Note over M: Morning Setup
+    M->>CB: GET /balance/today
+    Note right of M: Header: Authorization Bearer {jwt}
+    
+    CB->>UM: Validate user token
+    UM-->>CB: User validated (user_id)
+    
+    CB->>DB: Query today's events
+    DB-->>CB: Events data
+    CB-->>M: Current balance
+    Note right of CB: {consumed: 0, burned: 0, net: 0}
+    
+    Note over M: Breakfast Logging
+    M->>CB: POST /calorie-event/consumed
+    Note right of M: {calories: 350, source: "nutrition_scan"}
+    
+    CB->>UM: Get user profile for validation
+    UM-->>CB: User profile
+    
+    CB->>DB: Insert calorie event
+    DB-->>CB: Event saved
+    CB-->>M: 201 Created
+    
+    Note over M: Background Health Sync
+    HK->>M: Heart rate, steps data
+    M->>CB: POST /calorie-event/burned
+    Note right of M: {calories: 120, source: "healthkit"}
+    
+    CB->>DB: Insert burned calories
+    CB-->>M: 201 Created
+    
+    Note over M: Real-time Balance
+    M->>CB: GET /balance/today
+    CB-->>M: Updated balance
+    Note right of CB: {consumed: 350, burned: 120, net: +230}
+```
+
+### 3. Weight Tracking & Goal Management
+
+```mermaid
+sequenceDiagram
+    participant M as Mobile App
+    participant CB as Calorie Balance
+    participant UM as User Management
+    participant DB as Supabase DB
+    
+    Note over M: Weight Update from Smart Scale
+    M->>CB: POST /calorie-event/weight
+    Note right of M: {weight_kg: 75.2, source: "smart_scale"}
+    
+    CB->>DB: Save weight event
+    DB-->>CB: Weight saved
+    CB-->>M: 201 Created
+    
+    Note over M: Goal Creation
+    M->>CB: POST /goals/create
+    Note right of M: {goal_type: "weight_loss", target_weight: 70.0, target_date: "2024-12-31"}
+    
+    CB->>UM: Get user current weight
+    UM-->>CB: Current profile
+    
+    CB->>CB: Calculate daily calorie deficit
+    Note right of CB: Auto-calc: 5.2kg in 10 weeks = 500cal/day deficit
+    
+    CB->>DB: Create goal record
+    DB-->>CB: Goal created
+    CB-->>M: 201 Created + Goal details
+    Note right of CB: {daily_calorie_target: 1800, daily_deficit: 500}
+    
+    Note over M: Progress Tracking
+    M->>CB: GET /goals/current
+    CB->>DB: Get active goal + progress
+    DB-->>CB: Goal + recent weights
+    CB-->>M: Progress data
+    Note right of CB: {progress: "2.1kg lost", remaining: "3.1kg", eta: "8 weeks"}
+```
+
 ## 🐳 Docker Strategy e Local Development
 
 ### Dockerfile Multi-Environment per Render Compatibility

@@ -353,6 +353,32 @@ class SupabaseCalorieGoalRepository(ICalorieGoalRepository):
         try:
             goal_dict = goal.dict(exclude={'id', 'created_at'})
             
+            # Convert user_id to string
+            goal_dict['user_id'] = str(goal_dict['user_id'])
+            
+            # Convert datetime objects to ISO format strings
+            if 'updated_at' in goal_dict and goal_dict['updated_at']:
+                goal_dict['updated_at'] = goal_dict['updated_at'].isoformat()
+            
+            # Convert date objects to ISO format strings
+            if 'start_date' in goal_dict and goal_dict['start_date']:
+                goal_dict['start_date'] = goal_dict['start_date'].isoformat()
+            if 'end_date' in goal_dict and goal_dict['end_date']:
+                goal_dict['end_date'] = goal_dict['end_date'].isoformat()
+            
+            # Convert Decimal objects to float for JSON serialization
+            decimal_fields = [
+                'daily_calorie_target', 'daily_deficit_target',
+                'weekly_weight_change_kg'
+            ]
+            for field in decimal_fields:
+                if field in goal_dict and goal_dict[field] is not None:
+                    goal_dict[field] = float(goal_dict[field])
+            
+            # Convert enum objects to string
+            if 'goal_type' in goal_dict and goal_dict['goal_type']:
+                goal_dict['goal_type'] = goal_dict['goal_type'].value
+            
             response = self.client.table(self.table).update(
                 goal_dict
             ).eq("id", str(goal.id)).execute()

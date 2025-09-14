@@ -271,6 +271,7 @@ class CalorieGoalService:
             # Calculate end_date if target_weight_kg is provided
             end_date = None
             logger.info(f"End date calculation - target_weight_kg: {target_weight_kg}, user_weight_kg: {user_weight_kg}, weekly_weight_change_kg: {weekly_weight_change_kg}")
+            logger.info(f"Types: target_weight_kg: {type(target_weight_kg)}, user_weight_kg: {type(user_weight_kg)}, weekly_weight_change_kg: {type(weekly_weight_change_kg)}")
             
             if target_weight_kg and user_weight_kg and weekly_weight_change_kg:
                 logger.info("All parameters present for end_date calculation")
@@ -392,25 +393,10 @@ class CalorieGoalService:
             # Create goal entity
             from datetime import datetime, timedelta
             
-            # Calculate end_date if target_weight_kg is provided and target_date is not
-            calculated_end_date = target_date  # Start with provided target_date
-            logger.info(f"End_date calculation - target_weight_kg: {target_weight_kg}, user_weight_kg: {user_weight_kg}, weekly_weight_change_kg: {weekly_weight_change_kg}")
-            
-            if not target_date and target_weight_kg and user_weight_kg and weekly_weight_change_kg:
-                logger.info("All parameters present for end_date calculation")
-                # Calculate weeks needed to reach target
-                weight_diff = abs(float(user_weight_kg) - float(target_weight_kg))
-                weeks_needed = weight_diff / abs(float(weekly_weight_change_kg))
-                
-                logger.info(f"Weight difference: {weight_diff} kg, Weeks needed: {weeks_needed}")
-                
-                # Calculate end date
-                calculated_end_date = date.today() + timedelta(weeks=int(weeks_needed))
-                logger.info(f"Calculated end_date: {calculated_end_date}")
-            elif not target_date and target_weight_kg:
-                logger.info("Missing user_weight_kg or weekly_weight_change_kg for end_date calculation")
-            else:
-                logger.info(f"Using provided target_date: {target_date} or no target_weight_kg: {target_weight_kg}")
+            # Calculate end_date using extracted method
+            calculated_end_date = self._calculate_end_date(
+                target_date, target_weight_kg, user_weight_kg, weekly_weight_change_kg
+            )
             
             goal = CalorieGoal(
                 id=uuid4(),
@@ -491,9 +477,87 @@ class CalorieGoalService:
             logger.error(f"Failed to get active goal for {user_id}: {e}")
             raise
     
+    def _calculate_end_date(
+        self, 
+        target_date: Optional[DateType], 
+        target_weight_kg: Optional[Decimal],
+        user_weight_kg: Optional[Decimal], 
+        weekly_weight_change_kg: Optional[Decimal]
+    ) -> Optional[DateType]:
+        """Calculate end_date based on weight targets and weekly change rate."""
+        if target_date:
+            return target_date
+            
+        if target_weight_kg and user_weight_kg and weekly_weight_change_kg:
+            logger.info("All parameters present for end_date calculation")
+            # Calculate weeks needed to reach target
+            weight_diff = abs(float(user_weight_kg) - float(target_weight_kg))
+            weeks_needed = weight_diff / abs(float(weekly_weight_change_kg))
+            
+            logger.info(f"Weight difference: {weight_diff} kg, Weeks needed: {weeks_needed}")
+            
+            # Calculate end date
+            calculated_end_date = date.today() + timedelta(weeks=int(weeks_needed))
+            logger.info(f"Calculated end_date: {calculated_end_date}")
+            return calculated_end_date
+        elif target_weight_kg:
+            logger.info("Missing user_weight_kg or weekly_weight_change_kg for end_date calculation")
+        else:
+            logger.info(f"Using provided target_date: {target_date} or no target_weight_kg: {target_weight_kg}")
+        
+        return None
+
     async def get_current_goal(self, user_id: str) -> Optional[CalorieGoal]:
         """Get current active goal for user - alias for get_active_goal."""
         return await self.get_active_goal(user_id)
+
+    async def update_goal(
+        self, 
+        goal_id: str, 
+        user_id: str, 
+        updates: Dict[str, Any]
+    ) -> Optional[CalorieGoal]:
+        """Update an existing calorie goal with provided changes."""
+        try:
+            # Get all user goals and find the specific one
+            all_goals = await self.goal_repo.get_user_goals(user_id, include_inactive=True)
+            current_goal = next((goal for goal in all_goals if str(goal.id) == goal_id), None)
+            
+            if not current_goal:
+                logger.error(f"Goal {goal_id} not found for user {user_id}")
+                return None
+            
+            # Recalculate end_date if weight-related parameters change
+            # For update, we need to extract current parameters and apply updates
+            target_weight_kg = None  # Not stored in goal, would need to be passed
+            user_weight_kg = None    # Not stored in goal, would need to be passed
+            weekly_weight_change_kg = updates.get('weekly_weight_change_kg', current_goal.weekly_weight_change_kg)
+            
+            # Use current end_date if no recalculation needed
+            end_date = updates.get('end_date', current_goal.end_date)
+            
+            # Apply updates
+            updated_goal = CalorieGoal(
+                id=current_goal.id,
+                user_id=current_goal.user_id,
+                goal_type=GoalType(updates.get('goal_type', current_goal.goal_type.value)) if 'goal_type' in updates else current_goal.goal_type,
+                daily_calorie_target=Decimal(str(updates.get('daily_calorie_target', current_goal.daily_calorie_target))),
+                daily_deficit_target=Decimal(str(updates.get('daily_deficit_target', current_goal.daily_deficit_target))),
+                weekly_weight_change_kg=Decimal(str(weekly_weight_change_kg)),
+                start_date=current_goal.start_date,
+                end_date=end_date,
+                is_active=updates.get('is_active', current_goal.is_active),
+                ai_optimized=current_goal.ai_optimized,
+                optimization_metadata=current_goal.optimization_metadata,
+                created_at=current_goal.created_at,
+                updated_at=datetime.utcnow()
+            )
+            
+            return await self.goal_repo.update(updated_goal)
+            
+        except Exception as e:
+            logger.error(f"Failed to update goal {goal_id}: {e}")
+            raise
     
     async def optimize_goal_ai(self, user_id: str) -> Optional[CalorieGoal]:
         """AI-optimize existing goal based on progress data."""

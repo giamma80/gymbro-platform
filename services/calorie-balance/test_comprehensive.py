@@ -862,6 +862,127 @@ class CalorieBalanceTests:
         else:
             self.log_info("Balance summary endpoint not yet implemented (expected)")
 
+    def test_graphql_endpoints(self):
+        """Test GraphQL endpoint functionality."""
+        self.log_header("GRAPHQL ENDPOINT TESTS")
+        self.total += 4
+        
+        graphql_url = f"{BASE_URL}/graphql"
+        
+        # Test 1: GraphQL Schema Introspection
+        introspection_query = {
+            "query": """
+            {
+                __schema {
+                    queryType {
+                        name
+                    }
+                    mutationType {
+                        name
+                    }
+                }
+            }
+            """
+        }
+        
+        response = requests.post(graphql_url, json=introspection_query, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            if 'data' in data and '__schema' in data['data']:
+                self.log_success("GraphQL schema introspection")
+                self.passed += 1
+            else:
+                self.log_error("GraphQL schema introspection - invalid format")
+                self.failed += 1
+        else:
+            self.log_error(f"GraphQL schema introspection - status: {response.status_code}")
+            self.failed += 1
+        
+        # Test 2: GraphQL Federation Service Info
+        federation_query = {
+            "query": """
+            {
+                _service {
+                    sdl
+                }
+            }
+            """
+        }
+        
+        response = requests.post(graphql_url, json=federation_query, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            federation_ok = ('data' in data and '_service' in data['data'] 
+                           and 'sdl' in data['data']['_service'])
+            if federation_ok:
+                self.log_success("GraphQL federation service info")
+                self.passed += 1
+            else:
+                self.log_error("GraphQL federation service info - invalid format")
+                self.failed += 1
+        else:
+            self.log_error(f"GraphQL federation service info - status: {response.status_code}")
+            self.failed += 1
+        
+        # Test 3: GraphQL User Calorie Balance Query
+        balance_query = {
+            "query": """
+            query GetUserCalorieBalance($userId: String!) {
+                userCalorieBalance(userId: $userId) {
+                    userId
+                    currentCalories
+                    targetCalories
+                    remainingCalories
+                    lastUpdated
+                }
+            }
+            """,
+            "variables": {
+                "userId": TEST_USER_ID
+            }
+        }
+        
+        response = requests.post(graphql_url, json=balance_query, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            if 'data' in data:
+                if data['data'].get('userCalorieBalance'):
+                    self.log_success("GraphQL user calorie balance query")
+                    self.passed += 1
+                else:
+                    self.log_info("GraphQL user calorie balance query - no data (expected)")
+                    self.passed += 1
+            else:
+                self.log_error("GraphQL user calorie balance query - invalid format")
+                self.failed += 1
+        else:
+            self.log_error(f"GraphQL user calorie balance query - status: {response.status_code}")
+            self.failed += 1
+        
+        # Test 4: GraphQL Invalid Query (Error Handling)
+        invalid_query = {
+            "query": """
+            {
+                invalidField {
+                    nonExistentField
+                }
+            }
+            """
+        }
+        
+        response = requests.post(graphql_url, json=invalid_query, timeout=10)
+        if response.status_code == 400:
+            data = response.json()
+            if 'errors' in data:
+                self.log_success("GraphQL error handling")
+                self.passed += 1
+            else:
+                self.log_error("GraphQL error handling - should return errors array")
+                self.failed += 1
+        else:
+            self.log_error(f"GraphQL error handling - expected 400, got: {response.status_code}")
+            self.failed += 1
+
     def cleanup_test_data(self):
         """Clean up test data."""
         self.log_header("TEST CLEANUP")
@@ -897,6 +1018,125 @@ class CalorieBalanceTests:
         else:
             print(f"{TestColors.RED}{TestColors.BOLD}🚨 FAILURE: {success_rate:.1f}% tests passed{TestColors.END}")
 
+    def test_graphql_endpoints(self):
+        """Test GraphQL endpoint functionality."""
+        self.log_section("GraphQL Endpoint Tests")
+        
+        graphql_url = f"{BASE_URL}/graphql"
+        
+        # Test 1: GraphQL Schema Introspection
+        introspection_query = {
+            "query": """
+            {
+                __schema {
+                    queryType {
+                        name
+                    }
+                    mutationType {
+                        name
+                    }
+                }
+            }
+            """
+        }
+        
+        try:
+            response = self.session.post(graphql_url, json=introspection_query)
+            if response.status_code == 200:
+                data = response.json()
+                if 'data' in data and '__schema' in data['data']:
+                    self.log_success("GraphQL Schema Introspection")
+                else:
+                    self.log_error("GraphQL Schema Introspection - Invalid response format")
+            else:
+                self.log_error(f"GraphQL Schema Introspection - Status: {response.status_code}")
+        except Exception as e:
+            self.log_error(f"GraphQL Schema Introspection - Exception: {e}")
+        
+        # Test 2: GraphQL Federation Service Info
+        federation_query = {
+            "query": """
+            {
+                _service {
+                    sdl
+                }
+            }
+            """
+        }
+        
+        try:
+            response = self.session.post(graphql_url, json=federation_query)
+            if response.status_code == 200:
+                data = response.json()
+                if 'data' in data and '_service' in data['data'] and 'sdl' in data['data']['_service']:
+                    self.log_success("GraphQL Federation Service Info")
+                else:
+                    self.log_error("GraphQL Federation Service Info - Invalid response format")
+            else:
+                self.log_error(f"GraphQL Federation Service Info - Status: {response.status_code}")
+        except Exception as e:
+            self.log_error(f"GraphQL Federation Service Info - Exception: {e}")
+        
+        # Test 3: GraphQL User Calorie Balance Query
+        balance_query = {
+            "query": """
+            query GetUserCalorieBalance($userId: String!) {
+                userCalorieBalance(userId: $userId) {
+                    userId
+                    currentCalories
+                    targetCalories
+                    remainingCalories
+                    lastUpdated
+                }
+            }
+            """,
+            "variables": {
+                "userId": TEST_USER_ID
+            }
+        }
+        
+        try:
+            response = self.session.post(graphql_url, json=balance_query)
+            if response.status_code == 200:
+                data = response.json()
+                if 'data' in data:
+                    if data['data'].get('userCalorieBalance'):
+                        self.log_success("GraphQL User Calorie Balance Query")
+                    else:
+                        self.log_info("GraphQL User Calorie Balance Query - No data (expected for new user)")
+                else:
+                    self.log_error("GraphQL User Calorie Balance Query - Invalid response format")
+            else:
+                self.log_error(f"GraphQL User Calorie Balance Query - Status: {response.status_code}")
+        except Exception as e:
+            self.log_error(f"GraphQL User Calorie Balance Query - Exception: {e}")
+        
+        # Test 4: GraphQL Invalid Query (Error Handling)
+        invalid_query = {
+            "query": """
+            {
+                invalidField {
+                    nonExistentField
+                }
+            }
+            """
+        }
+        
+        try:
+            response = self.session.post(graphql_url, json=invalid_query)
+            if response.status_code == 400:
+                data = response.json()
+                if 'errors' in data:
+                    self.log_success("GraphQL Error Handling")
+                else:
+                    self.log_error("GraphQL Error Handling - Should return errors array")
+            else:
+                self.log_error(f"GraphQL Error Handling - Expected 400, got: {response.status_code}")
+        except Exception as e:
+            self.log_error(f"GraphQL Error Handling - Exception: {e}")
+        
+        self.log_section("GraphQL Tests Completed")
+
     def run_all_tests(self):
         """Run the complete test suite."""
         print(f"{TestColors.BOLD}{TestColors.PURPLE}🚀 Starting Calorie Balance Service Tests")
@@ -912,6 +1152,7 @@ class CalorieBalanceTests:
             self.test_calorie_events()
             self.test_goal_management()
             self.test_analytics_views()
+            self.test_graphql_endpoints()
 
         except KeyboardInterrupt:
             self.log_error("Tests interrupted by user")

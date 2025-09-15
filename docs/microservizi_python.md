@@ -78,7 +78,6 @@ Ogni microservizio deve seguire il template [`API-roadmap-template.md`](../templ
 | Script | Scopo | Utilizzo |
 |--------|-------|----------|
 | `start-dev.sh` | Start/Stop/Restart/Status del servizio | `./start-dev.sh [start\|stop\|restart\|status]` |
-| `stop-dev.sh` | Stop rapido del servizio | `./stop-dev.sh` |
 
 ### 🎯 Workflow di Sviluppo Standard
 
@@ -86,8 +85,8 @@ Ogni microservizio deve seguire il template [`API-roadmap-template.md`](../templ
 # 1. Navigare nel servizio
 cd services/[nome-servizio]
 
-# 2. Prima volta: rendere eseguibili gli script
-chmod +x start-dev.sh stop-dev.sh
+# 2. Prima volta: rendere eseguibile lo script
+chmod +x start-dev.sh
 
 # 3. Configurare l'ambiente
 cp .env.template .env
@@ -102,7 +101,7 @@ cp .env.template .env
 tail -f /tmp/[service]-port.log  # View logs in tempo reale
 
 # 6. Stop del servizio
-./stop-dev.sh
+./start-dev.sh stop
 ```
 
 ### 🔧 Funzionalità degli Script

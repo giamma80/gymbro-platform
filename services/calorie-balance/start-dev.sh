@@ -167,7 +167,7 @@ stop_server() {
     fi
     # Ensure port cleaned
     kill_processes_on_port "$SERVICE_PORT"
-    pkill -f "uvicorn.*${PYTHON_MODULE}" 2>/dev/null || true
+    pkill -f "uvicorn.*${PYTHON_MODULE}.*--port ${SERVICE_PORT}" 2>/dev/null || true
     log_success "Stopped"
 }
 

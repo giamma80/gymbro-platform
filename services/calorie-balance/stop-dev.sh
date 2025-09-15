@@ -17,7 +17,7 @@ NC='\033[0m' # No Color
 
 # Configuration
 SERVICE_NAME="calorie-balance"
-SERVICE_PORT=8001
+SERVICE_PORT=8002
 PID_FILE="/tmp/${SERVICE_NAME}-${SERVICE_PORT}.pid"
 
 echo -e "${BLUE}🛑 Stopping Calorie Balance Service${NC}"

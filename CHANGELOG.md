@@ -214,8 +214,7 @@ e questo progetto aderisce al [Semantic Versioning](https://semver.org/spec/v2.0
 ### 📁 New Infrastructure Files
 - **config/supabase/grants_template.sql** - Universal SQL grants template for all microservices
 - **scripts/generate-grants-script.sh** - Automated grants generation with schema name substitution
-- **services/user-management/start-dev.sh** - Production-quality service lifecycle management script
-- **services/user-management/stop-dev.sh** - Clean service shutdown with PID cleanup
+- **services/user-management/start-dev.sh** - Production-quality service lifecycle management script with integrated stop/restart/status commands
 - **services/user-management/sql/004_grants.sql** - Working database grants (replaces previous versions)
 - **services/user-management/sql/check_current_permissions.sql** - Database permissions verification queries
 

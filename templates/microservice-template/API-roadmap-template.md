@@ -94,8 +94,8 @@
 git clone [repository]
 cd services/[service-name]
 
-# 2. Rendi eseguibili gli script (prima volta)
-chmod +x start-dev.sh stop-dev.sh
+# 2. Rendi eseguibile lo script (prima volta)
+chmod +x start-dev.sh
 
 # 3. Configura ambiente (.env file)
 cp .env.template .env
@@ -113,7 +113,7 @@ curl http://localhost:80XX/health
 tail -f /tmp/[service]-80XX.log  # View logs
 
 # 7. Stop del servizio
-./stop-dev.sh
+./start-dev.sh stop
 ```
 
 ### 🎯 Development Scripts Features

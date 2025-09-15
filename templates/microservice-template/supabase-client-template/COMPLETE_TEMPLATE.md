@@ -68,7 +68,7 @@ asyncio_mode = "auto"
 
 # 🚀 Development Scripts (OBBLIGATORI)
 
-**⚠️ IMPORTANTE**: Durante lo sviluppo, utilizza **sempre** gli script `start-dev.sh` e `stop-dev.sh` per gestire il servizio. Questi script sono **obbligatori** per ogni microservizio e garantiscono:
+**⚠️ IMPORTANTE**: Durante lo sviluppo, utilizza **sempre** lo script `start-dev.sh` per gestire il servizio. Questo script è **obbligatorio** per ogni microservizio e garantisce:
 
 - ✅ Gestione corretta dell'ambiente Python/Poetry
 - ✅ Health check e monitoraggio del servizio  
@@ -286,39 +286,6 @@ esac
 exit 0
 ```
 
-## 📄 stop-dev.sh Template
-
-```bash
-#!/bin/bash
-
-# =============================================================================
-# {Service Name} Service - Stop Script
-# =============================================================================
-# Project: gymbro-platform
-# Service: {service-name}  
-# Environment: Development
-# =============================================================================
-
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-# Configuration
-SERVICE_NAME="{service-name}"
-SERVICE_PORT=80XX
-PID_FILE="/tmp/${SERVICE_NAME}-${SERVICE_PORT}.pid"
-
-echo -e "${BLUE}🛑 Stopping {Service Name} Service${NC}"
-echo "============================================================"
-
-# Simply call the main script with stop argument
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-exec "$SCRIPT_DIR/start-dev.sh" stop
-```
-
 ## 🎯 Port Assignment per Service
 
 | **Service** | **Port** | **Usage** |
@@ -334,11 +301,11 @@ exec "$SCRIPT_DIR/start-dev.sh" stop
 
 ```bash
 # Start del servizio (primo avvio o dopo modifica)
-chmod +x start-dev.sh stop-dev.sh
+chmod +x start-dev.sh
 ./start-dev.sh
 
 # Stop del servizio
-./stop-dev.sh
+./start-dev.sh stop
 
 # Restart del servizio (dopo modifiche al codice)
 ./start-dev.sh restart

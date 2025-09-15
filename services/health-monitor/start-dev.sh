@@ -1,3 +1,4 @@
+
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -48,125 +49,134 @@ kill_processes_on_port() {
     local pids
     pids=$(lsof -ti:$port 2>/dev/null || true)
     if [ -n "$pids" ]; then
-        log_warning "Found processes on port $port, terminating..."
-        echo "$pids" | xargs kill -9 2>/dev/null || true
+        echo "$pids" | xargs kill -TERM 2>/dev/null || true
         sleep 1
+        pids=$(lsof -ti:$port 2>/dev/null || true)
+        if [ -n "$pids" ]; then
+            echo "$pids" | xargs kill -KILL 2>/dev/null || true
+        fi
     fi
 }
 
-wait_for_health_check() {
-    log_info "Waiting for health check response..."
-    local retries=0
-    local max_retries=30
-    
-    while [ $retries -lt $max_retries ]; do
-        if curl -s "$HEALTH_URL" >/dev/null 2>&1; then
-            log_success "Service is healthy and responding"
-            return 0
-        fi
-        sleep 1
-        retries=$((retries + 1))
-        printf "."
-    done
-    echo
-    log_warning "Service started but health check not responding after ${max_retries}s"
+activate_venv() {
+    if command -v poetry >/dev/null 2>&1; then
+        log_info "Using Poetry (skip venv activation)"
+        return 0
+    fi
+    if [ -f "$VENV/bin/activate" ]; then
+        log_info "Activating virtualenv: $VENV"
+        # shellcheck disable=SC1090
+        source "$VENV/bin/activate"
+        return 0
+    fi
+    log_warning "Virtualenv not found at $VENV"
     return 1
 }
 
-setup_python_env() {
-    if [ ! -d "$VENV" ]; then
-        log_info "Creating virtual environment..."
-        python -m venv "$VENV"
-    fi
-    
-    log_info "Activating virtual environment..."
-    source "$VENV/bin/activate"
-    
-    if [ -f "$SERVICE_DIR/pyproject.toml" ]; then
-        if ! command -v poetry >/dev/null 2>&1; then
-            log_error "Poetry not found. Please install poetry first."
-            exit 1
-        fi
-        log_info "Installing dependencies with Poetry..."
-        cd "$SERVICE_DIR"
-        poetry install
-    else
-        log_warning "No pyproject.toml found, skipping dependency installation"
+install_deps() {
+    if [ -f "$SERVICE_DIR/app/requirements.txt" ]; then
+        pip install -r "$SERVICE_DIR/app/requirements.txt"
     fi
 }
 
 start_server() {
     print_banner
-    
     if is_server_running; then
-        log_warning "Server is already running (PID: $(cat "$PID_FILE"))"
-        log_info "Use '$0 stop' to stop it first, or '$0 restart' to restart"
-        exit 1
+        local pid
+        pid=$(cat "$PID_FILE")
+        log_warning "Server already running (PID $pid)"
+        return 0
     fi
-    
-    kill_processes_on_port $SERVICE_PORT
-    setup_python_env
-    
-    log_info "Starting ${SERVICE_NAME} on port ${SERVICE_PORT}..."
-    
-    cd "$SERVICE_DIR"
-    source "$VENV/bin/activate"
-    
-    # Start uvicorn in background
-    nohup poetry run uvicorn "$PYTHON_MODULE" \
-        --host 0.0.0.0 \
-        --port $SERVICE_PORT \
-        --reload \
-        --log-level info \
-        > "$LOG_FILE" 2>&1 &
-    
-    local pid=$!
-    echo $pid > "$PID_FILE"
-    
-    log_success "Server started with PID: $pid"
-    log_info "Logs: $LOG_FILE"
-    log_info "Health check: $HEALTH_URL"
-    
-    wait_for_health_check
-    
-    echo
-    log_success "🚀 ${SERVICE_NAME} development server is ready!"
-    echo -e "${CYAN}📝 View logs: tail -f $LOG_FILE${NC}"
-    echo -e "${CYAN}🛑 Stop server: $0 stop${NC}"
-    echo -e "${CYAN}🔄 Restart server: $0 restart${NC}"
-    echo
+
+    stop_server || true
+    activate_venv || true
+    if [ -f "$SERVICE_DIR/app/requirements.txt" ]; then
+        install_deps
+    fi
+
+    log_info "Starting ${SERVICE_NAME} on port ${SERVICE_PORT}"
+    rm -f "$LOG_FILE"
+
+    # Build uvicorn args; default no reload for stable background runs
+    RELOAD=${RELOAD:-0}
+    UVICORN_ARGS=(--host 0.0.0.0 --port "$SERVICE_PORT" --log-level info --access-log)
+    if [ "$RELOAD" = "1" ]; then
+        UVICORN_ARGS+=(--reload --reload-dir app)
+    fi
+
+    if command -v poetry >/dev/null 2>&1; then
+        nohup poetry run uvicorn $PYTHON_MODULE "${UVICORN_ARGS[@]}" > "$LOG_FILE" 2>&1 &
+    else
+        # prefer venv python if available
+        if [ -x "$VENV/bin/python" ]; then
+            nohup "$VENV/bin/python" -m uvicorn $PYTHON_MODULE "${UVICORN_ARGS[@]}" > "$LOG_FILE" 2>&1 &
+        else
+            nohup python3 -m uvicorn $PYTHON_MODULE "${UVICORN_ARGS[@]}" > "$LOG_FILE" 2>&1 &
+        fi
+    fi
+
+    # initial PID (may be reloader when --reload used)
+    local initial_pid
+    initial_pid=$!
+    echo "$initial_pid" > "$PID_FILE"
+
+    # Wait for health check
+    for i in $(seq 1 30); do
+        if curl -s "$HEALTH_URL" | grep -q 'healthy'; then
+            log_success "Health check OK"
+            # Prefer the PID actually listening on the port
+            if command -v lsof >/dev/null 2>&1; then
+                local real_pid
+                real_pid=$(lsof -ti:$SERVICE_PORT 2>/dev/null | head -n1 || true)
+                if [ -n "$real_pid" ]; then
+                    echo "$real_pid" > "$PID_FILE"
+                    log_info "Service listening PID: $real_pid"
+                fi
+            fi
+            echo "Server started, logs: $LOG_FILE"
+            return 0
+        fi
+        if ! ps -p "$initial_pid" > /dev/null 2>&1; then
+            log_error "Server process died during startup"
+            tail -n 40 "$LOG_FILE" || true
+            rm -f "$PID_FILE"
+            return 1
+        fi
+        sleep 1
+    done
+    log_error "Health check failed after timeout"
+    tail -n 40 "$LOG_FILE" || true
+    rm -f "$PID_FILE"
+    return 1
 }
 
 stop_server() {
-    log_info "Stopping ${SERVICE_NAME} development server..."
-    
+    print_banner
+    log_info "Stopping ${SERVICE_NAME}..."
     if [ -f "$PID_FILE" ]; then
         local pid
         pid=$(cat "$PID_FILE")
         if ps -p "$pid" > /dev/null 2>&1; then
-            kill "$pid"
-            rm -f "$PID_FILE"
-            log_success "Server stopped (PID: $pid)"
-        else
-            log_warning "PID file exists but process not running"
-            rm -f "$PID_FILE"
+            kill -TERM "$pid" || true
+            sleep 1
+            if ps -p "$pid" > /dev/null 2>&1; then
+                kill -KILL "$pid" || true
+            fi
         fi
-    else
-        log_info "No PID file found"
+        rm -f "$PID_FILE"
     fi
-    
-    kill_processes_on_port $SERVICE_PORT
-    log_success "All processes on port $SERVICE_PORT terminated"
+    # Ensure port cleaned
+    kill_processes_on_port "$SERVICE_PORT"
+    pkill -f "uvicorn.*${PYTHON_MODULE}.*--port ${SERVICE_PORT}" 2>/dev/null || true
+    log_success "Stopped"
 }
 
 status_server() {
-    log_info "Checking ${SERVICE_NAME} status..."
-    
+    print_banner
     if is_server_running; then
         local pid
         pid=$(cat "$PID_FILE")
-        log_success "Running (PID: $pid, Port: $SERVICE_PORT)"
-        
+        log_success "Running (PID $pid)"
         if curl -s "$HEALTH_URL" >/dev/null 2>&1; then
             log_success "Responding to health checks"
         else

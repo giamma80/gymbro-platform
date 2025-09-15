@@ -108,7 +108,6 @@ dev-server.log
 
 # Development scripts
 start-dev.sh
-stop-dev.sh
 setup_*.sh
 *_test.sh
 

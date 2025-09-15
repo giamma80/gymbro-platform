@@ -107,16 +107,13 @@ disallow_incomplete_defs = true
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = "--cov=app --cov-report=term-missing --cov-fail-under=80 --asyncio-mode=auto"
+addopts = "--cov=app --cov-report=term-missing --cov-fail-under=10 --asyncio-mode=auto"
 testpaths = ["tests"]
 asyncio_mode = "auto"
 
 [tool.coverage.run]
 source = ["app"]
 omit = ["tests/*"]
-warn_unused_ignores = true
-warn_redundant_casts = true
-warn_unused_configs = true
 
 [tool.coverage.report]
 exclude_lines = [

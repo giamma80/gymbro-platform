@@ -1,7 +1,15 @@
 # ==========================================
 # NutriFit Platform - CI/CD Pipeline
 # ==========================================
-# Test & Validate - Render Deploy Automatico via Repository
+# Test & Vali      - name: 🧪 Run Tests
+        working-directory: ./services/calorie-balance
+        run: |
+          poetry run pytest tests/ -v --tb=short
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'mock://test' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'mock-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'mock-key' }}
+          JWT_SECRET: test-secret-keynder Deploy Automatico via Repository
 
 name: 🚀 NutriFit Platform CI/CD
 

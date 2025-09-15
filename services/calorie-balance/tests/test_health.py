@@ -38,14 +38,17 @@ def test_basic_configuration():
 async def test_app_can_be_created():
     """Test that the FastAPI app can be created with mocked dependencies."""
     with patch("app.core.database.create_supabase_client") as mock_client:
-        mock_client.return_value = None
+        # Create proper mock client with table method
+        mock_supabase = MagicMock()
+        mock_supabase.schema.return_value.table.return_value = MagicMock()
+        mock_client.return_value = mock_supabase
         
         # Import app after mocking the database client
         from app.main import app
         
         # Test that app was created successfully
         assert app is not None
-        assert app.title == "CalorieBalance Service"
+        assert app.title == "NutriFit calorie-balance"
 
 
 @pytest.mark.asyncio

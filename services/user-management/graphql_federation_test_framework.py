@@ -329,6 +329,85 @@ class GraphQLFederationTester(ABC):
         except Exception as e:
             return False, None, f"Exception: {str(e)}"
     
+    def parse_sdl_query_fields(self, sdl: str) -> Dict[str, Dict[str, str]]:
+        """
+        Parse SDL to extract Query type fields and their return types.
+        
+        Args:
+            sdl: SDL string from the service
+            
+        Returns:
+            Dict mapping field names to their details
+        """
+        query_fields = {}
+        
+        # Find the Query type extension in SDL
+        lines = sdl.split('\n')
+        in_query_block = False
+        
+        for line in lines:
+            line = line.strip()
+            
+            if line.startswith('extend type Query {'):
+                in_query_block = True
+                continue
+            elif in_query_block and line == '}':
+                break
+            elif in_query_block and ':' in line and not line.startswith('_'):
+                # Parse field definition like "getUser(id: ID!): UserType"
+                # Skip internal federation fields like _entities, _service
+                field_def = line.rstrip(',').strip()
+                if '(' in field_def:
+                    # Has arguments
+                    field_name = field_def.split('(')[0].strip()
+                    if '): ' in field_def:
+                        return_type = field_def.split('): ')[1]
+                    else:
+                        return_type = 'Unknown'
+                else:
+                    # Simple field
+                    parts = field_def.split(': ', 1)
+                    if len(parts) == 2:
+                        field_name, return_type = parts
+                    else:
+                        continue
+                
+                query_fields[field_name.strip()] = {
+                    'return_type': return_type.strip(),
+                    'full_definition': field_def
+                }
+        
+        return query_fields
+    
+    def parse_sdl_type_fields(self, sdl: str, type_name: str) -> List[str]:
+        """
+        Parse SDL to extract fields of a specific type.
+        
+        Args:
+            sdl: SDL string from the service
+            type_name: Name of the type to analyze
+            
+        Returns:
+            List of field names
+        """
+        fields = []
+        lines = sdl.split('\n')
+        in_type_block = False
+        
+        for line in lines:
+            line = line.strip()
+            
+            if line.startswith(f'type {type_name}'):
+                in_type_block = True
+                continue
+            elif in_type_block and line == '}':
+                break
+            elif in_type_block and ':' in line:
+                field_name = line.split(':')[0].strip()
+                fields.append(field_name)
+        
+        return fields
+    
     def _generate_report(self) -> bool:
         """Generate and print test report."""
         total_tests = sum(suite.total for suite in self.test_suites)

@@ -427,6 +427,57 @@ class UserManagementTests:
             "Correctly handles invalid email format",
         )
 
+    def test_graphql_federation(self):
+        """Test GraphQL Federation endpoints."""
+        self.log_section("GraphQL Federation Tests")
+        
+        graphql_url = f"{BASE_URL}/graphql"
+        
+        # Test 1: Schema Introspection
+        try:
+            introspection_query = {
+                "query": "{ __schema { queryType { name } mutationType { name } } }"
+            }
+            response = requests.post(graphql_url, json=introspection_query, timeout=10)
+            self.log_test(
+                "GraphQL Schema Introspection",
+                response.status_code == 200 and 'data' in response.json(),
+                f"Status: {response.status_code}"
+            )
+        except Exception as e:
+            self.log_test("GraphQL Schema Introspection", False, str(e))
+        
+        # Test 2: Federation SDL
+        try:
+            federation_query = {"query": "{ _service { sdl } }"}
+            response = requests.post(graphql_url, json=federation_query, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'data' in data and '_service' in data['data'] and 'sdl' in data['data']['_service']:
+                    sdl = data['data']['_service']['sdl']
+                    self.log_test("GraphQL Federation SDL", True, f"SDL retrieved ({len(sdl)} chars)")
+                else:
+                    self.log_test("GraphQL Federation SDL", False, "Invalid SDL response structure")
+            else:
+                self.log_test("GraphQL Federation SDL", False, f"HTTP {response.status_code}")
+        except Exception as e:
+            self.log_test("GraphQL Federation SDL", False, str(e))
+        
+        # Test 3: Error Handling
+        try:
+            invalid_query = {"query": "{ invalidField { nonExistentField } }"}
+            response = requests.post(graphql_url, json=invalid_query, timeout=10)
+            
+            expected_error = response.status_code == 400 and 'errors' in response.json()
+            self.log_test(
+                "GraphQL Error Handling", 
+                expected_error,
+                f"Status: {response.status_code}, Has errors: {'errors' in response.json()}"
+            )
+        except Exception as e:
+            self.log_test("GraphQL Error Handling", False, str(e))
+
     def generate_summary(self):
         """Generate test summary."""
         duration = time.time() - self.start_time
@@ -483,6 +534,9 @@ class UserManagementTests:
         self.test_service_context_endpoints()
         self.test_user_actions()
         self.test_data_validation()
+        
+        # GraphQL Federation tests
+        self.test_graphql_federation()
 
         # Generate summary
         return self.generate_summary()

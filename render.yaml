@@ -50,49 +50,37 @@ services:
   - type: web
     name: nutrifit-calorie-balance
     runtime: docker
-    
-    # GitHub Container Registry Configuration
-    image:
-      url: ghcr.io/giamma80/nutrifit-calorie-balance:main
+    repo: https://github.com/giamma80/gymbro-platform.git
+    rootDir: services/calorie-balance
+    dockerfilePath: ./Dockerfile
+    dockerContext: services/calorie-balance
     
     # Runtime Configuration
     plan: starter
-    region: oregon
+    region: oregon  
+    branch: main
     
-    # Auto Deploy da Container Registry
+    # Auto Deploy
     autoDeploy: true
     
-    # Health Check  
+    # Health Check
     healthCheckPath: /health
     
-    # Environment Variables
+    # Deploy solo quando cambia questo servizio
+    buildFilter:
+      paths:
+        - services/calorie-balance/**
+        - render.yaml
+    
+    # Environment Variables - Caricato come Secret File
     envVars:
+      # Solo variabili non sensibili in chiaro
       - key: ENVIRONMENT
         value: production
-      - key: DEBUG
-        value: "false"
-      - key: LOG_LEVEL
-        value: INFO
       - key: PORT
-        value: "8001"
-      
-      # Supabase
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_ANON_KEY
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      
-      # JWT
-      - key: JWT_SECRET
-        generateValue: true
-      - key: JWT_ALGORITHM
-        value: HS256
-        
-      # Python optimizations
+        value: "8000"
       - key: PYTHONDONTWRITEBYTECODE
-        value: "1" 
+        value: "1"
       - key: PYTHONUNBUFFERED
         value: "1"
         sync: false

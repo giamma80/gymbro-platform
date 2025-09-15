@@ -32,13 +32,13 @@
    ```bash
    ./start-dev.sh
    # Or manually:
-   poetry run uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+   poetry run uvicorn app.main:app --host 0.0.0.0 --port 8002 --reload
    ```
 
 5. **Verify Service**
    ```bash
-   curl http://localhost:8001/health
-   curl http://localhost:8001/docs  # API documentation
+   curl http://localhost:8002/health
+   curl http://localhost:8002/docs  # API documentation
    ```
 
 ### Production Deployment

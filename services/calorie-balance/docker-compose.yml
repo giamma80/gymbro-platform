@@ -1,9 +1,7 @@
 # ===============================================
 # Calorie Balance Service - Docker Compose
 # ===============================================
-# Development environment with local dependencies
-
-version: '3.8'
+# Simplified development environment using Supabase
 
 services:
   # ====================================
@@ -16,7 +14,7 @@ services:
       target: development
     container_name: nutrifit-calorie-balance-dev
     ports:
-      - "8001:8001"
+      - "8002:8002"
     environment:
       - ENVIRONMENT=development
       - DEBUG=true
@@ -57,59 +55,13 @@ services:
       - /app/.venv  # Exclude venv from volume mount
     networks:
       - nutrifit-network
-    depends_on:
-      - redis
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-
-  # ====================================
-  # Redis Cache (for development)
-  # ====================================
-  redis:
-    image: redis:7-alpine
-    container_name: nutrifit-redis-dev
-    ports:
-      - "6379:6379"
-    command: redis-server --appendonly yes
-    volumes:
-      - redis_data:/data
-    networks:
-      - nutrifit-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # ====================================
-  # PostgreSQL Local (optional fallback)
-  # ====================================
-  postgres:
-    image: postgres:15-alpine
-    container_name: nutrifit-postgres-dev
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_DB=calorie_balance
-      - POSTGRES_USER=nutrifit_user
-      - POSTGRES_PASSWORD=dev_password
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./sql:/docker-entrypoint-initdb.d
-    networks:
-      - nutrifit-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U nutrifit_user -d calorie_balance"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
 # ====================================
 # Networks
@@ -118,15 +70,6 @@ networks:
   nutrifit-network:
     driver: bridge
     name: nutrifit-platform
-
-# ====================================
-# Volumes
-# ====================================
-volumes:
-  redis_data:
-    driver: local
-  postgres_data:
-    driver: local
 
 # ====================================
 # Development Commands
@@ -149,4 +92,4 @@ volumes:
 #   docker-compose up --build
 #
 # Stop and clean:
-#   docker-compose down -v
+#   docker-compose down

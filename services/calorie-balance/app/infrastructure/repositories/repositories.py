@@ -27,7 +27,7 @@ from app.domain.repositories import (
 from app.domain.entities import (
     CalorieEvent, CalorieGoal, DailyBalance, MetabolicProfile,
     HourlyCalorieSummary, DailyCalorieSummary, WeeklyCalorieSummary,
-    MonthlyCalorieSummary, DailyBalanceSummary, EventType,
+    MonthlyCalorieSummary, DailyBalanceSummary, EventType, GoalType,
     ActivityLevel, GenderType
 )
 
@@ -263,6 +263,47 @@ class SupabaseCalorieGoalRepository(ICalorieGoalRepository):
         self.client: Client = get_supabase_client()
         self.table = "calorie_goals"
     
+    def _map_goal_from_db(self, data: Dict) -> CalorieGoal:
+        """Map database row to CalorieGoal entity with type conversion."""
+        # Convert string IDs to UUID
+        if 'user_id' in data:
+            data['user_id'] = UUID(data['user_id'])
+        if 'id' in data:
+            data['id'] = UUID(data['id'])
+        
+        # Convert string dates to date objects
+        date_fields = ['start_date', 'end_date']
+        for field in date_fields:
+            if field in data and data[field]:
+                if isinstance(data[field], str):
+                    data[field] = datetime.fromisoformat(data[field]).date()
+        
+        # Convert string datetimes to datetime objects
+        datetime_fields = ['created_at', 'updated_at']
+        for field in datetime_fields:
+            if field in data and data[field]:
+                if isinstance(data[field], str):
+                    # Handle timezone suffix
+                    datetime_str = data[field].replace('Z', '+00:00')
+                    data[field] = datetime.fromisoformat(datetime_str)
+        
+        # Convert numeric fields to Decimal
+        decimal_fields = [
+            'daily_calorie_target', 'daily_deficit_target',
+            'weekly_weight_change_kg'
+        ]
+        for field in decimal_fields:
+            if field in data and data[field] is not None:
+                if not isinstance(data[field], Decimal):
+                    data[field] = Decimal(str(data[field]))
+        
+        # Convert string enum to GoalType
+        if 'goal_type' in data and data['goal_type']:
+            if isinstance(data['goal_type'], str):
+                data['goal_type'] = GoalType(data['goal_type'])
+        
+        return CalorieGoal(**data)
+    
     async def get_active_goal(self, user_id: str) -> Optional[CalorieGoal]:
         """Get user's currently active goal."""
         try:
@@ -271,7 +312,7 @@ class SupabaseCalorieGoalRepository(ICalorieGoalRepository):
             ).eq("is_active", True).execute()
             
             if response.data and len(response.data) > 0:
-                return CalorieGoal(**response.data[0])
+                return self._map_goal_from_db(response.data[0])
             return None
             
         except Exception as e:
@@ -292,7 +333,7 @@ class SupabaseCalorieGoalRepository(ICalorieGoalRepository):
             
             response = query.order("created_at", desc=True).execute()
             
-            return [CalorieGoal(**data) for data in response.data]
+            return [self._map_goal_from_db(data) for data in response.data]
             
         except Exception as e:
             logger.error(f"Failed to get goals for user {user_id}: {e}")
@@ -340,7 +381,7 @@ class SupabaseCalorieGoalRepository(ICalorieGoalRepository):
             ).execute()
             
             if response.data and len(response.data) > 0:
-                return CalorieGoal(**response.data[0])
+                return self._map_goal_from_db(response.data[0])
             else:
                 raise Exception("No data returned from goal creation")
             
@@ -384,7 +425,7 @@ class SupabaseCalorieGoalRepository(ICalorieGoalRepository):
             ).eq("id", str(goal.id)).execute()
             
             if response.data and len(response.data) > 0:
-                return CalorieGoal(**response.data[0])
+                return self._map_goal_from_db(response.data[0])
             return None
             
         except Exception as e:

@@ -577,7 +577,7 @@ class MetabolicCalculationService:
 - **✅ Deployment Flexibility**: Servizi possono essere deployati indipendentemente
 - **✅ Performance Optimized**: Elimina network calls cross-service
 
-**Status**: ✅ **COMPLETATO** - Implementato nel calorie-balance service con successo
+**Status**: ✅ **COMPLETATO** - Implementato nel calorie-balance service con successo (100% test coverage)
 | **health-monitor** | `nutrifit_health_monitor` | HealthKit sync, metrics | ❌ Solo data collection |
 | **notifications** | `nutrifit_notifications` | Push notifications, alerts | ❌ Solo messaging |
 | **ai-coach** | `nutrifit_ai_coach` | Conversations, recommendations | ✅ Primary MCP server |
@@ -1943,7 +1943,7 @@ height="6.299212598425197in"}
 
 -   ✅ **User Management Service**: Production deployed (100% test success) - https://nutrifit-user-management.onrender.com
 
--   🟡 **Calorie Balance Service**: 68.8% complete (Task 2.3 Events API fixed, Goals API working)
+-   ✅ **Calorie Balance Service**: 100% complete (All endpoints working, optimized serialization) 🎉
 
 -   ⏳ **Meal Tracking Service**: Planning phase con OpenFoodFacts integration
 

@@ -469,7 +469,8 @@ class UserManagementTests:
             invalid_query = {"query": "{ invalidField { nonExistentField } }"}
             response = requests.post(graphql_url, json=invalid_query, timeout=10)
             
-            expected_error = response.status_code == 400 and 'errors' in response.json()
+            # GraphQL returns 200 OK with errors in payload, not HTTP 400
+            expected_error = response.status_code == 200 and 'errors' in response.json()
             self.log_test(
                 "GraphQL Error Handling", 
                 expected_error,

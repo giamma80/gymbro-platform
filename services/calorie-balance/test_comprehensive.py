@@ -472,7 +472,7 @@ class CalorieBalanceAPITester:
             if response.status_code == 200:
                 data = response.json()
                 if 'data' in data and '_service' in data['data'] and 'sdl' in data['data']['_service']:
-                    sdl = data['_service']['sdl']
+                    sdl = data['data']['_service']['sdl']
                     self.log_test("GraphQL Federation SDL", True, f"SDL retrieved ({len(sdl)} chars)")
                 else:
                     self.log_test("GraphQL Federation SDL", False, "Invalid SDL response")
@@ -486,10 +486,12 @@ class CalorieBalanceAPITester:
         
         try:
             response = requests.post(graphql_url, json=invalid_query, timeout=10)
-            if response.status_code == 400 and 'errors' in response.json():
-                self.log_test("GraphQL Error Handling", True, "Proper error response")
+            response_data = response.json()
+            # GraphQL returns 200 OK with errors in payload, not HTTP 400
+            if response.status_code == 200 and 'errors' in response_data:
+                self.log_test("GraphQL Error Handling", True, "Proper GraphQL error response")
             else:
-                self.log_test("GraphQL Error Handling", False, f"Expected 400 with errors, got {response.status_code}")
+                self.log_test("GraphQL Error Handling", False, f"Expected 200 with errors, got {response.status_code}")
         except Exception as e:
             self.log_test("GraphQL Error Handling", False, str(e))
 

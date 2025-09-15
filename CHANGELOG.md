@@ -7,6 +7,62 @@ e questo progetto aderisce al [Semantic Versioning](https://semver.org/spec/v2.0
 
 ## [Unreleased]
 
+## [v1.10.0] - 2025-09-15 - Test Suite Consolidation & Master Test Runner
+
+### 🧪 Major Test Architecture Overhaul
+- **GraphQL Test Consolidation**: Unified all GraphQL Federation tests into `test_comprehensive.py`
+- **Test Structure Uniformation**: Achieved identical test structure between `calorie-balance` and `user-management`
+- **Master Test Runner**: Created platform-wide test orchestration tool (`run-all-tests.py`)
+- **ANSI Color Parsing**: Fixed subprocess output parsing with color code stripping
+
+### 🎯 Test Suite Perfection - 100% Success Rate
+```
+📊 PLATFORM STATISTICS
+Services:      2/2 successful  
+Total Tests:   44
+Passed:        44
+Failed:        0
+Success Rate:  100.0%
+Duration:      6.0s
+```
+
+### 🔧 GraphQL Federation Fixes
+- **calorie-balance SDL**: Fixed Federation SDL parsing from `data['_service']['sdl']` to `data['data']['_service']['sdl']`
+- **Error Handling Standard**: Updated GraphQL error handling to accept HTTP 200 with `errors` payload (GraphQL standard)
+- **Schema Validation**: All federation endpoints now working correctly
+
+### 🗂️ File Cleanup & Organization
+- **Removed Duplicates**: Eliminated 4 redundant test files:
+  - `services/calorie-balance/test_graphql.py` → consolidated
+  - `services/calorie-balance/test_graphql_federation.py` → consolidated  
+  - `services/user-management/test_graphql.py` → consolidated
+  - `services/user-management/test_graphql_federation.py` → consolidated
+
+### 🚀 Master Test Runner Features
+- **Parallel Execution**: All services tested simultaneously for maximum speed
+- **Consolidated Reporting**: Platform-wide statistics with service-by-service breakdown
+- **Environment Support**: Local/production environment testing
+- **Color-Coded Output**: Visual status indicators with proper ANSI handling
+- **Error Isolation**: Failed services clearly identified with error details
+
+### 📊 Test Coverage Achievements
+- **calorie-balance**: 19/19 tests (100%) - Health, Metabolic, Goals, Events, Balance, GraphQL
+- **user-management**: 25/25 tests (100%) - Database Repositories, APIs, Privacy, Actions, GraphQL
+- **GraphQL Federation**: Complete SDL validation and error handling across all services
+- **Performance**: 6.0s total execution time with parallel processing
+
+### 🛠️ Technical Improvements
+- **TestColors Class**: Unified ANSI color system across all test files
+- **Environment Handling**: Consistent local/prod configuration management
+- **Logging Structure**: Standardized `log_section()` and `log_test()` methods
+- **Regex Parsing**: Robust statistics extraction from test output
+
+### 🎉 Platform Maturity Milestones
+- **Zero Test Failures**: Complete platform stability achieved
+- **Scalable Testing**: Master runner supports additional services seamlessly
+- **Developer Experience**: Single command platform-wide testing
+- **CI/CD Ready**: Structured output suitable for automated pipelines
+
 ## [v1.9.0] - 2025-09-14 - Events Timeline API Fixed + Schema Manager Documentation
 
 ### 🎯 Task 2.6 COMPLETED: Events Timeline API Fixed

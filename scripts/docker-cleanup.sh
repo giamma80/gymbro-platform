@@ -71,8 +71,8 @@ else
     echo "$dangling_cleanup" | grep "Total reclaimed space"
 fi
 
-# 3. Remove old service images (keep only current enhanced versions)
-print_header "3. 📦 Removing Old Service Images"
+# 3. Remove old service images and unused infrastructure
+print_header "3. 📦 Removing Old Service Images & Unused Infrastructure"
 old_images_to_remove=(
     "gymbro-platform-analytics-service"
     "analytics-service-test"
@@ -81,12 +81,17 @@ old_images_to_remove=(
     "gymbro-platform-user-service"
     "user-management-test"
     "gymbro-user-service"
+    "postgres:15-alpine"
+    "redis:7-alpine"
 )
 
 for image in "${old_images_to_remove[@]}"; do
-    if docker images --format "table {{.Repository}}" | grep -q "^$image$"; then
+    # Check if image exists using docker images command without table format
+    if docker images --format "{{.Repository}}:{{.Tag}}" | grep -q "^${image}$"; then
         print_status "Removing old image: $image"
         docker rmi "$image" 2>/dev/null || print_warning "Could not remove $image (might be in use)"
+    else
+        print_status "Image $image not found (already removed or never existed)"
     fi
 done
 
@@ -127,11 +132,13 @@ echo ""
 print_header "✅ Cleanup Complete!"
 print_success "Docker cleanup completed successfully!"
 print_status "Only essential images for GymBro Platform are now present:"
-print_status "• analytics-service-enhanced (current analytics service)"
-print_status "• user-management-enhanced (current user management service)"
-print_status "• postgres:15-alpine (database)"
-print_status "• n8nio/n8n (automation workflows)"
-print_status "• python:3.11-slim (base Python image)"
-print_status "• traefik:v3.0 (load balancer)"
+print_status "• user-management-user-management (current user management service)"
+print_status "• calorie-balance-calorie-balance (current calorie balance service)"
+print_status "• python:3.11-slim (base Python image for builds)"
+print_status ""
+print_status "🌟 Supabase-Only Architecture:"
+print_status "• No local PostgreSQL (using Supabase Cloud DB)"
+print_status "• No local Redis (simplified docker-compose)"
+print_status "• Cloud-native microservices architecture"
 
 echo -e "\n${GREEN}🎉 Space successfully reclaimed! Your GymBro Platform is now optimized.${NC}\n"

@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  apollo-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: apollo-gateway
+    ports:
+      - "${GATEWAY_PORT:-4000}:4000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - GATEWAY_PORT=4000
+      - GATEWAY_HOST=0.0.0.0
+      - GRAPHQL_PATH=/graphql
+      - POLL_INTERVAL=${POLL_INTERVAL:-30000}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:8080}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      # Subgraph URLs - point to host services
+      - USER_MANAGEMENT_URL=http://host.docker.internal:8001/graphql
+      - CALORIE_BALANCE_URL=http://host.docker.internal:8002/graphql
+    networks:
+      - gymbro-network
+    healthcheck:
+      test: ["CMD", "node", "scripts/health-check.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+networks:
+  gymbro-network:
+    driver: bridge
+    external: true

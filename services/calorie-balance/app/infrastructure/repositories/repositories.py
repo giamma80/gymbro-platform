@@ -25,11 +25,14 @@ from app.domain.repositories import (
     ITemporalAnalyticsRepository, ICalorieSearchRepository
 )
 from app.domain.entities import (
-    CalorieEvent, CalorieGoal, DailyBalance, MetabolicProfile,
-    HourlyCalorieSummary, DailyCalorieSummary, WeeklyCalorieSummary,
-    MonthlyCalorieSummary, DailyBalanceSummary, EventType, GoalType,
-    ActivityLevel, GenderType
+    CalorieGoal, CalorieEvent, DailyBalance,
+    MetabolicProfile, HourlyCalorieSummary, DailyCalorieSummary,
+    MonthlyCalorieSummary, DailyBalanceSummary,
+    EventType, GoalType, ActivityLevel, GenderType
 )
+
+# Core exceptions 
+from app.core.exceptions import SupabaseError
 
 # Core dependencies
 from app.core.database import get_supabase_client
@@ -716,20 +719,67 @@ class SupabaseTemporalAnalyticsRepository(ITemporalAnalyticsRepository):
             return []
     
     async def get_weekly_summary(
-        self, user_id: str, year: int, week_number: Optional[int] = None
-    ) -> List[WeeklyCalorieSummary]:
-        """Get weekly summaries for year (optional specific week)."""
+        self, user_id: str, weeks_back: int = 12
+    ) -> List[Dict[str, Any]]:
+        """Get weekly summaries for the specified number of weeks back."""
         try:
-            query = self.client.table(self.weekly_view).select("*").eq(
-                "user_id", user_id
-            ).eq("year", year)
+            # Use our existing get_user_statistics RPC function
+            # to get weekly data
+            from datetime import datetime, timedelta
+            import json
             
-            if week_number:
-                query = query.eq("week_number", week_number)
+            end_date = datetime.now().date()
+            start_date = end_date - timedelta(weeks=weeks_back)
             
-            response = query.order("week_number").execute()
+            # Call the RPC function we created
+            response = self.client.rpc(
+                'get_user_statistics',
+                {
+                    'p_user_id': user_id,
+                    'p_start_date': str(start_date),
+                    'p_end_date': str(end_date)
+                }
+            ).execute()
             
-            return [WeeklyCalorieSummary(**data) for data in response.data]
+            if response.data:
+                # Parse the JSON response from RPC function
+                if isinstance(response.data, dict):
+                    stats_data = response.data
+                else:
+                    stats_data = json.loads(response.data)
+                
+                # Create weekly summary format for last weeks_back weeks
+                weekly_summaries = []
+                current_date = end_date
+                
+                for week_num in range(weeks_back):
+                    week_end = current_date - timedelta(days=week_num * 7)
+                    week_start = week_end - timedelta(days=6)
+                    
+                    # Use averaged data from statistics (simplified approach)
+                    averages = stats_data.get('averages', {})
+                    weekly_summary = {
+                        'week_start': str(week_start),
+                        'week_end': str(week_end),
+                        'avg_daily_consumed': float(
+                            averages.get('daily_consumed', 0)
+                        ),
+                        'avg_daily_burned': float(
+                            averages.get('daily_burned', 0)
+                        ),
+                        'avg_net_calories': float(
+                            averages.get('daily_net', 0)
+                        ),
+                        'total_weight_change': None,
+                        'active_days': 7,  # Assume full week for now
+                        'goal_adherence_pct': None,  # Calculate if needed
+                    }
+                    weekly_summaries.append(weekly_summary)
+                
+                # Reverse to get chronological order (oldest first)
+                return list(reversed(weekly_summaries))
+            
+            return []
             
         except Exception as e:
             logger.error(

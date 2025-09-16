@@ -96,10 +96,11 @@ def get_calorie_goal_service(
 
 def get_analytics_service(
     analytics_repo: SupabaseTemporalAnalyticsRepository = Depends(get_analytics_repository),
-    search_repo: SupabaseCalorieSearchRepository = Depends(get_search_repository)
+    event_repo: SupabaseCalorieEventRepository = Depends(get_calorie_event_repository),
+    balance_repo: SupabaseDailyBalanceRepository = Depends(get_daily_balance_repository)
 ) -> AnalyticsService:
-    """Get analytics service."""
-    return AnalyticsService(analytics_repo, search_repo)
+    """Get analytics service - Timeline Analytics."""
+    return AnalyticsService(analytics_repo, event_repo, balance_repo)
 
 
 # =============================================================================

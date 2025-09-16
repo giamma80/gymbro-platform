@@ -1,9 +1,9 @@
 # User Management Service - API Development Roadmap
 
 **Service:** user-management  
-**Current Version:** v0.1.0  
-**Last Updated:** 10 settembre 2025  
-**Priority:** ✅ **PHASE 1 COMPLETE** - Core authentication and user management implemented
+**Current Version:** v2.3.0 (GraphQL Federation Integration)  
+**Last Updated:** 16 settembre 2025  
+**Priority:** ✅ **FEDERATION READY** - Core authentication, user management, and GraphQL Federation operational
 
 ## 📊 Development Status Overview
 
@@ -11,15 +11,22 @@
 |--------------|----------------|-------------------|-------------------|----------------|------------------|
 | **Authentication & Authorization** | 6 | 6 | 0 | 0 | 100% |
 | **User Profile Management** | 5 | 5 | 0 | 0 | 100% |
-| **Health & Status** | 3 | 2 | 0 | 1 | 67% |
-| **Service Integration** | 4 | 2 | 0 | 2 | 50% |
+| **GraphQL Federation** | 4 | 4 | 0 | 0 | 100% |
+| **Health & Status** | 3 | 3 | 0 | 0 | 100% |
+| **Service Integration** | 4 | 4 | 0 | 0 | 100% |
 | **GDPR & Data Privacy** | 4 | 2 | 0 | 2 | 50% |
-| **Session Management** | 4 | 0 | 0 | 4 | 0% |
+| **Session Management** | 4 | 2 | 0 | 2 | 50% |
 | **Social Authentication** | 4 | 0 | 0 | 4 | 0% |
 | **Security & MFA** | 4 | 0 | 0 | 4 | 0% |
-| **TOTAL** | **34** | **17** | **0** | **17** | **50%** |
+| **TOTAL** | **38** | **26** | **0** | **12** | **68%** |
 
-## ✅ IMPLEMENTED APIS (Phase 1 Complete)
+### 🌐 Federation Integration Status
+- **Apollo Gateway**: ✅ **FEDERATED** at https://apollo-gateway.onrender.com/graphql
+- **Schema Introspection**: ✅ **ACTIVE** with user type definitions
+- **Cross-Service Queries**: ✅ **OPERATIONAL** with calorie-balance service
+- **Production Deployment**: ✅ **LIVE** on Render.com
+
+## ✅ IMPLEMENTED APIS (Federation Ready)
 
 ### Authentication & Authorization (✅ 100%)
 - ✅ `POST /api/v1/auth/register` - User registration with email validation
@@ -28,6 +35,12 @@
 - ✅ `POST /api/v1/auth/refresh` - JWT token refresh
 - ✅ `POST /api/v1/auth/password-reset` - Password reset request
 - ✅ `POST /api/v1/auth/password-reset/confirm` - Password reset confirmation
+
+### GraphQL Federation (✅ 100% - PRODUCTION READY)
+- ✅ `Query.users` - User search and listing via federated queries
+- ✅ `User.id` - User identification for cross-service federation
+- ✅ `User.profile` - User profile data for federated user context
+- ✅ `User.calorieData` - Cross-service integration with calorie-balance service
 
 ### User Profile Management (✅ 100%)
 - ✅ `GET /api/v1/users/{user_id}` - Get user profile by ID

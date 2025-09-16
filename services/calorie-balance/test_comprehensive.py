@@ -173,7 +173,7 @@ class CalorieBalanceAPITester:
             # URL corretto senza doppio prefix
             url = f"{API_BASE}/users/{TEST_USER_ID}/profile/metabolic"
             response = self.session.get(url)
-            success = response.status_code in [200, 404]
+            success = response.status_code == 200
             profile_exists = response.status_code == 200
             details = f"Profile exists: {profile_exists}"
             if not success:
@@ -236,7 +236,7 @@ class CalorieBalanceAPITester:
         # 3. Get current active goal
         try:
             response = self.session.get(f"{API_BASE}/goals/current")
-            success = response.status_code in [200, 404]
+            success = response.status_code == 200
             has_active_goal = response.status_code == 200
             details = f"Has active goal: {has_active_goal}"
             if not success:
@@ -396,7 +396,7 @@ class CalorieBalanceAPITester:
         # 1. Get today's balance
         try:
             response = self.session.get(f"{API_BASE}/balance/today")
-            success = response.status_code in [200, 404]
+            success = response.status_code == 200
             has_data = response.status_code == 200
             
             if has_data:
@@ -416,7 +416,7 @@ class CalorieBalanceAPITester:
         try:
             today = date.today().isoformat()
             response = self.session.get(f"{API_BASE}/balance/daily/{today}")
-            success = response.status_code in [200, 404]
+            success = response.status_code == 200
             details = f"Status: {response.status_code}"
             if not success:
                 details += f", Response: {response.text[:200]}..."
@@ -432,7 +432,7 @@ class CalorieBalanceAPITester:
                 f"{API_BASE}/balance/progress",
                 params={"days": 7}
             )
-            success = response.status_code in [200, 404]
+            success = response.status_code == 200
             details = f"Status: {response.status_code}"
             if not success:
                 details += f", Response: {response.text[:200]}..."
@@ -441,7 +441,211 @@ class CalorieBalanceAPITester:
         except Exception as e:
             self.log_test("Balance: Get progress tracking", False, str(e))
 
-    # ========== GraphQL Federation Tests ==========
+    # ========== Timeline Analytics API Tests (NEW) ==========
+    def test_timeline_analytics_flow(self):
+        """Test complete Timeline Analytics API workflow."""
+        self.log_section("Timeline Analytics Tests")
+        
+        # 1. Test Hourly Analytics
+        try:
+            today = date.today().isoformat()
+            response = self.session.get(
+                f"{API_BASE}/timeline/analytics/hourly",
+                params={"date": today}
+            )
+            success = response.status_code == 200
+            if success:
+                data = response.json()
+                details = f"Hourly data points: {len(data.get('data', []))}"
+            else:
+                details = f"Status: {response.status_code}"
+                if response.status_code == 404:
+                    details += " - Endpoint not found (not implemented)"
+                else:
+                    details += f", Response: {response.text[:200]}..."
+                    
+            self.log_test("Timeline: Hourly analytics", success, details)
+        except Exception as e:
+            self.log_test("Timeline: Hourly analytics", False, str(e))
+            
+        # 2. Test Daily Analytics
+        try:
+            from datetime import timedelta
+            end_date = date.today()
+            start_date = end_date - timedelta(days=7)
+            
+            response = self.session.get(
+                f"{API_BASE}/timeline/analytics/daily",
+                params={
+                    "start_date": start_date.isoformat(),
+                    "end_date": end_date.isoformat()
+                }
+            )
+            success = response.status_code == 200
+            if success and response.status_code == 200:
+                data = response.json()
+                details = f"Daily data points: {len(data.get('data', []))}"
+            else:
+                details = f"Status: {response.status_code}"
+                if response.status_code not in [200, 404]:
+                    details += f", Response: {response.text[:200]}..."
+                    
+            self.log_test("Timeline: Daily analytics", success, details)
+        except Exception as e:
+            self.log_test("Timeline: Daily analytics", False, str(e))
+            
+        # 3. Test Weekly Analytics
+        try:
+            response = self.session.get(
+                f"{API_BASE}/timeline/analytics/weekly",
+                params={"weeks": 4}
+            )
+            success = response.status_code == 200
+            if success and response.status_code == 200:
+                data = response.json()
+                details = f"Weekly data points: {len(data.get('data', []))}"
+            else:
+                details = f"Status: {response.status_code}"
+                if response.status_code not in [200, 404]:
+                    details += f", Response: {response.text[:200]}..."
+                    
+            self.log_test("Timeline: Weekly analytics", success, details)
+        except Exception as e:
+            self.log_test("Timeline: Weekly analytics", False, str(e))
+            
+        # 4. Test Monthly Analytics
+        try:
+            response = self.session.get(
+                f"{API_BASE}/timeline/analytics/monthly",
+                params={"months": 3}
+            )
+            success = response.status_code == 200
+            if success and response.status_code == 200:
+                data = response.json()
+                details = f"Monthly data points: {len(data.get('data', []))}"
+            else:
+                details = f"Status: {response.status_code}"
+                if response.status_code not in [200, 404]:
+                    details += f", Response: {response.text[:200]}..."
+                    
+            self.log_test("Timeline: Monthly analytics", success, details)
+        except Exception as e:
+            self.log_test("Timeline: Monthly analytics", False, str(e))
+            
+        # 5. Test Balance Analytics
+        try:
+            response = self.session.get(
+                f"{API_BASE}/timeline/analytics/balance",
+                params={"days": 14}
+            )
+            success = response.status_code == 200
+            if success and response.status_code == 200:
+                data = response.json()
+                trend = data.get('trend_direction', 'N/A')
+                details = f"Balance trend: {trend}"
+            else:
+                details = f"Status: {response.status_code}"
+                if response.status_code not in [200, 404]:
+                    details += f", Response: {response.text[:200]}..."
+                    
+            self.log_test("Timeline: Balance analytics", success, details)
+        except Exception as e:
+            self.log_test("Timeline: Balance analytics", False, str(e))
+            
+        # 6. Test Intraday Analytics
+        try:
+            today = date.today().isoformat()
+            response = self.session.get(
+                f"{API_BASE}/timeline/analytics/intraday",
+                params={"date": today}
+            )
+            success = response.status_code == 200
+            if success and response.status_code == 200:
+                data = response.json()
+                details = f"Intraday events: {data.get('total_events', 0)}"
+            else:
+                details = f"Status: {response.status_code}"
+                if response.status_code not in [200, 404]:
+                    details += f", Response: {response.text[:200]}..."
+                    
+            self.log_test("Timeline: Intraday analytics", success, details)
+        except Exception as e:
+            self.log_test("Timeline: Intraday analytics", False, str(e))
+            
+        # 7. Test Behavioral Patterns
+        try:
+            response = self.session.get(
+                f"{API_BASE}/timeline/analytics/patterns",
+                params={
+                    "pattern_types": ["eating_schedule", "exercise_timing"],
+                    "min_confidence": 0.7
+                }
+            )
+            success = response.status_code == 200
+            if success and response.status_code == 200:
+                data = response.json()
+                patterns = data.get('data', [])
+                details = f"Behavioral patterns found: {len(patterns)}"
+                if patterns:
+                    scores = [p.get('confidence_score', 0) for p in patterns]
+                    avg_confidence = sum(scores) / len(patterns)
+                    details += f", Avg confidence: {avg_confidence:.2f}"
+            else:
+                details = f"Status: {response.status_code}"
+                if response.status_code not in [200, 404]:
+                    details += f", Response: {response.text[:200]}..."
+                    
+            self.log_test("Timeline: Behavioral patterns", success, details)
+        except Exception as e:
+            self.log_test("Timeline: Behavioral patterns", False, str(e))
+            
+        # 8. Test Real-time Analytics
+        try:
+            url = f"{API_BASE}/timeline/analytics/realtime"
+            response = self.session.get(url)
+            success = response.status_code == 200
+            if success and response.status_code == 200:
+                data = response.json()
+                calories = data.get('current_calories', 0)
+                details = f"Real-time calories: {calories}"
+            else:
+                details = f"Status: {response.status_code}"
+                if response.status_code not in [200, 404]:
+                    details += f", Response: {response.text[:200]}..."
+                    
+            self.log_test("Timeline: Real-time analytics", success, details)
+        except Exception as e:
+            self.log_test("Timeline: Real-time analytics", False, str(e))
+            
+        # 9. Test Data Export
+        try:
+            from datetime import timedelta
+            end_date = date.today()
+            start_date = end_date - timedelta(days=30)
+            
+            response = self.session.get(
+                f"{API_BASE}/timeline/analytics/export",
+                params={
+                    "start_date": start_date.isoformat(),
+                    "end_date": end_date.isoformat(),
+                    "format": "json",
+                    "granularity": "daily"
+                }
+            )
+            success = response.status_code == 200
+            if success and response.status_code == 200:
+                data = response.json()
+                details = f"Export records: {data.get('total_records', 0)}"
+            else:
+                details = f"Status: {response.status_code}"
+                if response.status_code not in [200, 404]:
+                    details += f", Response: {response.text[:200]}..."
+                    
+            self.log_test("Timeline: Data export", success, details)
+        except Exception as e:
+            self.log_test("Timeline: Data export", False, str(e))
+
+    # ========== GraphQL Federation Tests (EXTENDED) ==========
     def test_graphql_federation_basic(self):
         """Test basic GraphQL Federation endpoints."""
         graphql_url = f"{BASE_URL}/graphql"
@@ -495,6 +699,266 @@ class CalorieBalanceAPITester:
         except Exception as e:
             self.log_test("GraphQL Error Handling", False, str(e))
 
+    def test_graphql_extended_features(self):
+        """Test extended GraphQL features for calorie-balance operations."""
+        self.log_section("Extended GraphQL Features Tests")
+        graphql_url = f"{BASE_URL}/graphql"
+        
+        # Test 1: Calorie Goals Query
+        goals_query = {
+            "query": """
+                query GetUserCalorieGoals($userId: String!) {
+                    getUserCalorieGoals(userId: $userId) {
+                        success
+                        message
+                        data {
+                            id
+                            goalType
+                            dailyCalorieTarget
+                            isActive
+                        }
+                    }
+                }
+            """,
+            "variables": {"userId": TEST_USER_ID}
+        }
+        
+        try:
+            url = graphql_url
+            response = requests.post(url, json=goals_query, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                has_errors = 'errors' in data
+                success = not has_errors
+                if success:
+                    details = "Query executed successfully"
+                else:
+                    error_msg = data.get('errors', [{}])[0].get('message', 'Unknown error')
+                    details = f"GraphQL error: {error_msg}"
+            else:
+                success = False
+                details = f"HTTP {response.status_code}"
+            
+            self.log_test("GraphQL: Calorie Goals Query", success, details)
+        except Exception as e:
+            self.log_test("GraphQL: Calorie Goals Query", False, str(e))
+            
+        # Test 2: Calorie Events Query
+        events_query = {
+            "query": """
+                query GetUserCalorieEvents($userId: String!, $limit: Int) {
+                    getUserCalorieEvents(userId: $userId, limit: $limit) {
+                        success
+                        message
+                        data {
+                            id
+                            eventType
+                            value
+                            eventTimestamp
+                            source
+                        }
+                        total
+                    }
+                }
+            """,
+            "variables": {"userId": TEST_USER_ID, "limit": 10}
+        }
+        
+        try:
+            response = requests.post(graphql_url, json=events_query, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                has_errors = 'errors' in data
+                success = not has_errors
+                if success:
+                    details = "Query executed successfully"
+                else:
+                    error_msg = data.get('errors', [{}])[0].get('message', 'Unknown')
+                    details = f"GraphQL error: {error_msg}"
+            else:
+                success = False
+                details = f"HTTP {response.status_code}"
+                
+            self.log_test("GraphQL: Calorie Events Query", success, details)
+        except Exception as e:
+            self.log_test("GraphQL: Calorie Events Query", False, str(e))
+            
+        # Test 3: Daily Balance Query
+        balance_query = {
+            "query": """
+                query GetCurrentDailyBalance($userId: String!) {
+                    getCurrentDailyBalance(userId: $userId) {
+                        success
+                        message
+                        data {
+                            id
+                            date
+                            caloriesConsumed
+                            caloriesBurnedExercise
+                            netCalories
+                            dataCompletenessScore
+                        }
+                    }
+                }
+            """,
+            "variables": {"userId": TEST_USER_ID}
+        }
+        
+        try:
+            response = requests.post(graphql_url, json=balance_query, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                has_errors = 'errors' in data
+                success = not has_errors
+                if success:
+                    details = "Query executed successfully"
+                else:
+                    error_msg = data.get('errors', [{}])[0].get('message', 'Unknown')
+                    details = f"GraphQL error: {error_msg}"
+            else:
+                success = False
+                details = f"HTTP {response.status_code}"
+                
+            self.log_test("GraphQL: Daily Balance Query", success, details)
+        except Exception as e:
+            self.log_test("GraphQL: Daily Balance Query", False, str(e))
+            
+        # Test 4: Timeline Analytics GraphQL Query
+        analytics_query = {
+            "query": """
+                query GetDailyAnalytics($userId: String!, $startDate: String!, $endDate: String!) {
+                    getDailyAnalytics(userId: $userId, startDate: $startDate, endDate: $endDate) {
+                        success
+                        message
+                        data {
+                            date
+                            caloriesConsumed
+                            caloriesBurnedExercise
+                            netCalories
+                            trendDirection
+                            activeHours
+                        }
+                    }
+                }
+            """,
+            "variables": {
+                "userId": TEST_USER_ID,
+                "startDate": "2025-09-10",
+                "endDate": "2025-09-16"
+            }
+        }
+        
+        try:
+            response = requests.post(graphql_url, json=analytics_query, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                has_errors = 'errors' in data
+                success = not has_errors
+                if success:
+                    details = "Analytics query executed successfully"
+                else:
+                    error_msg = data.get('errors', [{}])[0].get('message', 'Unknown')
+                    details = f"GraphQL error: {error_msg}"
+            else:
+                success = False
+                details = f"HTTP {response.status_code}"
+                
+            self.log_test("GraphQL: Timeline Analytics Query", success, details)
+        except Exception as e:
+            self.log_test("GraphQL: Timeline Analytics Query", False, str(e))
+            
+        # Test 5: Create Calorie Goal Mutation
+        create_goal_mutation = {
+            "query": """
+                mutation CreateCalorieGoal($userId: String!, $input: CreateCalorieGoalInput!) {
+                    createCalorieGoal(userId: $userId, input: $input) {
+                        success
+                        message
+                        data {
+                            id
+                            goalType
+                            dailyCalorieTarget
+                            isActive
+                        }
+                    }
+                }
+            """,
+            "variables": {
+                "userId": TEST_USER_ID,
+                "input": {
+                    "goalType": "WEIGHT_LOSS",
+                    "dailyCalorieTarget": 1800.0,
+                    "weeklyWeightChangeKg": -0.5,
+                    "startDate": "2025-09-16"
+                }
+            }
+        }
+        
+        try:
+            response = requests.post(graphql_url, json=create_goal_mutation, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                has_errors = 'errors' in data
+                success = not has_errors
+                if success:
+                    details = "Goal mutation executed successfully"
+                else:
+                    error_msg = data.get('errors', [{}])[0].get('message', 'Unknown')
+                    details = f"GraphQL error: {error_msg}"
+            else:
+                success = False
+                details = f"HTTP {response.status_code}"
+                
+            self.log_test("GraphQL: Create Goal Mutation", success, details)
+        except Exception as e:
+            self.log_test("GraphQL: Create Goal Mutation", False, str(e))
+            
+        # Test 6: Create Calorie Event Mutation
+        create_event_mutation = {
+            "query": """
+                mutation CreateCalorieEvent($userId: String!, $input: CreateCalorieEventInput!) {
+                    createCalorieEvent(userId: $userId, input: $input) {
+                        success
+                        message
+                        data {
+                            id
+                            eventType
+                            value
+                            source
+                        }
+                    }
+                }
+            """,
+            "variables": {
+                "userId": TEST_USER_ID,
+                "input": {
+                    "eventType": "CONSUMED",
+                    "value": 250.0,
+                    "source": "MANUAL",
+                    "metadata": "{\"meal_type\": \"snack\"}"
+                }
+            }
+        }
+        
+        try:
+            response = requests.post(graphql_url, json=create_event_mutation, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                has_errors = 'errors' in data
+                success = not has_errors
+                if success:
+                    details = "Event mutation executed successfully"
+                else:
+                    error_msg = data.get('errors', [{}])[0].get('message', 'Unknown')
+                    details = f"GraphQL error: {error_msg}"
+            else:
+                success = False
+                details = f"HTTP {response.status_code}"
+                
+            self.log_test("GraphQL: Create Event Mutation", success, details)
+        except Exception as e:
+            self.log_test("GraphQL: Create Event Mutation", False, str(e))
+
     # ========== Main Test Execution ==========
     def run_all_tests(self):
         """Execute all test suites in logical order."""
@@ -528,10 +992,14 @@ class CalorieBalanceAPITester:
         # 5. Analytics and balance tracking (after events created)
         self.test_balance_analytics_flow()
         
-        # 6. GraphQL Federation Testing
+        # 6. Timeline Analytics API Testing (NEW)
+        self.test_timeline_analytics_flow()
+        
+        # 7. GraphQL Federation Testing
         self.log_section("GraphQL Federation Tests")
         try:
             self.test_graphql_federation_basic()
+            self.test_graphql_extended_features()
         except Exception as e:
             self.log_test("GraphQL Federation Tests", False, f"Error: {e}")
 
@@ -547,28 +1015,26 @@ class CalorieBalanceAPITester:
         print(f"Total Tests: {TestColors.BOLD}{self.total}{TestColors.END}")
         print(f"Passed: {TestColors.GREEN}{self.passed}{TestColors.END}")
         print(f"Failed: {TestColors.RED}{self.failed}{TestColors.END}")
-        print(
-            f"Success Rate: {TestColors.CYAN}{(self.passed/self.total*100):.1f}%{TestColors.END}"
-        )
-        print(f"Duration: {TestColors.YELLOW}{duration:.2f} seconds{TestColors.END}")
+        rate = (self.passed/self.total*100) if self.total > 0 else 0
+        print(f"Success Rate: {TestColors.CYAN}{rate:.1f}%{TestColors.END}")
+        duration_str = f"{duration:.2f} seconds"
+        print(f"Duration: {TestColors.YELLOW}{duration_str}{TestColors.END}")
 
         if self.failed > 0:
-            print(
-                f"\n{TestColors.RED}{TestColors.BOLD}⚠️  {self.failed} test(s) failed. Please review the issues above.{TestColors.END}"
-            )
+            warning = "⚠️  {} test(s) failed. Please review the issues above."
+            print(f"\n{TestColors.RED}{TestColors.BOLD}" +
+                  warning.format(self.failed) +
+                  f"{TestColors.END}")
+            
+        # Basic console output
+        print(f"\nTest Results: {self.passed}/{self.total}")
+        rate_basic = (self.passed/self.total)*100 if self.total > 0 else 0
+        print(f"Success Rate: {rate_basic:.1f}%")
+
+        if self.total - self.passed > 0:
+            print("Some tests failed!")
 
         return self.failed == 0
-        print(f"Success Rate: {(passed/total)*100:.1f}%")
-        
-        if total - passed > 0:
-            print("\n❌ Failed Tests:")
-            for result in self.test_results:
-                if not result['success']:
-                    print(f"  - {result['test']}: {result['details']}")
-        else:
-            print("\n✅ All tests passed!")
-        
-        return passed == total
 
 
 def main():

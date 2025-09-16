@@ -713,15 +713,432 @@ class MetabolicCalculationService:
 
 
 class AnalyticsService:
-    """Service for temporal analytics and insights."""
+    """📈 TIMELINE ANALYTICS SERVICE - Mobile dashboard optimization."""
     
     def __init__(
         self,
         analytics_repo: ITemporalAnalyticsRepository,
-        search_repo: ICalorieSearchRepository
+        event_repo: ICalorieEventRepository,
+        balance_repo: IDailyBalanceRepository
     ):
         self.analytics_repo = analytics_repo
-        self.search_repo = search_repo
+        self.event_repo = event_repo
+        self.balance_repo = balance_repo
+    
+    async def get_hourly_analytics(
+        self,
+        user_id: str,
+        date: DateType,
+        hours_back: int = 24
+    ) -> List[Dict[str, Any]]:
+        """Get hourly analytics using pre-computed temporal views."""
+        try:
+            # Use hourly_calorie_summary view
+            return await self.analytics_repo.get_hourly_summary(
+                user_id=user_id,
+                target_date=date,
+                hours_back=hours_back
+            )
+        except Exception as e:
+            logger.error(f"Failed to get hourly analytics: {e}")
+            raise
+    
+    async def get_daily_analytics(
+        self,
+        user_id: str,
+        start_date: DateType,
+        end_date: DateType,
+        include_trends: bool = True
+    ) -> List[Dict[str, Any]]:
+        """Get daily analytics with trend calculations."""
+        try:
+            daily_data = await self.analytics_repo.get_daily_summary(
+                user_id=user_id,
+                start_date=start_date,
+                end_date=end_date
+            )
+            
+            if include_trends:
+                # Add trend calculations
+                for i, day in enumerate(daily_data):
+                    if i > 0:
+                        prev_day = daily_data[i-1]
+                        day['trend_direction'] = self._calculate_trend(
+                            day['net_calories'], prev_day['net_calories']
+                        )
+            
+            return daily_data
+        except Exception as e:
+            logger.error(f"Failed to get daily analytics: {e}")
+            raise
+    
+    async def get_weekly_analytics(
+        self,
+        user_id: str,
+        weeks_back: int = 12,
+        include_patterns: bool = True
+    ) -> List[Dict[str, Any]]:
+        """Get weekly analytics with pattern recognition."""
+        try:
+            weekly_data = await self.analytics_repo.get_weekly_summary(
+                user_id=user_id,
+                weeks_back=weeks_back
+            )
+            
+            if include_patterns:
+                # Add weekday pattern analysis
+                for week in weekly_data:
+                    week['weekday_patterns'] = await self._analyze_weekday_patterns(
+                        user_id, week['week_start'], week['week_end']
+                    )
+            
+            return weekly_data
+        except Exception as e:
+            logger.error(f"Failed to get weekly analytics: {e}")
+            raise
+    
+    async def get_monthly_analytics(
+        self,
+        user_id: str,
+        months_back: int = 12,
+        include_yearly_trends: bool = True
+    ) -> List[Dict[str, Any]]:
+        """Get monthly analytics with long-term trends."""
+        try:
+            monthly_data = await self.analytics_repo.get_monthly_summary(
+                user_id=user_id,
+                months_back=months_back
+            )
+            
+            if include_yearly_trends:
+                # Add seasonal analysis
+                for month in monthly_data:
+                    month['seasonal_factor'] = self._calculate_seasonal_factor(
+                        month['month']
+                    )
+            
+            return monthly_data
+        except Exception as e:
+            logger.error(f"Failed to get monthly analytics: {e}")
+            raise
+    
+    async def get_balance_timeline(
+        self,
+        user_id: str,
+        period: str = "week",
+        include_goals: bool = True
+    ) -> List[Dict[str, Any]]:
+        """Get calorie balance timeline with goal tracking."""
+        try:
+            # Determine date range based on period
+            end_date = DateType.today()
+            if period == "day":
+                start_date = end_date - timedelta(days=1)
+            elif period == "week":
+                start_date = end_date - timedelta(weeks=1)
+            elif period == "month":
+                start_date = end_date - timedelta(days=30)
+            elif period == "quarter":
+                start_date = end_date - timedelta(days=90)
+            else:
+                start_date = end_date - timedelta(weeks=1)
+            
+            balance_data = await self.balance_repo.get_balance_timeline(
+                user_id=user_id,
+                start_date=start_date,
+                end_date=end_date
+            )
+            
+            if include_goals:
+                # Enrich with goal data
+                goal_service = CalorieGoalService(None, None)  # TODO: Proper DI
+                for point in balance_data:
+                    point['goal_data'] = await goal_service.get_goal_for_date(
+                        user_id, point.get('date', end_date)
+                    )
+            
+            return balance_data
+        except Exception as e:
+            logger.error(f"Failed to get balance timeline: {e}")
+            raise
+    
+    async def get_intraday_analytics(
+        self,
+        user_id: str,
+        date: DateType,
+        resolution_minutes: int = 15
+    ) -> List[Dict[str, Any]]:
+        """Get high-resolution intraday analytics."""
+        try:
+            # Generate time slots based on resolution
+            time_slots = []
+            current_time = datetime.combine(date, datetime.min.time())
+            end_time = current_time + timedelta(days=1)
+            
+            while current_time < end_time:
+                slot_end = current_time + timedelta(minutes=resolution_minutes)
+                
+                # Get events for this time slot
+                slot_events = await self.event_repo.get_events_by_time_range(
+                    user_id=user_id,
+                    start_time=current_time,
+                    end_time=slot_end
+                )
+                
+                # Calculate slot metrics
+                calories_consumed = sum(
+                    e.value for e in slot_events 
+                    if e.event_type == EventType.CONSUMED
+                )
+                calories_burned = sum(
+                    e.value for e in slot_events 
+                    if e.event_type in [EventType.BURNED_EXERCISE, EventType.BURNED_BMR]
+                )
+                
+                time_slots.append({
+                    'time_slot': current_time.strftime('%H:%M'),
+                    'calories_consumed': calories_consumed,
+                    'calories_burned': calories_burned,
+                    'cumulative_balance': calories_consumed - calories_burned,
+                    'activity_intensity': self._calculate_activity_intensity(slot_events)
+                })
+                
+                current_time = slot_end
+            
+            return time_slots
+        except Exception as e:
+            logger.error(f"Failed to get intraday analytics: {e}")
+            raise
+    
+    async def get_pattern_analytics(
+        self,
+        user_id: str,
+        analysis_type: str = "behavioral",
+        lookback_days: int = 90,
+        min_confidence: float = 0.7
+    ) -> List[Dict[str, Any]]:
+        """Get behavioral pattern analytics with AI insights."""
+        try:
+            patterns = []
+            
+            if analysis_type == "behavioral":
+                patterns.extend(await self._detect_eating_patterns(user_id, lookback_days))
+            elif analysis_type == "seasonal":
+                patterns.extend(await self._detect_seasonal_patterns(user_id, lookback_days))
+            elif analysis_type == "weekly":
+                patterns.extend(await self._detect_weekly_patterns(user_id, lookback_days))
+            elif analysis_type == "daily":
+                patterns.extend(await self._detect_daily_patterns(user_id, lookback_days))
+            
+            # Filter by confidence threshold
+            return [p for p in patterns if p.get('confidence_score', 0) >= min_confidence]
+            
+        except Exception as e:
+            logger.error(f"Failed to get pattern analytics: {e}")
+            raise
+    
+    async def generate_real_time_analytics(
+        self,
+        user_id: str,
+        recent_events: List[CalorieEvent],
+        include_predictions: bool = True
+    ) -> Dict[str, Any]:
+        """Generate real-time metrics for live dashboard."""
+        try:
+            today = DateType.today()
+            
+            # Get today's balance
+            today_balance = await self.balance_repo.get_daily_balance(user_id, today)
+            
+            # Calculate current metrics
+            current_balance = today_balance.net_calories if today_balance else Decimal("0")
+            
+            # Calculate rates from recent events (last hour)
+            one_hour_ago = datetime.utcnow() - timedelta(hours=1)
+            recent_events_filtered = [
+                e for e in recent_events 
+                if e.event_timestamp >= one_hour_ago
+            ]
+            
+            consumed_last_hour = sum(
+                e.value for e in recent_events_filtered 
+                if e.event_type == EventType.CONSUMED
+            )
+            burned_last_hour = sum(
+                e.value for e in recent_events_filtered 
+                if e.event_type in [EventType.BURNED_EXERCISE, EventType.BURNED_BMR]
+            )
+            
+            metrics = {
+                'current_balance': current_balance,
+                'burn_rate_per_hour': burned_last_hour,
+                'consumption_rate_per_hour': consumed_last_hour,
+            }
+            
+            if include_predictions:
+                # Add predictions
+                metrics.update(await self._generate_predictions(user_id, current_balance))
+            
+            return metrics
+            
+        except Exception as e:
+            logger.error(f"Failed to generate real-time analytics: {e}")
+            raise
+    
+    async def export_timeline_data(
+        self,
+        user_id: str,
+        format: str = "json",
+        start_date: DateType = None,
+        end_date: DateType = None,
+        granularity: str = "daily"
+    ) -> Dict[str, Any]:
+        """Export timeline data for external analysis."""
+        try:
+            # Get data based on granularity
+            if granularity == "hourly":
+                data = await self.analytics_repo.get_hourly_export(
+                    user_id, start_date, end_date
+                )
+            elif granularity == "daily":
+                data = await self.analytics_repo.get_daily_export(
+                    user_id, start_date, end_date
+                )
+            elif granularity == "weekly":
+                data = await self.analytics_repo.get_weekly_export(
+                    user_id, start_date, end_date
+                )
+            else:
+                data = []
+            
+            # Format data based on format
+            if format == "json":
+                export_data = data
+            elif format == "csv":
+                export_data = self._convert_to_csv(data)
+            elif format == "xlsx":
+                export_data = self._convert_to_xlsx(data)
+            else:
+                export_data = data
+            
+            return {
+                'export_format': format,
+                'inline_data': export_data,
+                'record_count': len(data),
+                'export_timestamp': datetime.utcnow()
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to export timeline data: {e}")
+            raise
+    
+    # Private helper methods
+    def _calculate_trend(self, current: Decimal, previous: Decimal) -> str:
+        """Calculate trend direction."""
+        if current > previous:
+            return "increasing"
+        elif current < previous:
+            return "decreasing"
+        else:
+            return "stable"
+    
+    def _calculate_seasonal_factor(self, month: int) -> Decimal:
+        """Calculate seasonal adjustment factor."""
+        # Simple seasonal adjustment - could be more sophisticated
+        seasonal_factors = {
+            12: Decimal("1.1"), 1: Decimal("1.1"), 2: Decimal("1.05"),  # Winter
+            3: Decimal("1.0"), 4: Decimal("0.95"), 5: Decimal("0.95"),   # Spring
+            6: Decimal("0.9"), 7: Decimal("0.9"), 8: Decimal("0.9"),     # Summer
+            9: Decimal("0.95"), 10: Decimal("1.0"), 11: Decimal("1.05")  # Fall
+        }
+        return seasonal_factors.get(month, Decimal("1.0"))
+    
+    def _calculate_activity_intensity(self, events: List[CalorieEvent]) -> str:
+        """Calculate activity intensity for time slot."""
+        total_activity = sum(
+            e.value for e in events 
+            if e.event_type == EventType.BURNED_EXERCISE
+        )
+        
+        if total_activity > 200:
+            return "high"
+        elif total_activity > 100:
+            return "moderate"
+        elif total_activity > 50:
+            return "light"
+        else:
+            return "minimal"
+    
+    async def _analyze_weekday_patterns(
+        self, user_id: str, start_date: DateType, end_date: DateType
+    ) -> Dict[str, Decimal]:
+        """Analyze weekday eating patterns."""
+        # This would analyze patterns by weekday
+        # Return placeholder data for now
+        return {
+            "monday": Decimal("2000"),
+            "tuesday": Decimal("1950"),
+            "wednesday": Decimal("2100"),
+            "thursday": Decimal("2050"),
+            "friday": Decimal("2200"),
+            "saturday": Decimal("2300"),
+            "sunday": Decimal("2100")
+        }
+    
+    async def _detect_eating_patterns(
+        self, user_id: str, lookback_days: int
+    ) -> List[Dict[str, Any]]:
+        """Detect eating behavior patterns."""
+        # Placeholder pattern detection
+        return [{
+            'pattern_id': 'late_night_eating',
+            'pattern_type': 'behavioral',
+            'description': 'Tendency to consume calories after 9 PM',
+            'confidence_score': Decimal("0.85"),
+            'frequency': 'daily',
+            'impact_score': Decimal("0.3"),
+            'recommendations': ['Try to finish eating by 8 PM']
+        }]
+    
+    async def _detect_seasonal_patterns(
+        self, user_id: str, lookback_days: int
+    ) -> List[Dict[str, Any]]:
+        """Detect seasonal eating patterns."""
+        return []
+    
+    async def _detect_weekly_patterns(
+        self, user_id: str, lookback_days: int
+    ) -> List[Dict[str, Any]]:
+        """Detect weekly eating patterns."""
+        return []
+    
+    async def _detect_daily_patterns(
+        self, user_id: str, lookback_days: int
+    ) -> List[Dict[str, Any]]:
+        """Detect daily eating patterns."""
+        return []
+    
+    async def _generate_predictions(
+        self, user_id: str, current_balance: Decimal
+    ) -> Dict[str, Any]:
+        """Generate predictions for end of day."""
+        # Simple prediction logic - could be ML-based
+        return {
+            'projected_end_of_day': current_balance + Decimal("500"),
+            'calories_remaining': Decimal("300"),
+            'goal_achievement_probability': Decimal("0.75"),
+            'next_meal_recommendation': 'Light protein-rich meal'
+        }
+    
+    def _convert_to_csv(self, data: List[Dict]) -> str:
+        """Convert data to CSV format."""
+        # Placeholder CSV conversion
+        return "date,calories_consumed,calories_burned,net_calories\n"
+    
+    def _convert_to_xlsx(self, data: List[Dict]) -> str:
+        """Convert data to XLSX format."""
+        # Placeholder XLSX conversion
+        return "XLSX_DATA_PLACEHOLDER"
     
     async def get_daily_dashboard(
         self, user_id: str, date: DateType

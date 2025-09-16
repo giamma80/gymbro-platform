@@ -7,20 +7,23 @@ import strawberry
 from strawberry.fastapi import GraphQLRouter
 from typing import List, Optional
 
-from app.graphql.queries import Query
-from app.graphql.mutations import Mutation
+from app.graphql.queries import Query as BaseQuery
+from app.graphql.mutations import Mutation as BaseMutation
 from app.graphql.types import UcalorieUbalanceType
+from app.graphql.extended_resolvers import (
+    ExtendedCalorieQueries, ExtendedCalorieMutations
+)
 
 
 @strawberry.federation.type(extend=True)
-class Query(Query):
-    """Extended Query for Apollo Federation."""
+class Query(BaseQuery, ExtendedCalorieQueries):
+    """Extended Query for Apollo Federation with calorie-balance features."""
     pass
 
 
-@strawberry.federation.type(extend=True) 
-class Mutation(Mutation):
-    """Extended Mutation for Apollo Federation."""
+@strawberry.federation.type(extend=True)
+class Mutation(BaseMutation, ExtendedCalorieMutations):
+    """Extended Mutation for Apollo Federation with calorie features."""
     pass
 
 

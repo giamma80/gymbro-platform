@@ -169,6 +169,12 @@ services:
       - key: LOG_LEVEL
         value: info
       
+      # GraphQL Development Features (Enabled for testing)
+      - key: ENABLE_INTROSPECTION
+        value: "true"
+      - key: ENABLE_PLAYGROUND
+        value: "true"
+      
       # CORS Configuration
       - key: CORS_ORIGINS
         value: https://nutrifit.app,https://app.nutrifit.app

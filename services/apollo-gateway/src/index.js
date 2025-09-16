@@ -28,6 +28,7 @@ async function startGateway() {
     // Create Apollo Server with Gateway
     const server = new ApolloServer({
       gateway,
+      introspection: config.graphql.introspection,
       formatError: (err) => {
         logger.error('GraphQL Error:', err);
         return {

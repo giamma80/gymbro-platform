@@ -16,8 +16,8 @@ export function getConfig() {
 
     graphql: {
       path: process.env.GRAPHQL_PATH || '/graphql',
-      introspection: process.env.NODE_ENV !== 'production',
-      playground: process.env.NODE_ENV !== 'production',
+      introspection: process.env.ENABLE_INTROSPECTION === 'true' || process.env.NODE_ENV !== 'production',
+      playground: process.env.ENABLE_PLAYGROUND === 'true' || process.env.NODE_ENV !== 'production',
     },
 
     gateway: {

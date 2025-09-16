@@ -48,12 +48,11 @@ services:
   # Calorie Balance Service
   # ====================================
   - type: web
-    name: nutrifit-calorie-service
+    name: nutrifit-calorie-balance
     runtime: docker
     repo: https://github.com/giamma80/gymbro-platform.git
     rootDir: services/calorie-balance
-    dockerfilePath: ./Dockerfile
-    dockerContext: services/calorie-balance
+    dockerfilePath: Dockerfile
     
     # Runtime Configuration
     plan: starter
@@ -183,7 +182,7 @@ services:
       - key: USER_MANAGEMENT_URL
         value: https://nutrifit-user-management.onrender.com/graphql
       - key: CALORIE_BALANCE_URL
-        value: https://nutrifit-calorie-service.onrender.com/graphql
+        value: https://nutrifit-calorie-balance.onrender.com/graphql
 
   # ====================================
   # Future Services

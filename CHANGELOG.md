@@ -7,6 +7,71 @@ e questo progetto aderisce al [Semantic Versioning](https://semver.org/spec/v2.0
 
 ## [Unreleased]
 
+## [v2.2.0] - 2025-09-16 - Apollo GraphQL Federation Implementation
+
+### 🌐 Major GraphQL Federation Achievement
+- **Apollo Gateway v2.5**: Complete GraphQL federation implementation for microservices
+- **Production Deployment**: Live Apollo Gateway at https://apollo-gateway.onrender.com
+- **Development Tooling**: Enhanced start-dev.sh scripts with profile support (local/prod)
+- **Explorer Integration**: Apollo Studio embedded explorer for production API testing
+
+### 🚀 Federation Architecture
+
+#### Apollo Gateway Core
+- **Federation v2.5**: Latest Apollo Federation with introspection and composition
+- **Dual Profile Support**: Local federation (localhost services) vs Production federation (Render services)
+- **Health Monitoring**: Comprehensive health checks and service discovery
+- **Schema Composition**: Automatic federation of user-management and calorie-balance schemas
+
+#### Development Experience
+- **Standardized Scripts**: Unified start-dev.sh pattern across all microservices
+- **Background Execution**: Services run with PID management and structured logging (/tmp/*.log)
+- **Profile Management**: --profile local/prod for flexible development workflows
+- **Service Discovery**: Automatic health checks for dependent services
+
+#### Production Features
+- **Render.com Integration**: Auto-deploy CI/CD with GitHub Actions
+- **Apollo Studio**: Embedded GraphQL explorer for production API testing
+- **CORS Configuration**: Production-ready cross-origin resource sharing
+- **Environment Variables**: Comprehensive configuration management
+
+### 🔧 Technical Implementation
+
+#### GraphQL Federation
+```yaml
+Services Federated:
+- user-management: https://nutrifit-user-management.onrender.com/graphql
+- calorie-balance: https://nutrifit-calorie-balance.onrender.com/graphql
+- apollo-gateway: https://apollo-gateway.onrender.com/graphql (Unified API)
+
+Development Endpoints:
+- Local Gateway: http://localhost:4000/graphql
+- Local Services: http://localhost:8001/8002/graphql
+```
+
+#### Developer Tooling
+- **Unified Command Interface**: `./start-dev.sh [start|stop|restart|status|logs] [--profile local|prod]`
+- **Background Process Management**: PID files, log files, health checks
+- **Service Orchestration**: Automatic dependency checking and startup coordination
+- **Profile-Based Configuration**: Environment-specific settings and service URLs
+
+### ✅ Platform Status - GraphQL Federation Complete
+```
+🎊 FEDERATION STATISTICS
+Gateway:       Apollo v2.5 ✅
+Services:      3/3 federated (user-management, calorie-balance, apollo-gateway)
+Endpoints:     Unified GraphQL API at /graphql
+Explorer:      Apollo Studio embedded ✅
+Deployment:    Render.com auto-deploy ✅
+Development:   Profile-based local/prod workflow ✅
+```
+
+### 🏗️ Architecture Enhancements
+- **Microservice Federation**: Single GraphQL endpoint federating multiple services
+- **Schema Composition**: Automatic introspection and composition of distributed schemas
+- **Service Discovery**: Health-check based service availability detection
+- **Development Workflow**: Streamlined local development with production-grade tooling
+
 ## [v2.1.0] - 2025-09-15 - Docker & CI/CD Infrastructure Optimization
 
 ### 🚀 Major Infrastructure Modernization

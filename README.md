@@ -8,12 +8,17 @@
 
 ### ✨ Features Core
 
+- 🌐 **GraphQL Federation** - Apollo Gateway v2.5 con schema unificato per tutti i microservizi
 - 🔥 **Bilanciamento Calorico AI** - Calcoli precision-aware con accuratezza ±20g
 - 🍎 **Food Recognition** - Riconoscimento alimenti tramite GPT-4V + OpenFoodFacts
 - 📊 **Health Integration** - Sync HealthKit/Health Connect automatico
 - 📱 **Cross-Platform** - Flutter iOS + Android simultaneo
 
 ### 🏗️ Architettura
+
+**GraphQL Federation**: Apollo Gateway v2.5 con schema composition automatica
+- **Gateway**: https://apollo-gateway.onrender.com/graphql - Unified API endpoint
+- **Apollo Studio**: Explorer integrato per testing e documentazione API
 
 **Backend**: 5 microservizi Python (FastAPI + PostgreSQL/Supabase)
 1. **User Management** - Auth, profili, GDPR compliance
@@ -22,7 +27,7 @@
 4. **Health Monitor** - Sync dati salute e quality scoring
 5. **Notifications** - Notifiche smart e coaching
 
-**Frontend**: Flutter cross-platform con UUID cross-service consistency
+**Frontend**: Flutter cross-platform con GraphQL client integration
 
 ### 📚 Docs Principali
 - **[🏗️ Architettura](docs/architettura.md)** - Microservizi, sequence diagrams, pattern
@@ -31,9 +36,17 @@
 - **[🗄️ Database](docs/databases/)** - Schema, ER diagrams, migrations
 
 ### 🎯 Development
+- **[🌐 GraphQL Federation](services/apollo-gateway/)** - Apollo Gateway v2.5, schema composition
 - **[User Management](docs/databases/user-management-db.md)** - Auth schema, profili
 - **[Calorie Balance](docs/databases/calorie-balance-db.md)** - Eventi, analytics temporali
-- **[API Reference](docs/API_DOCUMENTATION.md)** - REST endpoints *(in development)*
+- **[API Reference](https://apollo-gateway.onrender.com/graphql)** - GraphQL unified endpoint ✨
+
+### 🚀 GraphQL Federation
+**Production Endpoint**: https://apollo-gateway.onrender.com/graphql
+- ✅ **Schema Unificato** - Federation automatica di tutti i microservizi
+- ✅ **Apollo Studio** - Explorer integrato per development e testing
+- ✅ **Service Discovery** - Health checks automatici e composition dinamica
+- ✅ **Profile Development** - Workflow locale/produzione con --profile flag
 
 ### 🏗️ Microservizi Details
 Ogni microservizio segue **Domain-Driven Design** con FastAPI + Repository pattern:
@@ -43,18 +56,21 @@ Ogni microservizio segue **Domain-Driven Design** con FastAPI + Repository patte
 ## 🚀 Status Progetto
 
 ### Development Progress
+- **Apollo Gateway**: 🟢 **PRODUCTION** - [Live Federation](https://apollo-gateway.onrender.com/graphql) (GraphQL unified API) 🚀
 - **User Management**: 🟢 **PRODUCTION** - [Live Service](https://nutrifit-user-management.onrender.com) (100% tests)
-- **Calorie Balance**: � **PRODUCTION READY** - 100% test success, complete API implementation 🎉
+- **Calorie Balance**: 🟢 **PRODUCTION READY** - [Live Service](https://nutrifit-calorie-balance.onrender.com) (100% test success) 🎉
 - **Meal Tracking**: ⏳ **PLANNED** - Food recognition + AI integration
 - **Health Monitor**: ⏳ **PLANNED** - HealthKit/Health Connect sync  
-- **Mobile App**: ⏳ **PLANNED** - Flutter cross-platform with UUID standards
+- **Mobile App**: ⏳ **PLANNED** - Flutter cross-platform with GraphQL client
 
 ### Technical Achievements
-- ✅ UUID cross-service consistency established
-- ✅ Parameter Passing pattern implemented
-- ✅ Events API validation complete
-- 🔧 Metabolic profile validation improved
-- 📱 Mobile client architecture prepared
+- ✅ **GraphQL Federation** - Apollo Gateway v2.5 production deployment
+- ✅ **Schema Composition** - Automatic federation of distributed microservices
+- ✅ **Apollo Studio Integration** - Production API explorer and documentation
+- ✅ **UUID cross-service consistency** established
+- ✅ **Parameter Passing pattern** implemented
+- ✅ **Profile-based development** workflow (local/prod)
+- ✅ **Background process management** with PID and logging
 
 ### Next Milestones
 - **Q4 2024**: Calorie Balance completion (90%+ tests), Mobile app MVP
@@ -71,17 +87,30 @@ cd gymbro-platform
 # Setup ambiente completo
 make setup-dev
 
-# Start all services
-make dev-up
+# Start GraphQL Federation (Production)
+cd services/apollo-gateway
+./start-dev.sh start --profile prod  # Federation con servizi remoti
 
-# Crea nuovo microservice  
-./scripts/create-service.sh my-service bounded-context
+# Start Local Development Environment
+cd services/user-management && ./start-dev.sh start &
+cd services/calorie-balance && ./start-dev.sh start &
+cd services/apollo-gateway && ./start-dev.sh start --profile local
+
+# GraphQL Explorer Access
+open https://apollo-gateway.onrender.com/graphql  # Production
+open http://localhost:4000/graphql               # Local
+
+# Service Management
+./start-dev.sh status        # Check service status
+./start-dev.sh logs         # View service logs
+./start-dev.sh restart      # Restart service
+./start-dev.sh stop         # Stop service
 
 # Run tests
 make test-all
 
-# Deploy to staging
-make deploy-staging
+# Deploy to production (auto-deploy configured)
+git push origin main
 ```
 
 ## 🚀 Project Status

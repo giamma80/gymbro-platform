@@ -2,29 +2,77 @@
 
 ## Executive Summary
 
-**NutriFit** è una piattaforma fitness-nutrizionale basata su microservizi cloud-native con focus su bilanciamento calorico intelligente e tracking nutrizionale avanzato.
+**NutriFit** è una piattaforma fitness-nutrizionale basata su microservizi cloud-native con **GraphQL Federation** per API unificata e bilanciamento calorico intelligente.
+
+### 🌐 GraphQL Federation Architecture
+
+**Unified API Endpoint**: https://apollo-gateway.onrender.com/graphql
+
+- **Apollo Gateway v2.5**: Federation enterprise-grade con schema composition automatica
+- **Schema Unificato**: Single endpoint per tutti i microservizi con type federation
+- **Apollo Studio**: Explorer integrato per development, testing e documentazione API
+- **Service Discovery**: Health checks automatici e composizione dinamica
+- **Profile-based Development**: Workflow locale/produzione con environment switching
 
 ### Stack Tecnologico Production
 
+- **GraphQL Federation**: Apollo Gateway v2.5 + automatic schema composition
 - **Backend**: 5 microservizi FastAPI + Python 3.11 + Supabase Cloud
 - **AI Platform**: OpenAI integration + N8N workflow automation
-- **Mobile**: Flutter cross-platform (iOS + Android) con UUID consistency
-- **Infrastructure**: Supabase + Render deployment + GitHub Actions CI/CD
+- **Mobile**: Flutter cross-platform (iOS + Android) con GraphQL client
+- **Infrastructure**: Render.com + Supabase + GitHub Actions CI/CD
 
 ### Architettura Benefits
 
-- 🌐 **Global Scalability**: Supabase edge network per performance mondiale
-- 📱 **Mobile Production**: Deployment simultaneo iOS App Store + Google Play
-- 🔄 **Real-time Sync**: WebSocket + subscriptions cross-device
-- 🛡️ **Security**: JWT + encrypted data storage + cross-service UUID consistency
-- ⚡ **Performance**: Database segregation + CDN optimization + Parameter Passing patterns
+- 🌐 **Unified API**: Single GraphQL endpoint per tutti i client con schema federation
+- 📱 **Mobile Production**: GraphQL client per deployment iOS App Store + Google Play
+- 🔄 **Real-time Sync**: GraphQL subscriptions + WebSocket cross-device
+- 🛡️ **Security**: JWT + encrypted data storage + federated authentication
+- ⚡ **Performance**: Schema composition + CDN optimization + Apollo caching
 
 ### Technical Foundation
 
+- ✅ **GraphQL Federation**: Apollo Gateway v2.5 con schema composition e service discovery
 - ✅ **UUID Standards**: Generic UUID cross-service per flessibilità massima
 - ✅ **Parameter Passing**: Pattern implementato per goal calculations
 - ✅ **Cross-Schema FK**: Single source of truth via user_management schema
-- ✅ **Mobile Ready**: Flutter sequence diagrams e API consistency preparata
+- ✅ **Profile-based Development**: Local/prod environment switching
+- ✅ **Mobile Ready**: GraphQL client integration e API consistency preparata
+
+### 🌐 GraphQL Federation Technical Implementation
+
+**Architecture Overview**:
+```
+📱 Flutter Mobile Apps          🖥️  Web Applications
+         ↓                              ↓
+🌐 Apollo Gateway (Port 4000) - https://apollo-gateway.onrender.com/graphql
+         ↓ (Federation v2.5)
+┌─────────────────┬─────────────────┬─────────────────┐
+│  User Mgmt      │ Calorie Balance │  Future Services│
+│  :8001/graphql  │  :8002/graphql  │     :800x       │
+│  Auth, Profile  │ Metabolism, Bal │ Meals, AI, etc  │
+└─────────────────┴─────────────────┴─────────────────┘
+```
+
+**Key Features**:
+- **Schema Composition**: Automatic introspection e merge di schemi distribuiti
+- **Service Discovery**: Health checks automatici per dependency management
+- **Apollo Studio**: Explorer integrato per testing e documentazione
+- **Profile Switching**: `./start-dev.sh --profile local|prod` per development workflow
+- **Background Processing**: PID management, structured logging (/tmp/*.log)
+
+**Development Workflow**:
+```bash
+# Local Development (localhost federation)
+./start-dev.sh start --profile local
+
+# Production Testing (remote services federation)  
+./start-dev.sh start --profile prod
+
+# Service Status & Monitoring
+./start-dev.sh status  # Check health
+./start-dev.sh logs    # View logs
+```
 
 ---
 

@@ -83,6 +83,7 @@ services:
         value: "1"
       - key: PYTHONUNBUFFERED
         value: "1"
+      - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_ANON_KEY
         sync: false
@@ -124,63 +125,6 @@ services:
         value: "2"
 
   # ====================================
-  # Calorie Balance Service
-  # ====================================
-  - type: web
-    name: nutrifit-calorie-balance
-    runtime: docker
-    repo: https://github.com/giamma80/gymbro-platform.git
-    rootDir: services/calorie-balance
-    dockerfilePath: ./Dockerfile
-    
-    # Build Configuration
-    plan: starter
-    region: oregon
-    branch: main
-    
-    # Health Check
-    healthCheckPath: /health
-    autoDeploy: true
-    
-    # Build Filter
-    buildFilter:
-      paths:
-        - services/calorie-balance/**
-        - render.yaml
-    
-    # Environment Variables
-    envVars:
-      # Application
-      - key: ENVIRONMENT
-        value: production
-      - key: DEBUG
-        value: "false"
-      - key: LOG_LEVEL
-        value: INFO
-      - key: PORT
-        value: "8000"
-      - key: DATABASE_SCHEMA
-        value: calorie_balance
-      
-      # Supabase
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_ANON_KEY
-        sync: false
-      - key: SUPABASE_SERVICE_KEY
-        sync: false
-      
-      # Security
-      - key: SECRET_KEY
-        generateValue: true
-      - key: JWT_SECRET_KEY
-        generateValue: true
-      
-      # Inter-service Communication
-      - key: USER_MANAGEMENT_URL
-        value: https://nutrifit-user-management.onrender.com
-
-  # ====================================
   # Apollo Gateway Service
   # ====================================
   - type: web
@@ -188,6 +132,10 @@ services:
     runtime: node
     repo: https://github.com/giamma80/gymbro-platform.git
     rootDir: services/apollo-gateway
+    
+    # Build and Start Commands
+    buildCommand: npm ci
+    startCommand: npm start
     
     # Runtime Configuration
     plan: starter
@@ -232,25 +180,26 @@ services:
         value: https://nutrifit-calorie-balance.onrender.com/graphql
 
   # ====================================
-  # Future Microservices
+  # Future Services
   # ====================================
   # Add new services here following the same pattern:
-  # - workout-tracking
-  # - nutrition-planning  
-  # - progress-analytics
-  # - notification-service
+  # - meal-tracking
+  # - health-monitor  
+  # - ai-coach
+  # - notifications
 
   # ====================================
-  # Shared Infrastructure
+  # Shared Infrastructure (Future)
   # ====================================
   
-  # Redis Cache (shared by all services)
-  - type: redis
-    name: nutrifit-redis
-    plan: starter
-    region: oregon
-    ipAllowList: []
-    maxmemoryPolicy: allkeys-lru
+  # Redis Cache - DISABLED: Not used by current services
+  # Will be enabled when implementing response caching in Apollo Gateway
+  # - type: redis
+  #   name: nutrifit-redis
+  #   plan: starter
+  #   region: oregon
+  #   ipAllowList: []
+  #   maxmemoryPolicy: allkeys-lru
 
 # ====================================
 # API Gateway Configuration

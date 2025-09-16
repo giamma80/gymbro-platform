@@ -12,8 +12,7 @@ services:
     runtime: docker
     repo: https://github.com/giamma80/gymbro-platform.git
     rootDir: services/user-management
-    dockerfilePath: ./Dockerfile
-    dockerContext: services/user-management
+    dockerfilePath: Dockerfile
     
     # Runtime Configuration
     plan: starter

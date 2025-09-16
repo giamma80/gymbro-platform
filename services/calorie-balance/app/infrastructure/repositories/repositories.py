@@ -541,8 +541,8 @@ class SupabaseDailyBalanceRepository(IDailyBalanceRepository):
         # This would typically call a stored procedure or trigger
         # that recalculates from the events table
         try:
-            # Call Supabase function to recalculate
-            response = self.client.rpc(
+            # Call Supabase function in calorie_balance schema
+            response = self.client.schema("calorie_balance").rpc(
                 'recalculate_daily_balance',
                 {'p_user_id': user_id, 'p_date': date.isoformat()}
             ).execute()
@@ -731,8 +731,8 @@ class SupabaseTemporalAnalyticsRepository(ITemporalAnalyticsRepository):
             end_date = datetime.now().date()
             start_date = end_date - timedelta(weeks=weeks_back)
             
-            # Call the RPC function we created
-            response = self.client.rpc(
+            # Call the RPC function we created in calorie_balance schema
+            response = self.client.schema("calorie_balance").rpc(
                 'get_user_statistics',
                 {
                     'p_user_id': user_id,
@@ -893,8 +893,8 @@ class SupabaseCalorieSearchRepository(ICalorieSearchRepository):
     ) -> Dict[str, Any]:
         """Get comprehensive user statistics."""
         try:
-            # This would call a stored procedure for complex stats
-            response = self.client.rpc(
+            # Call RPC function in calorie_balance schema
+            response = self.client.schema("calorie_balance").rpc(
                 'get_user_statistics',
                 {
                     'p_user_id': user_id,
@@ -914,8 +914,8 @@ class SupabaseCalorieSearchRepository(ICalorieSearchRepository):
     ) -> Dict[str, Any]:
         """Get user trends analysis."""
         try:
-            # Call stored procedure for trend analysis
-            response = self.client.rpc(
+            # Call RPC function in calorie_balance schema
+            response = self.client.schema("calorie_balance").rpc(
                 'get_user_trends',
                 {'p_user_id': user_id, 'p_days': days}
             ).execute()

@@ -392,9 +392,69 @@ class ExtendedCalorieQueries:
     ) -> PatternAnalyticsResponse:
         """Get user's behavioral patterns."""
         try:
-            # Implementation will be injected by service layer
-            pass
+            # Create service instances manually for GraphQL
+            # (no FastAPI dependency injection available here)
+            from app.infrastructure.repositories.repositories import (
+                SupabaseTemporalAnalyticsRepository,
+                SupabaseCalorieEventRepository,
+                SupabaseDailyBalanceRepository
+            )
+            from app.application.services import AnalyticsService
+            
+            # Create repository instances
+            analytics_repo = SupabaseTemporalAnalyticsRepository()
+            event_repo = SupabaseCalorieEventRepository()
+            balance_repo = SupabaseDailyBalanceRepository()
+            
+            # Create service instance
+            analytics_service = AnalyticsService(
+                analytics_repo, event_repo, balance_repo
+            )
+            
+            # Determine analysis type from pattern types
+            analysis_type = "behavioral"
+            if pattern_types and len(pattern_types) > 0:
+                analysis_type = pattern_types[0]
+            
+            # Get pattern analytics from service
+            patterns_raw = await analytics_service.get_pattern_analytics(
+                user_id=user_id,
+                analysis_type=analysis_type,
+                lookback_days=90,
+                min_confidence=min_confidence
+            )
+            
+            # Convert Decimal values to float for GraphQL
+            from app.graphql.extended_types import BehavioralPatternType
+            patterns = []
+            for pattern in patterns_raw:
+                pattern_obj = BehavioralPatternType(
+                    pattern_id=pattern['pattern_id'],
+                    pattern_type=pattern['pattern_type'],
+                    description=pattern['description'],
+                    confidence_score=float(pattern['confidence_score']),
+                    frequency=pattern['frequency'],
+                    impact_score=(
+                        float(pattern['impact_score'])
+                        if pattern.get('impact_score') else None
+                    ),
+                    recommendations=pattern.get('recommendations', [])
+                )
+                patterns.append(pattern_obj)
+            
+            return PatternAnalyticsResponse(
+                success=True,
+                message="Behavioral patterns retrieved successfully",
+                data=patterns,
+                metadata={
+                    "analysis_type": analysis_type,
+                    "patterns_found": len(patterns),
+                    "min_confidence": min_confidence
+                }
+            )
+            
         except Exception as e:
+            logger.error(f"Error in get_behavioral_patterns: {str(e)}")
             return PatternAnalyticsResponse(
                 success=False,
                 message=f"Error fetching patterns: {str(e)}",

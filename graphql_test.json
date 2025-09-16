@@ -1,0 +1,1 @@
+{"data": null, "errors": [{"message": "Cannot query field 'pattern_id' on type 'BehavioralPatternType'. Did you mean 'patternId' or 'patternType'?", "locations": [{"line": 1, "column": 81}]}]}

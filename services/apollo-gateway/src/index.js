@@ -1,6 +1,7 @@
 import { ApolloGateway, IntrospectAndCompose } from '@apollo/gateway';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
+import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
@@ -29,15 +30,10 @@ async function startGateway() {
     const server = new ApolloServer({
       gateway,
       introspection: config.graphql.introspection,
-      formatError: (err) => {
-        logger.error('GraphQL Error:', err);
-        return {
-          message: err.message,
-          code: err.extensions?.code,
-          path: err.path,
-        };
-      },
+      // Enable Apollo Studio local default landing page for development
       plugins: [
+        // Use the local default landing page with embedded Explorer
+        ApolloServerPluginLandingPageLocalDefault({ embed: true }),
         {
           requestDidStart() {
             return {
@@ -48,6 +44,14 @@ async function startGateway() {
           },
         },
       ],
+      formatError: (err) => {
+        logger.error('GraphQL Error:', err);
+        return {
+          message: err.message,
+          code: err.extensions?.code,
+          path: err.path,
+        };
+      },
     });
 
     // Start the server

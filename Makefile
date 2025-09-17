@@ -2,6 +2,7 @@
 
 .PHONY: help dev-setup services-start services-stop flutter-dev test-all quality-check deploy-staging clean
  .PHONY: lint format lint-fix type-check
+ .PHONY: schema-export schema-validate
 
 # Default target
 help: ## Show this help message
@@ -124,6 +125,16 @@ type-check: ## Run mypy on all Python services (strict mode if configured)
 	  fi; \
 	done
 	@echo "✅ Type check complete"
+
+# ---------- GraphQL Schema (calorie-balance) ----------
+schema-export: ## Export Strawberry SDL (calorie-balance service)
+	@echo "🗺️  Exporting GraphQL schema (calorie-balance)..."
+	@cd services/calorie-balance && poetry run python scripts/export_schema.py || exit 1
+
+schema-validate: schema-export ## Export and ensure no diff (commit required if changed)
+	@git diff --quiet --exit-code services/calorie-balance/app/graphql/schema.graphql || { \
+	  echo "❌ Schema GraphQL modificato: eseguire 'make schema-export' e committare il file aggiornato."; exit 1; }
+	@echo "✅ Schema invariato"
 
 # Microservice Generation
 new-service: ## Generate new microservice (usage: make new-service SERVICE=name TEMPLATE=supabase|postgresql)

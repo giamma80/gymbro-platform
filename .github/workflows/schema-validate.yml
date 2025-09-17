@@ -1,0 +1,42 @@
+name: GraphQL Schema Validation
+
+on:
+  pull_request:
+    paths:
+      - 'services/calorie-balance/app/graphql/**'
+      - 'services/calorie-balance/scripts/export_schema.py'
+      - '.github/workflows/schema-validate.yml'
+  push:
+    branches: [ main ]
+
+jobs:
+  schema:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install Dependencies (calorie-balance)
+        working-directory: services/calorie-balance
+        run: poetry install --no-interaction --no-root
+
+      - name: Export Schema
+        working-directory: services/calorie-balance
+        run: poetry run python scripts/export_schema.py
+
+      - name: Verify schema.graphql committed
+        run: |
+          if ! git diff --quiet --exit-code services/calorie-balance/app/graphql/schema.graphql; then
+            echo '❌ Schema GraphQL differisce dal file versionato.'
+            echo "Esegui localmente: make schema-export && git add services/calorie-balance/app/graphql/schema.graphql && git commit"
+            exit 1
+          fi
+          echo '✅ Schema allineato'

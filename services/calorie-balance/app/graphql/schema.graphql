@@ -1,0 +1,341 @@
+schema @link(url: "https://specs.apollo.dev/federation/v2.3", import: ["@key"]) {
+  query: Query
+  mutation: Mutation
+}
+
+enum ActivityLevelEnum {
+  SEDENTARY
+  LIGHT
+  MODERATE
+  HIGH
+  EXTREME
+}
+
+type BehavioralPatternType {
+  patternId: String!
+  patternType: String!
+  description: String!
+  confidenceScore: Float!
+  frequency: String!
+  impactScore: Float
+  recommendations: [String!]
+}
+
+type CalorieEventListResponse {
+  success: Boolean!
+  message: String!
+  data: [CalorieEventType!]!
+  total: Int!
+}
+
+type CalorieEventResponse {
+  success: Boolean!
+  message: String!
+  data: CalorieEventType
+}
+
+type CalorieEventType @key(fields: "id") {
+  id: ID!
+  userId: String!
+  eventType: EventTypeEnum!
+  eventTimestamp: DateTime!
+  value: Float!
+  source: EventSourceEnum!
+  confidenceScore: Float!
+  metadata: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type CalorieGoalListResponse {
+  success: Boolean!
+  message: String!
+  data: [CalorieGoalType!]!
+  total: Int!
+}
+
+type CalorieGoalResponse {
+  success: Boolean!
+  message: String!
+  data: CalorieGoalType
+}
+
+type CalorieGoalType @key(fields: "id") {
+  id: ID!
+  userId: String!
+  goalType: GoalTypeEnum!
+  dailyCalorieTarget: Float!
+  dailyDeficitTarget: Float
+  weeklyWeightChangeKg: Float
+  startDate: String!
+  endDate: String
+  isActive: Boolean!
+  aiOptimized: Boolean!
+  optimizationMetadata: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input CreateCalorieEventInput {
+  eventType: EventTypeEnum!
+  value: Float!
+  eventTimestamp: String = null
+  source: EventSourceEnum! = MANUAL
+  confidenceScore: Float = null
+  metadata: String = null
+}
+
+input CreateCalorieGoalInput {
+  goalType: GoalTypeEnum!
+  dailyCalorieTarget: Float!
+  dailyDeficitTarget: Float = null
+  weeklyWeightChangeKg: Float = null
+  startDate: String!
+  endDate: String = null
+}
+
+input CreateUcalorieUbalanceInput {
+  name: String!
+  description: String = null
+}
+
+type DailyAnalyticsResponse {
+  success: Boolean!
+  message: String!
+  data: [DailyDataPointType!]!
+  metadata: String
+}
+
+type DailyBalanceListResponse {
+  success: Boolean!
+  message: String!
+  data: [DailyBalanceType!]!
+  total: Int!
+}
+
+type DailyBalanceResponse {
+  success: Boolean!
+  message: String!
+  data: DailyBalanceType
+}
+
+type DailyBalanceType @key(fields: "id") {
+  id: ID!
+  userId: String!
+  date: String!
+  caloriesConsumed: Float!
+  caloriesBurnedExercise: Float!
+  caloriesBurnedBmr: Float!
+  netCalories: Float!
+  morningWeightKg: Float
+  eveningWeightKg: Float
+  eventsCount: Int!
+  lastEventTimestamp: DateTime
+  dataCompletenessScore: Float!
+  dailyCalorieTarget: Float
+  targetDeviation: Float
+  progressPercentage: Float
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type DailyDataPointType {
+  date: String!
+  caloriesConsumed: Float!
+  caloriesBurnedExercise: Float!
+  caloriesBurnedBmr: Float!
+  netCalories: Float!
+  morningWeightKg: Float
+  eveningWeightKg: Float
+  goalTarget: Float
+  goalDeviation: Float
+  trendDirection: String
+  activeHours: Int!
+}
+
+"""Date with time (isoformat)"""
+scalar DateTime
+
+enum EventSourceEnum {
+  MANUAL
+  FITNESS_TRACKER
+  SMART_SCALE
+  NUTRITION_SCAN
+  HEALTHKIT
+  GOOGLE_FIT
+}
+
+enum EventTypeEnum {
+  CONSUMED
+  BURNED_EXERCISE
+  BURNED_BMR
+  WEIGHT
+}
+
+enum GoalTypeEnum {
+  WEIGHT_LOSS
+  WEIGHT_GAIN
+  MAINTAIN_WEIGHT
+  MUSCLE_GAIN
+  PERFORMANCE
+}
+
+type HourlyAnalyticsResponse {
+  success: Boolean!
+  message: String!
+  data: [HourlyDataPointType!]!
+  metadata: String
+}
+
+type HourlyDataPointType {
+  hour: Int!
+  date: String!
+  caloriesConsumed: Float!
+  caloriesBurnedExercise: Float!
+  caloriesBurnedBmr: Float!
+  netCalories: Float!
+  weightKg: Float
+  eventCount: Int!
+  dataQuality: Float!
+}
+
+input MetabolicCalculationInput {
+  weightKg: Float!
+  heightCm: Float!
+  age: Int!
+  gender: String!
+  activityLevel: ActivityLevelEnum!
+}
+
+type MetabolicProfileResponse {
+  success: Boolean!
+  message: String!
+  data: MetabolicProfileType
+}
+
+type MetabolicProfileType @key(fields: "id") {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  userId: String!
+  bmrCalories: Float!
+  tdeeCalories: Float!
+  rmrCalories: Float
+  calculationMethod: String!
+  accuracyScore: Float!
+  sedentaryMultiplier: Float!
+  lightMultiplier: Float!
+  moderateMultiplier: Float!
+  highMultiplier: Float!
+  extremeMultiplier: Float!
+  activityLevel: String
+  aiAdjusted: Boolean!
+  adjustmentFactor: Float!
+  learningIterations: Int!
+  calculatedAt: DateTime!
+  expiresAt: DateTime
+  isActive: Boolean!
+}
+
+extend type Mutation {
+  createCalorieBalance(input: CreateUcalorieUbalanceInput!): UcalorieUbalanceResponse!
+  updateCalorieBalance(id: ID!, input: UpdateUcalorieUbalanceInput!): UcalorieUbalanceResponse!
+  deleteCalorieBalance(id: ID!): UcalorieUbalanceResponse!
+  createCalorieGoal(userId: String!, input: CreateCalorieGoalInput!): CalorieGoalResponse!
+  updateCalorieGoal(goalId: ID!, input: UpdateCalorieGoalInput!): CalorieGoalResponse!
+  deactivateCalorieGoal(goalId: ID!): CalorieGoalResponse!
+  createCalorieEvent(userId: String!, input: CreateCalorieEventInput!): CalorieEventResponse!
+  createBulkCalorieEvents(userId: String!, events: [CreateCalorieEventInput!]!): CalorieEventListResponse!
+  deleteCalorieEvent(eventId: ID!): CalorieEventResponse!
+  calculateMetabolicProfile(userId: String!, input: MetabolicCalculationInput!): MetabolicProfileResponse!
+  refreshMetabolicProfile(userId: String!): MetabolicProfileResponse!
+}
+
+type PatternAnalyticsResponse {
+  success: Boolean!
+  message: String!
+  data: [BehavioralPatternType!]!
+  metadata: String
+}
+
+extend type Query {
+  _entities(representations: [_Any!]!): [_Entity]!
+  _service: _Service!
+  getCalorieBalance(id: ID!): UcalorieUbalanceType
+  listCalorieBalances(limit: Int = 10, offset: Int = 0): UcalorieUbalanceListResponse!
+  getCalorieGoalById(id: ID!): CalorieGoalResponse!
+  getUserCalorieGoals(userId: String!, isActive: Boolean = null, limit: Int! = 10, offset: Int! = 0): CalorieGoalListResponse!
+  getCurrentCalorieGoal(userId: String!): CalorieGoalResponse!
+  getCalorieEventById(id: ID!): CalorieEventResponse!
+  getUserCalorieEvents(userId: String!, startDate: String = null, endDate: String = null, eventType: String = null, source: String = null, limit: Int! = 50, offset: Int! = 0): CalorieEventListResponse!
+  getDailyCalorieEvents(userId: String!, targetDate: String!): CalorieEventListResponse!
+  getDailyBalanceByDate(userId: String!, targetDate: String!): DailyBalanceResponse!
+  getUserDailyBalances(userId: String!, startDate: String = null, endDate: String = null, limit: Int! = 30, offset: Int! = 0): DailyBalanceListResponse!
+  getCurrentDailyBalance(userId: String!): DailyBalanceResponse!
+  getUserMetabolicProfile(userId: String!): MetabolicProfileResponse!
+  getHourlyAnalytics(userId: String!, targetDate: String!): HourlyAnalyticsResponse!
+  getDailyAnalytics(userId: String!, startDate: String!, endDate: String!): DailyAnalyticsResponse!
+  getWeeklyAnalytics(userId: String!, weeks: Int! = 12): WeeklyAnalyticsResponse!
+  getBehavioralPatterns(userId: String!, patternTypes: [String!] = null, minConfidence: Float! = 0.7): PatternAnalyticsResponse!
+}
+
+type UcalorieUbalanceListResponse {
+  success: Boolean!
+  message: String!
+  data: [UcalorieUbalanceType!]!
+  total: Int!
+}
+
+type UcalorieUbalanceResponse {
+  success: Boolean!
+  message: String!
+  data: UcalorieUbalanceType
+}
+
+type UcalorieUbalanceType @key(fields: "id") {
+  id: ID!
+  name: String!
+  description: String
+  createdAt: DateTime!
+  updatedAt: DateTime
+}
+
+input UpdateCalorieGoalInput {
+  goalType: GoalTypeEnum = null
+  dailyCalorieTarget: Float = null
+  dailyDeficitTarget: Float = null
+  weeklyWeightChangeKg: Float = null
+  endDate: String = null
+  isActive: Boolean = null
+}
+
+input UpdateUcalorieUbalanceInput {
+  name: String = null
+  description: String = null
+}
+
+type WeeklyAnalyticsResponse {
+  success: Boolean!
+  message: String!
+  data: [WeeklyDataPointType!]!
+  metadata: String
+}
+
+type WeeklyDataPointType {
+  weekStart: String!
+  weekEnd: String!
+  avgDailyConsumed: Float!
+  avgDailyBurned: Float!
+  avgNetCalories: Float!
+  totalWeightChange: Float
+  activeDays: Int!
+  goalAdherencePct: Float
+}
+
+scalar _Any
+
+union _Entity = UcalorieUbalanceType | CalorieGoalType | CalorieEventType | DailyBalanceType | MetabolicProfileType
+
+type _Service {
+  sdl: String!
+}

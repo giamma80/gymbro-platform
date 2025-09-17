@@ -2,8 +2,9 @@
 
 **Project:** NutriFit Platform - Calorie-Balance Service  
 **Task Type:** TDD-Based Critical Service Fixes  
-**Date Completed:** 16 settembre 2025  
-**Phase:** Systematic Debugging & Production Stabilization
+**Date Completed (Initial TDD Cycle):** 16 settembre 2025  
+**Extended Hardening Updates:** 17–18 settembre 2025  
+**Phase:** Systematic Debugging, Schema Hygiene & Quality Automation
 
 ---
 
@@ -20,7 +21,7 @@ Implement comprehensive Test-Driven Debugging approach to systematically resolve
 
 ---
 
-## 🏆 Completed Tasks
+## 🏆 Completed Tasks (Expanded Scope)
 
 ### Phase 1: TDD Framework Setup
 | Task | Status | Completion Date | Impact |
@@ -116,6 +117,25 @@ Improved Metrics:
 
 ---
 
+### 5. GraphQL Schema Hygiene & Tooling (Post-TDD Hardening)
+**Problems Addressed (17–18 Settembre):**
+- Errori `strawberry.exceptions.duplicated_type_name` causati da definizioni duplicate in `queries.py`
+- Assenza di controllo automatico drift schema GraphQL
+- Lint/format non unificati cross-microservices
+
+**Solutions:**
+- Consolidati tutti i GraphQL types in `app/graphql/extended_types.py` (fonte canonica)
+- Root `queries.py` reso minimale; rimossi file corrotti di backup
+- Introdotto script `scripts/export_schema.py` per export + validazione duplicati
+- Aggiunti target Makefile: `schema-export`, `schema-validate`, `lint`, `format`, `lint-fix`, `type-check`
+- Integrata validazione schema nel workflow `simple-ci.yml` PRIMA dei tests (fail-fast)
+- Versionato `schema.graphql` per diff leggibili nei PR
+
+**Outcomes:**
+- 0 duplicazioni type → startup stabile
+- Drift SDL intercettato in CI
+- Pipeline qualità ripetibile (flake8 + black + isort + mypy)
+
 ## 🧪 TDD Methodology Benefits
 
 ### Systematic Approach
@@ -138,7 +158,7 @@ Improved Metrics:
 
 ---
 
-## 🚀 Next Phase Priorities
+## 🚀 Next Phase Priorities (Updated)
 
 ### Immediate (High Priority)
 1. **Timeline REST Endpoints**: Implement remaining `/api/v1/balance/timeline/*` endpoints
@@ -169,7 +189,7 @@ Improved Metrics:
 
 ---
 
-## 📚 Documentation Updates Completed
+## 📚 Documentation & Automation Updates Completed
 
 ### Project Documentation
 - ✅ **CHANGELOG.md**: Comprehensive v2.3.0 release notes with TDD fixes
@@ -182,6 +202,12 @@ Improved Metrics:
 - ✅ **RPC Functions**: Complete SQL implementation documentation
 
 ### Technical Documentation
+| Area | Update | Stato |
+|------|--------|-------|
+| GraphQL Schema | `schema.graphql` versionato + export script | ✅ |
+| CI | Validazione SDL integrata in `simple-ci.yml` | ✅ |
+| Tooling | Makefile quality & schema targets | ✅ |
+| Hygiene | Rimozione file corrotti + .gitignore update | ✅ |
 - ✅ **TDD Methodology**: Systematic debugging approach documentation
 - ✅ **Performance Metrics**: Before/after comparison with quantified improvements
 - ✅ **Solution Implementation**: Detailed technical solution documentation
@@ -207,4 +233,4 @@ The systematic debugging methodology established through this task provides a re
 **Task Status:** ✅ **COMPLETE**  
 **Next Action:** Begin Timeline REST Endpoints implementation for 100% success rate  
 **Responsible:** Development Team  
-**Documentation Updated:** 16 settembre 2025
+**Documentation Updated:** 18 settembre 2025

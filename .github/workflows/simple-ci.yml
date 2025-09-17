@@ -151,7 +151,20 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'mock-key' }}
           JWT_SECRET: test-secret-key
 
-      - name: 🐳 Docker Build Test
+      - name: �️ Export GraphQL Schema (calorie-balance)
+        working-directory: ./services/calorie-balance
+        run: poetry run python scripts/export_schema.py
+
+      - name: ✅ Validate Committed SDL
+        run: |
+          if ! git diff --quiet --exit-code services/calorie-balance/app/graphql/schema.graphql; then
+            echo '❌ Schema GraphQL differisce dal file versionato.'
+            echo "Esegui localmente: make schema-export && git add services/calorie-balance/app/graphql/schema.graphql && git commit"
+            exit 1
+          fi
+          echo '✅ Schema allineato'
+
+      - name: �🐳 Docker Build Test
         working-directory: ./services/calorie-balance
         run: |
           echo "🏗️ Testing Docker build..."

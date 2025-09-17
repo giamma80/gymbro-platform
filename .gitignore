@@ -133,6 +133,8 @@ test-results.xml
 *.bak
 *.backup
 *.old
+*.corrupted
+*queries_methods.tmp
 
 # 🔒 Security
 secrets/

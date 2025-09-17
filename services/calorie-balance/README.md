@@ -14,6 +14,48 @@ Il **Calorie Balance Service** è il microservizio centrale della piattaforma Nu
 > **📋 [API Development Roadmap](API-roadmap.md)** - Stato completo delle API implementate e da sviluppare  
 > **Status**: ✅ **PRODUCTION READY** | **v1.4.0** | **100% Test Success Rate** 🎉
 
+## 🧬 GraphQL Canonical Types & Schema Hygiene
+
+Questo servizio espone tipi federati tramite Strawberry. Per garantire stabilità della federation:
+
+### Regola Fondamentale
+Tutti i GraphQL types (object, input, enums, response wrappers) vivono **solo** in:  
+`app/graphql/extended_types.py`
+
+### Struttura dei Moduli
+- `extended_types.py` → Definizioni canoniche (`CalorieGoalType`, `DailyBalanceType`, ecc.)
+- `extended_resolvers.py` → Implementazioni dei campi e mutations che usano i servizi/domain
+- `queries.py` → Root `Query` minimale (no definizioni di type)
+- `schema.py` → Composizione finale dello schema federato
+
+### Perché Questa Struttura
+Strawberry registra i tipi al primo import. Duplicare una classe con lo stesso nome in moduli diversi causa:  
+`strawberry.exceptions.duplicated_type_name: Type <Name> was defined multiple times`
+
+### Troubleshooting
+| Problema | Azione Rapida |
+|----------|---------------|
+| duplicated_type_name | `grep -R "NomeType" app/graphql` e rimuovi la definizione non canonica |
+| Campo mancante nel Gateway | Verifica export in `schema.py` e che il servizio sia raggiungibile |
+| Enum non riconosciuto | Conferma decoratore `@strawberry.enum` in `extended_types.py` |
+
+### Nuovi Tipi: Checklist
+1. Aggiungi definizione in `extended_types.py`
+2. Importa il type se serve in `extended_resolvers.py`
+3. Aggiungi resolver / mutation
+4. Verifica startup locale (`./start-dev.sh start`)
+5. Test federation dal gateway
+
+### Qualità & Lint
+Usa i target Makefile root:
+```bash
+make lint       # flake8 + black --check + isort --check
+make format     # isort + black
+make type-check # mypy (se configurato)
+```
+
+Evita file di backup locali: sono ignorati (`*.corrupted`) ma non devono contenere codice vivo.
+
 ## ✅ COMPLETAMENTO AL 100% - ACHIEVEMENT UNLOCKED 🏆
 
 **Data Completamento**: 14 settembre 2025  

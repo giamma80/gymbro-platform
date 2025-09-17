@@ -6,6 +6,28 @@ Il formato è basato su [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 e questo progetto aderisce al [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### 🛠️ Developer Experience & Code Quality
+- **Centralized Lint/Format Workflow**: Aggiunti target `make lint`, `make format`, `make lint-fix`, `make type-check` per applicare flake8, black, isort e mypy in tutti i microservizi Python.
+- **Repository Hygiene**: Aggiunti pattern a `.gitignore` per prevenire il commit di file temporanei/corrotti (`*.corrupted`, `*queries_methods.tmp`).
+
+### 🐛 Fix
+- **Duplicated GraphQL Type Definitions**: Risolto errore `strawberry.exceptions.duplicated_type_name` nel servizio `calorie-balance` eliminando definizioni duplicate in `queries.py` e centralizzando tutti i tipi federati in `app/graphql/extended_types.py`.
+- **Boolean Comparison Lint Errors**: Sostituiti confronti `== True` con `is_(True)` nei repository SQLAlchemy.
+- **Shadowed Variable Warning**: Rinominata variabile di loop in `services.py` per eliminare warning flake8 F402.
+
+### 📘 Documentation
+- **Schema Hygiene Guidelines**: Documentata la regola “single canonical source” per i GraphQL object types (modulo `extended_types.py`) + sezione troubleshooting per errori di duplicazione.
+- **Service README Update**: Aggiornato `services/calorie-balance/README.md` con sezione su tipi federati e guida alla risoluzione errori Strawberry.
+- **Root README Update**: Aggiunta sezione “Code Quality Workflow” con comandi standardizzati.
+
+### 🔥 Cleanup
+- Rimossi definitivamente file corrotti di backup: `queries.py.corrupted`, `queries_methods.tmp`.
+
+### ✅ Outcome
+- Startup GraphQL stabile senza conflitti di definizione.
+- Flusso di qualità ripetibile per tutti i microservizi.
+- Ridotto rischio di regressioni future sui tipi federati.
+
 
 ## [v2.4.0] - 2025-09-17 - Critical Schema Alignment & Data Preparation
 

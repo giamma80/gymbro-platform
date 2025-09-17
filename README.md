@@ -41,6 +41,42 @@
 - **[Calorie Balance](docs/databases/calorie-balance-db.md)** - Eventi, analytics temporali
 - **[API Reference](https://apollo-gateway.onrender.com/graphql)** - GraphQL unified endpoint ✨
 
+### 🧹 Code Quality Workflow
+Workflow standardizzato per tutti i microservizi Python:
+
+```bash
+# Lint (flake8 + black --check + isort --check-only)
+make lint
+
+# Formatting (isort + black)
+make format
+
+# Format + verifica lint
+make lint-fix
+
+# Type checking (mypy dove configurato)
+make type-check
+```
+
+Linee guida:
+- Evitare `# noqa` salvo casi documentati nel PR
+- Allineare naming dei tipi GraphQL con REST/DB per consistenza
+- Eseguire `make lint` prima del commit finale
+
+### 🧬 GraphQL Schema Hygiene
+Per prevenire errori `strawberry.exceptions.duplicated_type_name` nel servizio Calorie Balance:
+1. Definire TUTTI i type / input / enum GraphQL solo in `app/graphql/extended_types.py` (fonte canonica).
+2. Mantenere resolver e field implementations in `extended_resolvers.py`.
+3. Tenere `queries.py` minimale (solo root Query composition) senza definizioni di tipi.
+4. Non creare file di backup locali con definizioni duplicate (già ignorati: `*.corrupted`).
+5. Prima di aggiungere un nuovo type eseguire: `grep -R "NomeType" app/graphql` per verificare duplicati.
+
+Troubleshooting rapido:
+- Errore duplicated_type_name → Cerca il nome e rimuovi definizione duplicata in `queries.py` o file temporanei.
+- Campo mancante nel Gateway → Verifica che il type sia importato in `schema.py` e federated correttamente.
+
+CI Enhancement (proposta): step futuro per esportare schema e validare unicità nomi.
+
 ### 🚀 GraphQL Federation
 **Production Endpoint**: https://apollo-gateway.onrender.com/graphql
 - ✅ **Schema Unificato** - Federation automatica di tutti i microservizi

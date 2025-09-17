@@ -1,5 +1,27 @@
 # 🚨 Issues Identificate 
 
+### 🐛 **GraphQL Type Duplication & Tooling Hardening (18 settembre)**
+- **Strawberry duplicated_type_name Error**: ✅ **RISOLTO** – Eliminata definizione duplicata di tipi GraphQL (`DailyBalanceResponse`, `CalorieGoalType`, ecc.) centralizzando tutti i types in `app/graphql/extended_types.py`.
+- **Schema Startup Stability**: ✅ **GARANTITA** – `schema.py` importa solo un `Query` minimale + tipi estesi; nessuna collisione nomi.
+- **Repository Hygiene**: ✅ **PULIZIA** – Rimossi file corrotti (`queries.py.corrupted`, `queries_methods.tmp`) e aggiunti a `.gitignore`.
+- **Code Quality Workflow**: ✅ **STANDARDIZZATO** – Makefile con target `lint`, `format`, `lint-fix`, `type-check` (flake8 + black + isort + mypy) applicati cross‑services.
+- **Lint Remediation**: ✅ **ESEGUITO** – Sistemati boolean comparisons (`== True` → `is_(True)`), variabile shadowed (F402) e trailing issues.
+- **Documentation Alignment**: ✅ **AGGIORNAMENTO** – Aggiunta sezione “Schema Hygiene” (root + service README) + troubleshooting errori Strawberry.
+
+**Data Ultima Analisi:** 18 settembre 2025  
+**Scope:** GraphQL Federation Hygiene + Tooling Standardization  
+**Metodologia:** Forensic cleanup + canonical source enforcement + automated quality gates
+
+**Sintesi Impatto**  
+Ridotto rischio regressioni su schema federato, velocizzato triage errori Strawberry, introdotto flusso ripetibile di qualità e prevenzione file artefatti.
+
+**Azioni Preventive Future**  
+1. Aggiungere check CI per export schema Strawberry e validazione nomi duplicati.  
+2. Integrare pre-commit hook per bloccare file non permessi (`*.corrupted`).  
+3. Allineare line-length flake8 a 88 per match con black e ridurre noise.
+
+---
+
 ### 🎯 **CRITICAL SCHEMA ALIGNMENT BREAKTHROUGH (17 settembre)**
 - **Database Schema Fixes**: ✅ **COMPLETE RESOLUTION** - Sistemati tutti i problemi di allineamento schema
 - **getBehavioralPatterns Error**: ✅ **ROOT CAUSE FIXED** - Risolti errori null con schema alignment

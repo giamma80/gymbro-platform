@@ -13,6 +13,7 @@ from app.graphql.types import UcalorieUbalanceType
 from app.graphql.extended_resolvers import (
     ExtendedCalorieQueries, ExtendedCalorieMutations
 )
+from .interceptors import GraphQLQueryLoggingExtension
 
 
 @strawberry.federation.type(extend=True)
@@ -27,11 +28,12 @@ class Mutation(BaseMutation, ExtendedCalorieMutations):
     pass
 
 
-# Create federated schema
+# Create federated schema with logging extension
 schema = strawberry.federation.Schema(
     query=Query,
     mutation=Mutation,
-    enable_federation_2=True
+    enable_federation_2=True,
+    extensions=[GraphQLQueryLoggingExtension]
 )
 
 # Create GraphQL router

@@ -57,19 +57,34 @@ class MetabolicCalculationRequest(UserMetricsSchema):
 
 
 class MetabolicProfileResponse(BaseModel):
-    """Schema for metabolic profile response."""
+    """Schema for metabolic profile response - aligned with database schema."""
     
+    # Core entity fields from database schema
     id: UUID
     user_id: UUID
     bmr_calories: Decimal
     tdee_calories: Decimal
-    activity_level: ActivityLevel
-    current_weight_kg: Decimal
-    current_height_cm: Decimal
-    current_age: int
-    gender: GenderType
+    rmr_calories: Decimal
     calculation_method: str
-    calculation_date: datetime
+    accuracy_score: Decimal
+    
+    # Activity multipliers
+    activity_level: Optional[str] = None
+    sedentary_multiplier: Decimal
+    light_multiplier: Decimal
+    moderate_multiplier: Decimal
+    high_multiplier: Decimal
+    extreme_multiplier: Decimal
+    
+    # AI fields
+    ai_adjusted: bool = False
+    adjustment_factor: Decimal
+    learning_iterations: int = 0
+    
+    # Timestamps and status
+    calculated_at: datetime
+    expires_at: Optional[datetime] = None
+    is_active: bool = True
     
     model_config = ConfigDict(from_attributes=True)
 

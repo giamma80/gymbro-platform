@@ -650,41 +650,43 @@ class MetabolicCalculationService:
             # Calculate TDEE from BMR and activity level
             tdee = await self.calculate_tdee(bmr, activity_level)
             
-            # Get activity multiplier for storage
-            multipliers = {
-                ActivityLevel.SEDENTARY: Decimal("1.2"),
-                ActivityLevel.LIGHT: Decimal("1.375"),
-                ActivityLevel.MODERATE: Decimal("1.55"),
-                ActivityLevel.HIGH: Decimal("1.725"),
-                ActivityLevel.EXTREME: Decimal("1.9")
-            }
-            activity_multiplier = multipliers[activity_level]
-            
-            # Create metabolic profile
+            # Create metabolic profile with NEW entity structure
+            # Use database schema fields only
             profile = MetabolicProfile(
                 id=uuid4(),
                 user_id=user_id,
-                calculation_date=datetime.utcnow(),
+                calculated_at=datetime.utcnow(),
                 bmr_calories=bmr,
                 tdee_calories=tdee,
-                activity_level=activity_level,
-                current_weight_kg=weight_kg,
-                current_height_cm=height_cm,
-                current_age=age,
-                gender=gender,
-                activity_multiplier=activity_multiplier,
+                rmr_calories=bmr * Decimal("1.05"),  # RMR typically 5% higher than BMR
                 calculation_method="mifflin_st_jeor",
-                metadata={
-                    "calculated_with_parameter_passing": True,
-                    "architecture_pattern": "microservice_decoupled",
-                    "client_provided_metrics": True
-                },
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow()
+                accuracy_score=Decimal("0.85"),
+                
+                # Activity level and multipliers
+                activity_level=activity_level.value,  # Convert enum to string
+                sedentary_multiplier=Decimal("1.2"),
+                light_multiplier=Decimal("1.375"),
+                moderate_multiplier=Decimal("1.55"),
+                high_multiplier=Decimal("1.725"),
+                extreme_multiplier=Decimal("1.9"),
+                
+                # AI fields
+                ai_adjusted=False,
+                adjustment_factor=Decimal("1.0"),
+                learning_iterations=0,
+                
+                # Timestamps and status (only DB fields)
+                expires_at=datetime.utcnow() + timedelta(days=30),
+                is_active=True
+                # No created_at, updated_at - not in DB schema
             )
             
             # Save to repository
             await self.profile_repo.create(profile)
+            
+            # DEBUG: Check what we get back
+            print(f"DEBUG: Profile after create - rmr_calories: {profile.rmr_calories}")
+            print(f"DEBUG: Profile type: {type(profile)}")
             
             logger.info(
                 f"Metabolic profile calculated for user {user_id}: "

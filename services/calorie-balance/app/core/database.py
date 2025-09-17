@@ -47,16 +47,19 @@ def get_supabase_client() -> Client:
     """Get existing Supabase client."""
     if _supabase_client is None:
         return create_supabase_client()
+    # Disable database interceptor for now due to logging conflicts
+    # from app.graphql.interceptors import DatabaseQueryLoggingInterceptor
+    # interceptor = DatabaseQueryLoggingInterceptor(_supabase_client)
     return _supabase_client
 
 async def check_supabase_connection() -> bool:
     """Check Supabase connectivity."""
     try:
-        client = get_supabase_client()
-        
-        # Try a simple query to test connection using our actual schema
+        # Try a simple query to test connection using schema manager
         # Test with calorie_events table from calorie_balance schema
-        result = client.table("calorie_events").select("*").limit(1).execute()
+        from app.core.schema_tables import get_schema_manager
+        schema_manager = get_schema_manager()
+        schema_manager.calorie_events.select("*").limit(1).execute()
         
         logger.info("Supabase connection check passed")
         return True

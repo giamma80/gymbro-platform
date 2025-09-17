@@ -80,11 +80,35 @@ class MetabolicProfileModel(Base):
     __tablename__ = "metabolic_profiles"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    bmr = Column(Numeric(6, 1), nullable=False)
-    tdee = Column(Numeric(6, 1), nullable=False)
-    calculated_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    valid_until = Column(DateTime(timezone=True), nullable=False)
+    user_id = Column(String(255), nullable=False, index=True)  # VARCHAR(255) as per schema
     
-    # Relationships
-    user = relationship("UserModel", back_populates="metabolic_profiles")
+    # Calculated metabolic values
+    bmr_calories = Column(Numeric(6, 1), nullable=False)
+    tdee_calories = Column(Numeric(6, 1), nullable=False) 
+    rmr_calories = Column(Numeric(6, 1), nullable=True)
+    
+    # Calculation method and accuracy
+    calculation_method = Column(String(50), default='mifflin_st_jeor')
+    accuracy_score = Column(Numeric(3, 2), default=0.8)
+    
+    # Activity multipliers
+    sedentary_multiplier = Column(Numeric(3, 2), default=1.2)
+    light_multiplier = Column(Numeric(3, 2), default=1.375)
+    moderate_multiplier = Column(Numeric(3, 2), default=1.55)
+    high_multiplier = Column(Numeric(3, 2), default=1.725)
+    extreme_multiplier = Column(Numeric(3, 2), default=1.9)
+    
+    # Activity level (added in 006_fix_schema_task_1_1.sql)
+    activity_level = Column(String(20), default='moderate')
+    
+    # AI learning data
+    ai_adjusted = Column(Boolean, default=False)
+    adjustment_factor = Column(Numeric(4, 3), default=1.000)
+    learning_iterations = Column(Integer, default=0)
+    
+    # Validity period
+    calculated_at = Column(DateTime(timezone=True), server_default=func.now())
+    expires_at = Column(DateTime(timezone=True), server_default=text("NOW() + INTERVAL '30 days'"))
+    is_active = Column(Boolean, default=True)
+    
+    # Note: No relationship to UserModel since it's in user_management schema

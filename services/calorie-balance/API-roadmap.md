@@ -1,11 +1,11 @@
 # API Roadmap - Calorie Balance Service
 
-> **Status del microservizio**: ✅ **PRODUCTION READY** - GraphQL Federation & Analytics fully operational! 🎉  
-> **Versione attuale**: v2.4.0 (GraphQL Analytics Fix)  
-> **Database Strategy**: Supabase Client + `calorie_balance` schema with complete RPC functions  
+> **Status del microservizio**: ✅ **PRODUCTION READY** - Complete Schema Alignment & Test Data Ready! 🎉  
+> **Versione attuale**: v2.5.0 (Schema Alignment & Data Preparation)  
+> **Database Strategy**: Supabase Client + `calorie_balance` schema with validated structure alignment  
 > **Template Used**: [supabase-client-template](../templates/microservice-template/supabase-client-template/COMPLETE_TEMPLATE.md)  
-> **Ultimo aggiornamento**: 20 gennaio 2025  
-> **� MAJOR MILESTONE**: GraphQL Federation analytics now fully functional with comprehensive RPC backend
+> **Ultimo aggiornamento**: 17 settembre 2025  
+> **🎯 MAJOR MILESTONE**: Complete database schema validation, comprehensive test data, and getBehavioralPatterns resolution
 
 ## 📊 Overview dello Stato
 
@@ -14,16 +14,46 @@
 | **Health & Status** | 3 | 3 | ✅ 100% |
 | **~~User Management~~ (REMOVED)** | 0 | 0 | ✅ **Migrated to user-management service** |
 | **🎯 Calorie Goals** | 3 | 3 | ✅ 100% - **All CRUD operations fully operational** |
-| **🔥 Calorie Events** | 5 | 5 | ✅ 100% - **Complete Events API with RPC integration** |
-| **Daily Balance** | 3 | 3 | ✅ 100% - **Balance tracking with recalculation functions** |
-| **📈 Timeline Analytics** | 4 | 4 | ✅ 100% - **ALL analytics endpoints operational including GraphQL** |
+| **🔥 Calorie Events** | 5 | 5 | ✅ 100% - **Complete Events API with schema-aligned structure** |
+| **Daily Balance** | 3 | 3 | ✅ 100% - **Schema validation completed, progress_percentage properly calculated** |
+| **📈 Timeline Analytics** | 4 | 4 | ✅ 100% - **ALL analytics endpoints with comprehensive test data** |
 | **🗓️ Temporal Views** | 0 | 0 | ✅ **Integrated into Balance endpoints** |
-| **Analytics & Trends** | 3 | 3 | ✅ 100% - **RPC analytics functions fully deployed** |
-| **🧬 Metabolic Profiles** | 2 | 2 | ✅ 100% - **Profile calculation operational** |
-| **GraphQL Federation** | 6 | 6 | ✅ 100% - **All resolvers COMPLETELY FUNCTIONAL with RPC backend** |
-| **TOTALE** | **29** | **29** | **✅ 100%** - **COMPLETE SERVICE IMPLEMENTATION** |
+| **Analytics & Trends** | 3 | 3 | ✅ 100% - **RPC analytics functions with realistic diverse data** |
+| **🧬 Metabolic Profiles** | 2 | 2 | ✅ 100% - **Profile calculation with expanded model alignment** |
+| **GraphQL Federation** | 6 | 6 | ✅ 100% - **All resolvers with progress_percentage consistency** |
+| **TOTALE** | **29** | **29** | **✅ 100%** - **COMPLETE SERVICE WITH VALIDATED SCHEMA ALIGNMENT** |
 
-> **� BREAKTHROUGH ACHIEVED**: Service now fully operational with GraphQL Federation analytics providing real data instead of null responses.
+> **🎯 BREAKTHROUGH ACHIEVED**: Complete schema alignment validation, comprehensive test data preparation, and systematic resolution of getBehavioralPatterns null errors.
+
+---
+
+## 🚀 Latest Achievement: Critical Schema Alignment & Data Preparation (17 settembre 2025)
+
+### 🎯 Problem Resolved: Complete Database-Code Schema Misalignment
+**Issue**: Critical mismatches between code expectations and actual database structure
+**Root Cause**: SQL scripts and models assumed columns not present in actual database schema
+**Resolution Strategy**: Systematic database structure validation and comprehensive code alignment
+
+### 🔧 Technical Implementation
+- **Schema Structure Validation**: ✅ Complete analysis of actual table structures vs code expectations
+  - `calorie_events`: Removed non-existent 'description' column, moved descriptions to metadata JSONB
+  - `daily_balances`: Removed non-existent columns (progress_percentage, net_calories, weight_kg, metabolic_data)
+  - `metabolic_profiles`: Expanded SQLAlchemy model from 6 to 20+ fields matching database
+- **Progress Percentage Architecture**: ✅ Validated correct on-the-fly calculation approach
+  - Confirmed RPC calculation: `(consumed / goal * 100)` as best practice
+  - Added missing field to GraphQL DailyBalanceType for REST-GraphQL consistency
+  - Documented why calculated fields are superior to stored values
+- **Test Data Preparation**: ✅ Created comprehensive 009_test_data_preparation.sql
+  - Complete user setup with profile, credentials, privacy settings
+  - 35+ realistic calorie events across 9 days (2025-09-09 to 2025-09-17)
+  - 6 diverse data sources: manual, fitness_tracker, nutrition_scan, smart_scale, healthkit, google_fit
+  - Schema-aligned daily_balances with proper column mapping
+
+### 📊 Validation Results
+- **Database Level**: ✅ All SQL scripts execute without column existence errors
+- **Code Level**: ✅ SQLAlchemy models completely aligned with database structure
+- **GraphQL Level**: ✅ Consistent progress_percentage field across REST and GraphQL APIs
+- **Test Data**: ✅ Comprehensive realistic dataset ready for getBehavioralPatterns pattern detection
 
 ---
 

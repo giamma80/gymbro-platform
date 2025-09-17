@@ -211,8 +211,9 @@ class DailyBalance(BaseEntity):
         return self.calories_burned_exercise + self.calories_burned_bmr
 
 
-class MetabolicProfile(BaseEntity):
-    """Metabolic profile with BMR/TDEE calculations."""
+class MetabolicProfile(BaseModel):
+    """Metabolic profile matching database schema."""
+    id: UUID
     user_id: UUID = Field(
         ..., description="User ID (cross-schema FK to user_management.users)"
     )
@@ -224,48 +225,70 @@ class MetabolicProfile(BaseEntity):
     tdee_calories: Decimal = Field(
         ..., gt=0, description="Total Daily Energy Expenditure"
     )
-    
-    # User metrics (from Parameter Passing pattern)
-    activity_level: ActivityLevel = Field(
-        ..., description="Physical activity level used in calculation"
-    )
-    current_weight_kg: Decimal = Field(
-        ..., gt=0, description="Weight at calculation time"
-    )
-    current_height_cm: Decimal = Field(
-        ..., gt=0, description="Height at calculation time"
-    )
-    current_age: int = Field(
-        ..., ge=13, le=120, description="Age at calculation time"
-    )
-    gender: GenderType = Field(
-        ..., description="Gender used in BMR calculation"
+    rmr_calories: Optional[Decimal] = Field(
+        None, gt=0, description="Resting Metabolic Rate (if measured)"
     )
     
-    # Activity factors used in TDEE calculation
-    activity_multiplier: Decimal = Field(
-        ..., gt=0, description="Activity level multiplier"
-    )
-    
-    # Body composition (optional)
-    body_fat_percentage: Optional[Decimal] = Field(
-        None, ge=0, le=50, description="Body fat percentage"
-    )
-    muscle_mass_kg: Optional[Decimal] = Field(
-        None, ge=0, description="Muscle mass in kg"
-    )
-    
-    # Calculation metadata
+    # Calculation method and accuracy
     calculation_method: str = Field(
-        "mifflin_st_jeor", description="BMR calculation method"
+        default="mifflin_st_jeor", description="BMR calculation method"
     )
-    calculation_date: datetime = Field(
-        ..., description="When calculation was performed"
+    accuracy_score: Decimal = Field(
+        default=Decimal("0.8"), ge=0, le=1,
+        description="Estimated accuracy (0.0-1.0)"
     )
     
-    # Additional metadata for Parameter Passing pattern
-    metadata: Optional[Dict[str, Any]] = Field(
-        default_factory=dict, description="Calculation metadata"
+    # Activity multipliers for different levels (from 001_initial_schema.sql)
+    sedentary_multiplier: Decimal = Field(
+        default=Decimal("1.2"), gt=0, le=2,
+        description="Sedentary activity multiplier"
+    )
+    light_multiplier: Decimal = Field(
+        default=Decimal("1.375"), gt=0, le=2,
+        description="Light activity multiplier"
+    )
+    moderate_multiplier: Decimal = Field(
+        default=Decimal("1.55"), gt=0, le=2,
+        description="Moderate activity multiplier"
+    )
+    high_multiplier: Decimal = Field(
+        default=Decimal("1.725"), gt=0, le=2,
+        description="High activity multiplier"
+    )
+    extreme_multiplier: Decimal = Field(
+        default=Decimal("1.9"), gt=0, le=2,
+        description="Extreme activity multiplier"
+    )
+    
+    # Activity level (added in 006_fix_schema_task_1_1.sql)
+    activity_level: Optional[str] = Field(
+        None, description=(
+            "Activity level: sedentary, light, moderate, high, extreme"
+        )
+    )
+    
+    # AI learning data (from 001_initial_schema.sql)
+    ai_adjusted: bool = Field(
+        default=False, description="Whether AI has adjusted the calculations"
+    )
+    adjustment_factor: Decimal = Field(
+        default=Decimal("1.000"), ge=0.5, le=2,
+        description="AI correction factor"
+    )
+    learning_iterations: int = Field(
+        default=0, ge=0, description="Number of AI learning iterations"
+    )
+    
+    # Validity period (from 001_initial_schema.sql)
+    calculated_at: datetime = Field(
+        default_factory=datetime.now,
+        description="When calculation was performed"
+    )
+    expires_at: Optional[datetime] = Field(
+        None, description="When this profile expires"
+    )
+    is_active: bool = Field(
+        default=True, description="Whether this profile is currently active"
     )
 
 

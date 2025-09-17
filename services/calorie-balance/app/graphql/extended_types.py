@@ -135,8 +135,9 @@ class CalorieEventType:
     # Context
     metadata: Optional[str] = None  # JSON string
     
-    # Timestamps
+    # Timestamps (updated_at added in 004_alter_tables.sql)
     created_at: datetime
+    updated_at: datetime
     
     @classmethod
     def resolve_reference(cls, id: strawberry.ID):
@@ -202,6 +203,7 @@ class DailyBalanceType:
     # Goal tracking
     daily_calorie_target: Optional[float] = None
     target_deviation: Optional[float] = None
+    progress_percentage: Optional[float] = None  # Calculated progress
     
     # Timestamps
     created_at: datetime
@@ -245,36 +247,44 @@ class ActivityLevelEnum(Enum):
 
 
 @strawberry.federation.type(keys=["id"])
+@strawberry.type
+@strawberry.federation.type(keys=["id"])
 class MetabolicProfileType:
-    """GraphQL type for metabolic profiles with federation support."""
+    """GraphQL type for metabolic profiles - matches entity exactly."""
     
+    # Base entity fields
     id: strawberry.ID
+    created_at: datetime
+    updated_at: datetime
     user_id: str
     
-    # Calculated values
+    # Calculated metabolic rates
     bmr_calories: float
     tdee_calories: float
     rmr_calories: Optional[float] = None
     
-    # Calculation metadata
+    # Calculation method and accuracy
     calculation_method: str
     accuracy_score: float
     
-    # Activity multipliers
+    # Activity multipliers for different levels
     sedentary_multiplier: float
     light_multiplier: float
     moderate_multiplier: float
     high_multiplier: float
     extreme_multiplier: float
     
-    # AI learning
+    # Activity level (added in 006_fix_schema_task_1_1.sql)
+    activity_level: Optional[str] = None
+    
+    # AI learning data
     ai_adjusted: bool
     adjustment_factor: float
     learning_iterations: int
     
-    # Validity
+    # Validity period
     calculated_at: datetime
-    expires_at: datetime
+    expires_at: Optional[datetime] = None
     is_active: bool
     
     @classmethod

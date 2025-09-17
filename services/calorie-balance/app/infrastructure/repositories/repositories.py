@@ -8,14 +8,14 @@ for the event-driven calorie tracking system.
    1. self.client = get_supabase_client()
    2. self.schema_manager = get_schema_manager()  
    3. self.table = self.schema_manager.table_name  # Pre-configured object!
-   4. Use: self.table.select() (NOT self.client.table(self.table))
+   4. Use: self.table.select() (NOT self.table)
    
    See docs/databases/cross-schema-patterns.md for complete guide.
 """
 
 from typing import List, Optional, Dict, Any
 from uuid import UUID
-from datetime import datetime, date as DateType
+from datetime import datetime, date as DateType, timedelta
 from decimal import Decimal
 import logging
 
@@ -28,7 +28,7 @@ from app.domain.entities import (
     CalorieGoal, CalorieEvent, DailyBalance,
     MetabolicProfile, HourlyCalorieSummary, DailyCalorieSummary,
     MonthlyCalorieSummary, DailyBalanceSummary,
-    EventType, GoalType, ActivityLevel, GenderType
+    EventType, GoalType
 )
 
 # Core exceptions 
@@ -89,7 +89,7 @@ class SupabaseCalorieEventRepository(ICalorieEventRepository):
                 event_dict['id'] = str(event_dict['id'])
                 events_data.append(event_dict)
             
-            response = self.client.table(self.table).insert(
+            response = self.table.insert(
                 events_data
             ).execute()
             
@@ -129,7 +129,7 @@ class SupabaseCalorieEventRepository(ICalorieEventRepository):
     ) -> List[CalorieEvent]:
         """Get user events with high-performance temporal filtering."""
         try:
-            query = self.client.table(self.table).select("*").eq(
+            query = self.table.select("*").eq(
                 "user_id", user_id
             )
             
@@ -232,7 +232,7 @@ class SupabaseCalorieEventRepository(ICalorieEventRepository):
             event_dict = event.dict(exclude={'created_at'})
             event_dict['id'] = str(event_dict['id'])
             
-            response = self.client.table(self.table).update(
+            response = self.table.update(
                 event_dict
             ).eq("id", str(event.id)).execute()
             
@@ -247,7 +247,7 @@ class SupabaseCalorieEventRepository(ICalorieEventRepository):
     async def delete(self, event_id: UUID) -> bool:
         """Delete event (prefer soft delete in production)."""
         try:
-            response = self.client.table(self.table).delete().eq(
+            response = self.table.delete().eq(
                 "id", str(event_id)
             ).execute()
             
@@ -264,7 +264,8 @@ class SupabaseCalorieGoalRepository(ICalorieGoalRepository):
     def __init__(self):
         """Initialize with Supabase client."""
         self.client: Client = get_supabase_client()
-        self.table = "calorie_goals"
+        self.schema_manager = get_schema_manager()
+        self.table = self.schema_manager.calorie_goals
     
     def _map_goal_from_db(self, data: Dict) -> CalorieGoal:
         """Map database row to CalorieGoal entity with type conversion."""
@@ -310,7 +311,7 @@ class SupabaseCalorieGoalRepository(ICalorieGoalRepository):
     async def get_active_goal(self, user_id: str) -> Optional[CalorieGoal]:
         """Get user's currently active goal."""
         try:
-            response = self.client.table(self.table).select("*").eq(
+            response = self.table.select("*").eq(
                 "user_id", user_id
             ).eq("is_active", True).execute()
             
@@ -327,7 +328,7 @@ class SupabaseCalorieGoalRepository(ICalorieGoalRepository):
     ) -> List[CalorieGoal]:
         """Get all user goals with optional inactive inclusion."""
         try:
-            query = self.client.table(self.table).select("*").eq(
+            query = self.table.select("*").eq(
                 "user_id", user_id
             )
             
@@ -345,12 +346,32 @@ class SupabaseCalorieGoalRepository(ICalorieGoalRepository):
     async def create(self, goal: CalorieGoal) -> CalorieGoal:
         """Create new goal (auto-deactivates conflicting goals)."""
         try:
+            # Debug log
+            logger.info(f"🔍 DEBUG: Received goal object type: {type(goal)}")
+            logger.info(f"🔍 DEBUG: Goal object: {goal}")
+            
             # Deactivate existing active goals of same type
             await self._deactivate_conflicting_goals(
                 goal.user_id, goal.goal_type
             )
             
-            goal_dict = goal.dict()
+            # Ensure goal is CalorieGoal object with dict method
+            if not hasattr(goal, 'dict') and not hasattr(goal, 'model_dump'):
+                logger.error(f"❌ Goal object invalid: {type(goal)}")
+                raise ValueError(f"Invalid goal object type: {type(goal)}")
+            
+            # Try both Pydantic v1 (dict) and v2 (model_dump) methods
+            if hasattr(goal, 'model_dump'):
+                goal_dict = goal.model_dump()
+                logger.info("🔍 DEBUG: Used model_dump() method")
+            elif hasattr(goal, 'dict'):
+                goal_dict = goal.dict()
+                logger.info("🔍 DEBUG: Used dict() method")
+            else:
+                raise ValueError("Goal object has no serialization method")
+                
+            logger.info(f"🔍 DEBUG: goal_dict after serialization: {goal_dict}")
+            
             goal_dict['id'] = str(goal_dict['id'])
             goal_dict['user_id'] = str(goal_dict['user_id'])
             
@@ -379,7 +400,7 @@ class SupabaseCalorieGoalRepository(ICalorieGoalRepository):
             if 'goal_type' in goal_dict and goal_dict['goal_type']:
                 goal_dict['goal_type'] = goal_dict['goal_type'].value
             
-            response = self.client.table(self.table).insert(
+            response = self.table.insert(
                 goal_dict
             ).execute()
             
@@ -423,7 +444,7 @@ class SupabaseCalorieGoalRepository(ICalorieGoalRepository):
             if 'goal_type' in goal_dict and goal_dict['goal_type']:
                 goal_dict['goal_type'] = goal_dict['goal_type'].value
             
-            response = self.client.table(self.table).update(
+            response = self.table.update(
                 goal_dict
             ).eq("id", str(goal.id)).execute()
             
@@ -438,7 +459,7 @@ class SupabaseCalorieGoalRepository(ICalorieGoalRepository):
     async def deactivate_goal(self, goal_id: UUID) -> bool:
         """Deactivate goal (soft deletion)."""
         try:
-            response = self.client.table(self.table).update({
+            response = self.table.update({
                 "is_active": False,
                 "updated_at": datetime.utcnow().isoformat()
             }).eq("id", str(goal_id)).execute()
@@ -454,7 +475,7 @@ class SupabaseCalorieGoalRepository(ICalorieGoalRepository):
     ) -> None:
         """Helper to deactivate conflicting active goals."""
         try:
-            self.client.table(self.table).update({
+            self.table.update({
                 "is_active": False,
                 "updated_at": datetime.utcnow().isoformat()
             }).eq("user_id", user_id).eq(
@@ -473,14 +494,15 @@ class SupabaseDailyBalanceRepository(IDailyBalanceRepository):
     def __init__(self):
         """Initialize with Supabase client."""
         self.client: Client = get_supabase_client()
-        self.table = "daily_balances"
+        self.schema_manager = get_schema_manager()
+        self.table = self.schema_manager.daily_balances
     
     async def get_by_user_date(
         self, user_id: str, date: DateType
     ) -> Optional[DailyBalance]:
         """Get daily balance for specific date."""
         try:
-            response = self.client.table(self.table).select("*").eq(
+            response = self.table.select("*").eq(
                 "user_id", user_id
             ).eq("date", date.isoformat()).execute()
             
@@ -499,7 +521,7 @@ class SupabaseDailyBalanceRepository(IDailyBalanceRepository):
     ) -> List[DailyBalance]:
         """Get daily balances for date range."""
         try:
-            response = self.client.table(self.table).select("*").eq(
+            response = self.table.select("*").eq(
                 "user_id", user_id
             ).gte("date", start_date.isoformat()).lte(
                 "date", end_date.isoformat()
@@ -520,7 +542,7 @@ class SupabaseDailyBalanceRepository(IDailyBalanceRepository):
             balance_dict = balance.dict()
             balance_dict['id'] = str(balance_dict['id'])
             
-            response = self.client.table(self.table).upsert(
+            response = self.table.upsert(
                 balance_dict,
                 on_conflict="user_id,date"  # Composite unique constraint
             ).execute()
@@ -576,7 +598,7 @@ class SupabaseMetabolicProfileRepository(IMetabolicProfileRepository):
         if isinstance(data.get('id'), str):
             data['id'] = UUID(data['id'])
         
-        # Map database column names to entity field names
+        # Map database column names to entity field names - ALL REAL DATA FROM DB
         mapped_data = {
             'id': data.get('id'),
             'user_id': data.get('user_id'),
@@ -590,17 +612,59 @@ class SupabaseMetabolicProfileRepository(IMetabolicProfileRepository):
                 data.get('calculated_at', datetime.now().isoformat())
             ),
             'updated_at': datetime.now(),
-            # Default values for required fields that don't exist in DB
-            'activity_level': ActivityLevel.MODERATE,
-            'current_weight_kg': Decimal('70.0'),
-            'current_height_cm': Decimal('175.0'),
-            'current_age': 30,
-            'gender': GenderType.MALE,
-            'activity_multiplier': Decimal('1.55'),
-            'metadata': {}
+            
+            # Complete database mapping - all 21 entity fields
+            'activity_level': data.get('activity_level', 'moderate'),
+            'sedentary_multiplier': self._safe_decimal(
+                data.get('sedentary_multiplier', 1.2)
+            ),
+            'light_multiplier': self._safe_decimal(
+                data.get('light_multiplier', 1.375)
+            ),
+            'moderate_multiplier': self._safe_decimal(
+                data.get('moderate_multiplier', 1.55)
+            ),
+            'high_multiplier': self._safe_decimal(
+                data.get('high_multiplier', 1.725)
+            ),
+            'extreme_multiplier': self._safe_decimal(
+                data.get('extreme_multiplier', 1.9)
+            ),
+            'rmr_calories': self._safe_decimal(
+                data.get('rmr_calories', data.get('bmr_calories')), '1700'
+            ),
+            'accuracy_score': self._safe_decimal(
+                data.get('accuracy_score'), '0.95'
+            ),
+            'ai_adjusted': data.get('ai_adjusted', False),
+            'adjustment_factor': self._safe_decimal(
+                data.get('adjustment_factor', 1.0)
+            ),
+            'learning_iterations': int(data.get('learning_iterations', 0)),
+            'calculated_at': datetime.fromisoformat(
+                data.get('calculated_at', datetime.now().isoformat())
+            ),
+            'expires_at': datetime.fromisoformat(
+                data.get('expires_at', (datetime.now() + timedelta(days=30)).isoformat())
+            ) if data.get('expires_at') else datetime.now() + timedelta(days=30),
+            'is_active': data.get('is_active', True)
         }
         
         return MetabolicProfile(**mapped_data)
+    
+    def _safe_decimal(self, value, default_value='1500') -> Decimal:
+        """Safely convert value to Decimal, handling various input types."""
+        if isinstance(value, Decimal):
+            return value
+        if value is None:
+            return Decimal(str(default_value))
+        try:
+            # Direct conversion - don't convert to string first if already a number
+            if isinstance(value, (int, float)):
+                return Decimal(str(value))
+            return Decimal(str(value))
+        except (ValueError, TypeError, Exception):
+            return Decimal(str(default_value))
     
     async def get_latest(self, user_id: str) -> Optional[MetabolicProfile]:
         """Get user's latest metabolic profile."""
@@ -641,16 +705,34 @@ class SupabaseMetabolicProfileRepository(IMetabolicProfileRepository):
     async def create(self, profile: MetabolicProfile) -> MetabolicProfile:
         """Create new metabolic profile."""
         try:
-            # Convert entity to dict with proper datetime serialization
-            # Map to actual database schema
+            # Convert entity to dict with database schema mapping
+            # Only include fields that exist in the database table
             profile_dict = {
                 "id": str(profile.id),
                 "user_id": str(profile.user_id),
                 "bmr_calories": float(profile.bmr_calories),
                 "tdee_calories": float(profile.tdee_calories),
+                "rmr_calories": float(profile.rmr_calories),
                 "calculation_method": profile.calculation_method,
-                "calculated_at": profile.created_at.isoformat(),
-                "is_active": True
+                "accuracy_score": float(profile.accuracy_score),
+                
+                # Activity level and multipliers (from 006 migration)
+                "activity_level": profile.activity_level,
+                "sedentary_multiplier": float(profile.sedentary_multiplier),
+                "light_multiplier": float(profile.light_multiplier),
+                "moderate_multiplier": float(profile.moderate_multiplier),
+                "high_multiplier": float(profile.high_multiplier),
+                "extreme_multiplier": float(profile.extreme_multiplier),
+                
+                # AI fields (from original schema)
+                "ai_adjusted": profile.ai_adjusted,
+                "adjustment_factor": float(profile.adjustment_factor),
+                "learning_iterations": profile.learning_iterations,
+                
+                # Timestamps (only ones that exist in DB)
+                "calculated_at": profile.calculated_at.isoformat(),
+                "expires_at": profile.expires_at.isoformat() if profile.expires_at else None,
+                "is_active": profile.is_active
             }
             
             response = self.table.insert(
@@ -674,19 +756,20 @@ class SupabaseTemporalAnalyticsRepository(ITemporalAnalyticsRepository):
     def __init__(self):
         """Initialize with Supabase client for analytics views."""
         self.client: Client = get_supabase_client()
-        # View names from our SQL schema
-        self.hourly_view = "hourly_calorie_summary"
-        self.daily_view = "daily_calorie_summary"
-        self.weekly_view = "weekly_calorie_summary"
-        self.monthly_view = "monthly_calorie_summary"
-        self.balance_view = "daily_balance_summary"
+        self.schema_manager = get_schema_manager()
+        # Views from schema manager (pre-configured with schema)
+        self.hourly_view = self.schema_manager.hourly_calorie_summary
+        self.daily_view = self.schema_manager.daily_calorie_summary
+        self.weekly_view = self.schema_manager.weekly_calorie_summary
+        self.monthly_view = self.schema_manager.monthly_calorie_summary
+        self.balance_view = self.schema_manager.daily_balance_summary
     
     async def get_hourly_summary(
         self, user_id: str, date: DateType
     ) -> List[HourlyCalorieSummary]:
         """Get hourly calorie summary for a specific date."""
         try:
-            response = self.client.table(self.hourly_view).select("*").eq(
+            response = self.hourly_view.select("*").eq(
                 "user_id", user_id
             ).eq("date", date.isoformat()).order("hour").execute()
             
@@ -704,7 +787,7 @@ class SupabaseTemporalAnalyticsRepository(ITemporalAnalyticsRepository):
     ) -> List[DailyCalorieSummary]:
         """Get daily summaries for date range."""
         try:
-            response = self.client.table(self.daily_view).select("*").eq(
+            response = self.daily_view.select("*").eq(
                 "user_id", user_id
             ).gte("date", start_date.isoformat()).lte(
                 "date", end_date.isoformat()
@@ -792,7 +875,7 @@ class SupabaseTemporalAnalyticsRepository(ITemporalAnalyticsRepository):
     ) -> List[MonthlyCalorieSummary]:
         """Get monthly summaries for year (optional specific month)."""
         try:
-            query = self.client.table(self.monthly_view).select("*").eq(
+            query = self.monthly_view.select("*").eq(
                 "user_id", user_id
             ).eq("year", year)
             
@@ -814,7 +897,7 @@ class SupabaseTemporalAnalyticsRepository(ITemporalAnalyticsRepository):
     ) -> List[DailyBalanceSummary]:
         """Get daily balance with goal comparison."""
         try:
-            response = self.client.table(self.balance_view).select("*").eq(
+            response = self.balance_view.select("*").eq(
                 "user_id", user_id
             ).gte("date", start_date.isoformat()).lte(
                 "date", end_date.isoformat()
@@ -835,6 +918,8 @@ class SupabaseCalorieSearchRepository(ICalorieSearchRepository):
     def __init__(self):
         """Initialize with Supabase client."""
         self.client: Client = get_supabase_client()
+        self.schema_manager = get_schema_manager()
+        self.calorie_events = self.schema_manager.calorie_events
     
     async def search_events(
         self,
@@ -847,7 +932,7 @@ class SupabaseCalorieSearchRepository(ICalorieSearchRepository):
         try:
             offset = (page - 1) * page_size
             
-            query = self.client.table("calorie_events").select(
+            query = self.calorie_events.select(
                 "*", count="exact"
             ).eq("user_id", user_id)
             

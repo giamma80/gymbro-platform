@@ -37,7 +37,7 @@ class CalorieEventType:
     """GraphQL type for calorie event."""
     id: strawberry.ID
     user_id: str
-    event_type: str  # This will be normalized to lowercase for GraphQL responses
+    event_type: str  # Normalized to lowercase for GraphQL responses
     value: float
     source: str
     event_timestamp: str
@@ -112,7 +112,9 @@ class Query:
     """GraphQL queries for calorie-balance."""
     
     @strawberry.field
-    async def get_calorie_balance(self, id: strawberry.ID) -> Optional[UcalorieUbalanceType]:
+    async def get_calorie_balance(
+        self, id: strawberry.ID
+    ) -> Optional[UcalorieUbalanceType]:
         """Get a single calorie-balance by ID."""
         # Initialize repository
         repo = SupabaseRepository("calorie_balance")
@@ -133,7 +135,7 @@ class Query:
     
     @strawberry.field
     async def list_calorie_balances(
-        self, 
+        self,
         limit: Optional[int] = 10,
         offset: Optional[int] = 0
     ) -> UcalorieUbalanceListResponse:
@@ -192,7 +194,7 @@ class Query:
             
             # Get goals directly from repository
             goals = await repository.get_user_goals(
-                user_id, 
+                user_id,
                 include_inactive=(is_active is None)
             )
             
@@ -200,7 +202,9 @@ class Query:
             goal_data = []
             for goal in goals:
                 # Normalize goal_type to lowercase
-                normalized_goal_type = goal.goal_type.lower() if goal.goal_type else ""
+                normalized_goal_type = (
+                    goal.goal_type.lower() if goal.goal_type else ""
+                )
                 
                 goal_data.append(CalorieGoalType(
                     id=strawberry.ID(str(goal.id)),
@@ -209,7 +213,9 @@ class Query:
                     daily_calorie_target=float(goal.daily_calorie_target),
                     is_active=goal.is_active,
                     created_at=str(goal.created_at),
-                    updated_at=str(goal.updated_at) if goal.updated_at else None
+                    updated_at=(
+                        str(goal.updated_at) if goal.updated_at else None
+                    )
                 ))
             
             return CalorieGoalListResponse(

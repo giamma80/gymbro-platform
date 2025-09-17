@@ -15,17 +15,17 @@ from pydantic import BaseModel, Field
 
 from app.domain.entities import (
     CalorieEvent,
-    DailyBalance,
     CalorieGoal,
-    GoalType,
+    DailyBalance,
+    EventSource,
     EventType,
-    EventSource
+    GoalType,
 )
-
 
 # =============================================================================
 # DAILY BALANCE SCHEMAS
 # =============================================================================
+
 
 class DailyBalanceResponse(BaseModel):
     """Daily balance response schema."""
@@ -42,9 +42,7 @@ class DailyBalanceResponse(BaseModel):
 
     class Config:
         from_attributes = True
-        json_encoders = {
-            Decimal: str
-        }
+        json_encoders = {Decimal: str}
 
     @classmethod
     def from_entity(cls, balance: DailyBalance) -> "DailyBalanceResponse":
@@ -58,7 +56,7 @@ class DailyBalanceResponse(BaseModel):
             daily_goal=balance.daily_goal or Decimal("0"),
             progress_percentage=balance.progress_percentage or 0.0,
             weight_kg=balance.weight_kg,
-            metabolic_data=balance.metadata or {}
+            metabolic_data=balance.metadata or {},
         )
 
 
@@ -75,18 +73,17 @@ class ProgressResponse(BaseModel):
 
     class Config:
         from_attributes = True
-        json_encoders = {
-            Decimal: str
-        }
+        json_encoders = {Decimal: str}
 
 
 # =============================================================================
 # CALORIE GOAL SCHEMAS
 # =============================================================================
 
+
 class GoalTypeEnum(str, Enum):
     """Goal type for API responses."""
-    
+
     WEIGHT_LOSS = "weight_loss"
     WEIGHT_GAIN = "weight_gain"
     MAINTENANCE = "maintenance"
@@ -115,7 +112,7 @@ class CalorieGoalResponse(BaseModel):
         json_encoders = {
             Decimal: str,
             datetime: lambda v: v.isoformat() if v else None,
-            date: lambda v: v.isoformat() if v else None
+            date: lambda v: v.isoformat() if v else None,
         }
 
     @classmethod
@@ -134,7 +131,7 @@ class CalorieGoalResponse(BaseModel):
             ai_optimized=goal.ai_optimized,
             optimization_metadata=goal.optimization_metadata or {},
             created_at=goal.created_at,
-            updated_at=goal.updated_at
+            updated_at=goal.updated_at,
         )
 
 
@@ -147,7 +144,7 @@ class CalorieGoalCreateRequest(BaseModel):
     weekly_weight_change_kg: Optional[Decimal] = None
     activity_level: str = "moderate"
     custom_calorie_target: Optional[Decimal] = None
-    
+
     # Parameter Passing - User metrics provided by client (optional)
     user_weight_kg: Optional[Decimal] = Field(None, description="Current weight in kg")
     user_height_cm: Optional[Decimal] = Field(None, description="Height in cm")
@@ -165,7 +162,7 @@ class CalorieGoalCreateRequest(BaseModel):
                 "user_weight_kg": "80.0",
                 "user_height_cm": "175.0",
                 "user_age": 30,
-                "user_gender": "male"
+                "user_gender": "male",
             }
         }
 
@@ -185,7 +182,7 @@ class CalorieGoalUpdateRequest(BaseModel):
             "example": {
                 "daily_calorie_target": "2000.0",
                 "weekly_weight_change_kg": "0.3",
-                "is_active": True
+                "is_active": True,
             }
         }
 
@@ -193,6 +190,7 @@ class CalorieGoalUpdateRequest(BaseModel):
 # =============================================================================
 # ERROR AND UTILITY SCHEMAS
 # =============================================================================
+
 
 class HealthCheckResponse(BaseModel):
     """Health check response schema."""
@@ -206,9 +204,9 @@ class HealthCheckResponse(BaseModel):
         json_schema_extra = {
             "example": {
                 "status": "healthy",
-                "service": "calorie-balance", 
+                "service": "calorie-balance",
                 "timestamp": "2025-09-12T00:00:00Z",
-                "database_status": "connected"
+                "database_status": "connected",
             }
         }
 
@@ -227,6 +225,6 @@ class ErrorResponse(BaseModel):
                 "error": "Validation Error",
                 "message": "Invalid input data",
                 "code": 400,
-                "details": {"field": "value"}
+                "details": {"field": "value"},
             }
         }

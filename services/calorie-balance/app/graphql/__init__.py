@@ -2,20 +2,24 @@
 GraphQL module for calorie-balance
 """
 
-from .schema import schema, graphql_router
-from .types import (
-    UcalorieUbalanceType, CreateUcalorieUbalanceInput,
-    UpdateUcalorieUbalanceInput
-)
-from .queries import Query
-from .mutations import Mutation
+from .extended_resolvers import ExtendedCalorieMutations, ExtendedCalorieQueries
 from .extended_types import (
-    CalorieGoalType, CalorieEventType, DailyBalanceType,
-    MetabolicProfileType, CreateCalorieGoalInput, UpdateCalorieGoalInput,
-    CreateCalorieEventInput, MetabolicCalculationInput
+    CalorieEventType,
+    CalorieGoalType,
+    CreateCalorieEventInput,
+    CreateCalorieGoalInput,
+    DailyBalanceType,
+    MetabolicCalculationInput,
+    MetabolicProfileType,
+    UpdateCalorieGoalInput,
 )
-from .extended_resolvers import (
-    ExtendedCalorieQueries, ExtendedCalorieMutations
+from .mutations import Mutation
+from .queries import Query
+from .schema import graphql_router, schema
+from .types import (
+    CreateUcalorieUbalanceInput,
+    UcalorieUbalanceType,
+    UpdateUcalorieUbalanceInput,
 )
 
 __all__ = [
@@ -35,5 +39,5 @@ __all__ = [
     "CreateCalorieEventInput",
     "MetabolicCalculationInput",
     "ExtendedCalorieQueries",
-    "ExtendedCalorieMutations"
+    "ExtendedCalorieMutations",
 ]

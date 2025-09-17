@@ -1,6 +1,7 @@
 # 🏋️ GymbRo Platform - Cloud-Native Development Makefile
 
 .PHONY: help dev-setup services-start services-stop flutter-dev test-all quality-check deploy-staging clean
+ .PHONY: lint format lint-fix type-check
 
 # Default target
 help: ## Show this help message
@@ -85,6 +86,44 @@ quality-check: ## Run code quality checks (linting, formatting, security)
 	@cd mobile && flutter analyze
 	@cd mobile && flutter format --set-exit-if-changed .
 	@echo "✅ Quality checks passed!"
+
+# ---------- Python Lint & Formatting (Microservices) ----------
+lint: ## Run flake8 + black --check + isort --check on all Python services
+	@echo "🧹 Linting Python services..."
+	@find services -maxdepth 2 -name pyproject.toml | while read f; do \
+	  d=$$(dirname $$f); \
+	  echo "➡️  Checking $$d"; \
+	  (cd $$d && poetry run flake8 app || exit 1); \
+	  (cd $$d && poetry run black --check app || exit 1); \
+	  (cd $$d && poetry run isort --check-only app || exit 1); \
+	done
+	@echo "✅ Lint OK"
+
+format: ## Apply black + isort formatting to all Python services
+	@echo "🛠️ Formatting Python services..."
+	@find services -maxdepth 2 -name pyproject.toml | while read f; do \
+	  d=$$(dirname $$f); \
+	  echo "✏️  Formatting $$d"; \
+	  (cd $$d && poetry run isort app); \
+	  (cd $$d && poetry run black app); \
+	done
+	@echo "✅ Formatting applied"
+
+lint-fix: format ## Alias: format then lint to verify
+	@$(MAKE) lint
+
+type-check: ## Run mypy on all Python services (strict mode if configured)
+	@echo "🔎 Type checking Python services..."
+	@find services -maxdepth 2 -name pyproject.toml | while read f; do \
+	  d=$$(dirname $$f); \
+	  if grep -q "\[tool.mypy\]" $$f; then \
+	    echo "🧪 mypy in $$d"; \
+	    (cd $$d && poetry run mypy app || exit 1); \
+	  else \
+	    echo "(skip mypy) $$d"; \
+	  fi; \
+	done
+	@echo "✅ Type check complete"
 
 # Microservice Generation
 new-service: ## Generate new microservice (usage: make new-service SERVICE=name TEMPLATE=supabase|postgresql)

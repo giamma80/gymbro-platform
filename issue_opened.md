@@ -1,5 +1,18 @@
 # 🚨 Issues Identificate 
 
+### 🎯 **CRITICAL SCHEMA ALIGNMENT BREAKTHROUGH (17 settembre)**
+- **Database Schema Fixes**: ✅ **COMPLETE RESOLUTION** - Sistemati tutti i problemi di allineamento schema
+- **getBehavioralPatterns Error**: ✅ **ROOT CAUSE FIXED** - Risolti errori null con schema alignment
+- **Progress Percentage Implementation**: ✅ **DOCUMENTED APPROACH** - Confermato calcolo on-the-fly come best practice
+- **Test Data Preparation**: ✅ **COMPREHENSIVE DATASET** - Creato dataset completo per testing
+- **Code-Database Alignment**: ✅ **SYSTEMATIC VALIDATION** - Verificato allineamento tra codice e struttura database
+- **GraphQL Schema Consistency**: ✅ **API ALIGNMENT** - Aggiunto progress_percentage al GraphQL type per consistenza
+
+**Data Ultima Analisi:** 17 settembre 2025  
+**Data Analisi Precedente:** 16 settembre 2025  
+**Scope:** Critical Schema Alignment + Data Preparation + getBehavioralPatterns Resolution  
+**Metodologia:** Systematic Database Structure Validation + Comprehensive Test Data Generation
+
 ### 🎯 **CRITICAL TDD BREAKTHROUGH (16 settembre)**
 - **Calorie-Balance Service**: ✅ **SISTEMAZIONE COMPLETA** - Risolti errori critici 500 e GraphQL null
 - **TDD Implementation**: ✅ **Success rate migliorato** - Da baseline 47.1% a 80%+ con approccio sistematico
@@ -48,6 +61,49 @@
 ---
 
 ## 🚨 ISSUES DETTAGLIATE - STATO AGGIORNATO
+
+### ✅ **RISOLTE (dal 17 settembre) - Critical Schema Alignment & Data Preparation**
+
+#### 🔧 **Database Schema Critical Fixes**
+1. **[ARCH-CB-007]** ✅ **calorie_events Column Mismatch** - *Priorità: 10/10*
+   - **Issue**: ERROR 42703: column "description" of relation "calorie_events" does not exist
+   - **Impact**: Impossibilità di eseguire INSERT su test data, service testing bloccato
+   - **Root Cause**: SQL scripts assumevano colonna 'description' non presente nella struttura reale
+   - **Resolution**: Sistematico fix di tutti gli INSERT statements, spostamento description in metadata JSONB
+   - **Validation**: SQL eseguito con successo, tutti i test data inseriti correttamente
+
+2. **[ARCH-CB-008]** ✅ **daily_balances Column Mismatches** - *Priorità: 10/10*
+   - **Issue**: ERROR 42703: column "progress_percentage" of relation "daily_balances" does not exist
+   - **Impact**: Test data preparation falliva completamente per daily_balances
+   - **Root Cause**: Utilizzo di colonne inesistenti (progress_percentage, net_calories, weight_kg, metabolic_data)
+   - **Resolution**: Rimozione completa colonne inesistenti, utilizzo solo colonne schema reale
+   - **Validation**: Tutti gli INSERT di daily_balances eseguiti correttamente
+
+3. **[ARCH-CB-009]** ✅ **getBehavioralPatterns Null Error Resolution** - *Priorità: 9/10*
+   - **Issue**: GraphQL getBehavioralPatterns restituiva null per mancanza dati significativi
+   - **Root Cause**: Mancanza di dati di test realistici con source diversificati
+   - **Resolution**: Creazione dataset completo 009_test_data_preparation.sql con 6 diverse sorgenti dati
+   - **Validation**: Dataset con 35+ eventi diversificati per 9 giorni, pattern behaviors identificabili
+
+4. **[ARCH-CB-010]** ✅ **Progress Percentage Implementation Validation** - *Priorità: 8/10*
+   - **Issue**: Incertezza se progress_percentage dovesse essere salvato o calcolato
+   - **Analysis**: Verificata implementazione RPC con calcolo on-the-fly: `(consumed/goal*100)`
+   - **Decision**: Confermato approccio corretto - calcolo dinamico evita inconsistenze dati
+   - **Resolution**: Aggiunto campo mancante a GraphQL DailyBalanceType per consistenza API
+   - **Validation**: GraphQL schema allineato con REST API, progress_percentage disponibile
+
+#### 🏗️ **Code Architecture Enhancements**
+5. **[ARCH-CB-011]** ✅ **MetabolicProfile Model Expansion** - *Priorità: 8/10*
+   - **Issue**: SQLAlchemy MetabolicProfileModel aveva solo 6 campi vs 20+ nel database
+   - **Impact**: activity_level e altri campi critici non mappati, dati incompleti
+   - **Resolution**: Espansione completa modello da 6 a 20+ campi matching database schema
+   - **Validation**: Repository ora accede a activity_level reale dal database
+
+6. **[ARCH-CB-012]** ✅ **Repository Hardcoded Values Elimination** - *Priorità: 7/10*
+   - **Issue**: Repository restituiva valori hardcoded invece di leggere dal database
+   - **Impact**: getBehavioralPatterns vedeva sempre gli stessi pattern statici
+   - **Resolution**: Implementato mapping reale database con _map_activity_level enum conversion
+   - **Validation**: activity_level ora letto dinamicamente dal database
 
 ### ✅ **RISOLTE (dal 16 settembre) - TDD Service Fixes & Apollo Federation**
 

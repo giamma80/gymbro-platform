@@ -7,6 +7,38 @@ e questo progetto aderisce al [Semantic Versioning](https://semver.org/spec/v2.0
 
 ## [Unreleased]
 
+## [v2.4.0] - 2025-09-17 - Critical Schema Alignment & Data Preparation
+
+### 🔧 Database Schema Alignment Fixes
+- **Fixed Critical Schema Mismatches**: Resolved column existence issues in calorie_events and daily_balances tables
+  - Removed non-existent 'description' column from calorie_events INSERT statements
+  - Removed non-existent 'progress_percentage', 'net_calories', 'weight_kg', 'metabolic_data' columns from daily_balances
+  - Fixed metadata JSONB structure for proper data embedding
+- **Progress Percentage Implementation**: Documented correct on-the-fly calculation approach
+  - Maintained calculation in RPC functions: `(consumed / goal * 100)`
+  - Added missing progress_percentage field to GraphQL DailyBalanceType for API consistency
+  - Confirmed best practice of calculated fields vs stored values
+
+### 📊 Comprehensive Test Data Preparation
+- **Created 009_test_data_preparation.sql**: Complete test dataset with realistic user scenarios
+  - Test user: `550e8400-e29b-41d4-a716-446655440000` with full profile setup
+  - 9 days of diverse calorie events (2025-09-09 to 2025-09-17)
+  - Multiple data sources: manual, fitness_tracker, nutrition_scan, smart_scale, healthkit, google_fit
+  - Comprehensive daily_balances with proper schema alignment
+- **Enhanced Data Diversity**: Added source-specific metadata and confidence scores
+- **User Management Integration**: Complete user, profile, credentials, and privacy settings setup
+
+### 🏗️ Code Architecture Improvements
+- **SQLAlchemy Model Expansion**: Rebuilt MetabolicProfileModel from 6 to 20+ fields to match database schema
+- **Repository Pattern Enhancement**: Eliminated hardcoded values, implemented real database field mapping
+- **GraphQL Schema Completion**: Added missing activity_level field to complete API exposure
+- **Error Resolution Process**: Systematic approach to schema validation and correction
+
+### 🛠️ Development Process Enhancements
+- **Schema Validation Workflow**: Established systematic checking of database structure vs code expectations
+- **Cross-Reference Validation**: Comprehensive verification of all migration files against actual table structure
+- **Test Data Standards**: Standardized approach to realistic test data generation with proper constraints
+
 ## [v2.3.0] - 2025-09-16 - Calorie-Balance Service Critical Fixes & TDD Implementation
 
 ### 🛠️ Comprehensive TDD Bug Fixes

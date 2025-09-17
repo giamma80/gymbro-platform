@@ -275,12 +275,14 @@ class Query:
             event_data = []
             for event in events or []:
                 # Normalize event_type to lowercase
-                normalized_event_type = event.event_type.lower() if event.event_type else ""
+                normalized_event_type = (
+                    event.event_type.lower() if event.event_type else ""
+                )
                 
                 event_data.append(CalorieEventType(
                     id=strawberry.ID(str(event.id)),
                     user_id=user_id,
-                    event_type=normalized_event_type,  # Normalized to lowercase
+                    event_type=normalized_event_type,
                     value=float(event.calories),
                     source=event.source or "",
                     event_timestamp=str(event.event_timestamp),
@@ -317,7 +319,7 @@ class Query:
             from app.infrastructure.repositories.repositories import (
                 SupabaseCalorieEventRepository
             )
-            from datetime import datetime, date
+            from datetime import datetime
             
             # Parse target_date
             target_dt = datetime.fromisoformat(target_date).date()
@@ -337,7 +339,9 @@ class Query:
             # Convert to GraphQL types with normalized event_type
             event_data = []
             for event in events or []:
-                normalized_event_type = event.event_type.lower() if event.event_type else ""
+                normalized_event_type = (
+                    event.event_type.lower() if event.event_type else ""
+                )
                 
                 event_data.append(CalorieEventType(
                     id=strawberry.ID(str(event.id)),

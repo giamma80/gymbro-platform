@@ -140,17 +140,6 @@ jobs:
       - name: � Install Dependencies
         working-directory: ./services/calorie-balance
         run: poetry install --no-interaction
-
-      - name: 🧪 Run Tests
-        working-directory: ./services/calorie-balance
-        run: |
-          poetry run pytest tests/ -v --tb=short
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'mock://test' }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'mock-key' }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'mock-key' }}
-          JWT_SECRET: test-secret-key
-
       - name: �️ Export GraphQL Schema (calorie-balance)
         working-directory: ./services/calorie-balance
         run: poetry run python scripts/export_schema.py
@@ -163,6 +152,16 @@ jobs:
             exit 1
           fi
           echo '✅ Schema allineato'
+
+      - name: 🧪 Run Tests
+        working-directory: ./services/calorie-balance
+        run: |
+          poetry run pytest tests/ -v --tb=short
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'mock://test' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'mock-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'mock-key' }}
+          JWT_SECRET: test-secret-key
 
       - name: �🐳 Docker Build Test
         working-directory: ./services/calorie-balance

@@ -422,12 +422,22 @@ class Query:
                     user_id=user_id,
                     date=str(balance.date),
                     calories_consumed=float(balance.calories_consumed or 0),
-                    calories_burned_exercise=float(balance.calories_burned_exercise or 0),
-                    calories_burned_bmr=float(balance.calories_burned_bmr or 0),
+                    calories_burned_exercise=float(
+                        balance.calories_burned_exercise or 0
+                    ),
+                    calories_burned_bmr=float(
+                        balance.calories_burned_bmr or 0
+                    ),
                     net_calories=float(balance.net_calories or 0),
-                    daily_calorie_target=float(balance.daily_calorie_target) if balance.daily_calorie_target else 2000.0,  # Default target
+                    daily_calorie_target=(
+                        float(balance.daily_calorie_target)
+                        if balance.daily_calorie_target
+                        else 2000.0  # Default target
+                    ),
                     created_at=str(balance.created_at),
-                    updated_at=str(balance.updated_at) if balance.updated_at else None
+                    updated_at=(
+                        str(balance.updated_at) if balance.updated_at else None
+                    )
                 ))
             
             return DailyBalanceListResponse(
@@ -509,7 +519,9 @@ class Query:
                     is_ai_adjusted=profile.is_ai_adjusted or False,
                     is_active=profile.is_active,
                     created_at=str(profile.created_at),
-                    updated_at=str(profile.updated_at) if profile.updated_at else None
+                    updated_at=(
+                        str(profile.updated_at) if profile.updated_at else None
+                    )
                 )
                 
                 return MetabolicProfileResponse(
@@ -530,29 +542,4 @@ class Query:
                 success=False,
                 message=f"Error fetching metabolic profile: {str(e)}",
                 data=None
-            )
-            items = [
-                UcalorieUbalanceType(
-                    id=strawberry.ID(item["id"]),
-                    name=item["name"],
-                    description=item.get("description"),
-                    created_at=item["created_at"],
-                    updated_at=item.get("updated_at")
-                )
-                for item in data
-            ]
-            
-            return UcalorieUbalanceListResponse(
-                success=True,
-                message="Successfully retrieved calorie_balances",
-                data=items,
-                total=len(items)
-            )
-            
-        except Exception as e:
-            return UcalorieUbalanceListResponse(
-                success=False,
-                message=f"Error retrieving calorie_balances: {str(e)}",
-                data=[],
-                total=0
             )

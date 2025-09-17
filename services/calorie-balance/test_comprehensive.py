@@ -1216,15 +1216,32 @@ class CalorieBalanceAPITester:
                 expected_sources = {"manual", "fitness_tracker", "nutrition_scan"}
                 expected_types = {"consumed", "burned_exercise"}
                 
-                if len(sources.intersection(expected_sources)) >= 2:
-                    acceptance_checks.append(f"✅ Has diverse sources: {', '.join(sorted(sources))}")
-                else:
-                    acceptance_checks.append(f"❌ Should have diverse sources, found: {', '.join(sorted(sources))}")
+                # Filter out weight measurements (not calorie-related)
+                calorie_related_types = {
+                    t for t in event_types
+                    if t in ["consumed", "burned_exercise", "burned_bmr"]
+                }
                 
-                if event_types.intersection(expected_types):
-                    acceptance_checks.append(f"✅ Has expected event types: {', '.join(sorted(event_types))}")
+                if len(sources.intersection(expected_sources)) >= 2:
+                    acceptance_checks.append(
+                        f"✅ Has diverse sources: {', '.join(sorted(sources))}"
+                    )
                 else:
-                    acceptance_checks.append(f"❌ Should have expected event types, found: {', '.join(sorted(event_types))}")
+                    acceptance_checks.append(
+                        f"❌ Should have diverse sources, "
+                        f"found: {', '.join(sorted(sources))}"
+                    )
+                
+                if calorie_related_types.intersection(expected_types):
+                    acceptance_checks.append(
+                        f"✅ Has expected event types: "
+                        f"{', '.join(sorted(calorie_related_types))}"
+                    )
+                else:
+                    acceptance_checks.append(
+                        f"❌ Should have expected event types, "
+                        f"found: {', '.join(sorted(calorie_related_types))}"
+                    )
                 
                 details = " | ".join(acceptance_checks)
                 success = all("✅" in check for check in acceptance_checks)

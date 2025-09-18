@@ -22,7 +22,9 @@ from pydantic import BaseModel, Field
 from app.core.config import get_settings
 from app.core.database import get_supabase_client
 
-settings = get_settings()
+
+def _settings():
+    return get_settings()
 logger = structlog.get_logger()
 router = APIRouter(prefix="/{service-name-kebab}", tags=["calorie-balance Entities"])
 
@@ -79,18 +81,12 @@ async def list_entities(
     try:
         supabase = get_supabase_client()
 
-        # Build query (customize table name and fields)
         query = supabase.table("entities").select("*")
-
         if search:
             query = query.ilike("name", f"%{search}%")
-
-        # Execute query with pagination
         result = query.range(offset, offset + limit - 1).execute()
-
         logger.info("Entities listed", count=len(result.data))
         return result.data
-
     except Exception as e:
         logger.error("Failed to list entities", error=str(e))
         raise HTTPException(status_code=500, detail="Failed to list entities")
@@ -105,17 +101,12 @@ async def create_entity(entity: EntityCreate) -> EntityResponse:
     """
     try:
         supabase = get_supabase_client()
-
-        # Insert entity (customize table name and fields)
         result = supabase.table("entities").insert(entity.model_dump()).execute()
-
         if not result.data:
             raise HTTPException(status_code=400, detail="Failed to create entity")
-
         created_entity = result.data[0]
         logger.info("Entity created", entity_id=created_entity["id"])
         return created_entity
-
     except Exception as e:
         logger.error("Failed to create entity", error=str(e))
         raise HTTPException(status_code=500, detail="Failed to create entity")

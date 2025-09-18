@@ -24,7 +24,11 @@ from app.core.logging import configure_logging
 # from app.api.v1.auth import router as auth_router  # Uncomment if auth is needed
 from app.graphql import graphql_router
 
-settings = get_settings()
+# Lazy settings access: avoid early environment validation at import time
+def _settings():  # internal helper
+    return get_settings()
+
+
 logger = structlog.get_logger()
 
 
@@ -33,14 +37,17 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         # Generate correlation ID
-        correlation_id = request.headers.get("X-Correlation-ID", str(uuid.uuid4()))
+        correlation_id = request.headers.get(
+            "X-Correlation-ID", str(uuid.uuid4())
+        )
 
         # Bind to logger context
+        s = _settings()
         logger = structlog.get_logger().bind(
             correlation_id=correlation_id,
             path=request.url.path,
             method=request.method,
-            service=settings.service_name,
+            service=s.service_name,
         )
 
         start_time = time.time()
@@ -76,7 +83,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     is_connected = await check_supabase_connection()
     if not is_connected:
         logger.error("Failed to connect to Supabase")
-        raise HTTPException(status_code=503, detail="Database connection failed")
+        raise HTTPException(
+            status_code=503, detail="Database connection failed"
+        )
 
     logger.info("Service startup complete")
 
@@ -92,15 +101,18 @@ def create_application() -> FastAPI:
     # Configure logging first
     configure_logging()
 
+    s = _settings()
     app = FastAPI(
         title="NutriFit calorie-balance",
-        description="NutriFit calorie-balance microservice with Supabase integration",
+        description=(
+            "NutriFit calorie-balance microservice with Supabase integration"
+        ),
         version="1.0.0",
         openapi_url="/api/v1/openapi.json"
-        if settings.environment != "production"
+        if s.environment != "production"
         else None,
-        docs_url="/docs" if settings.environment != "production" else None,
-        redoc_url="/redoc" if settings.environment != "production" else None,
+        docs_url="/docs" if s.environment != "production" else None,
+        redoc_url="/redoc" if s.environment != "production" else None,
         lifespan=lifespan,
     )
 
@@ -109,7 +121,7 @@ def create_application() -> FastAPI:
     app.add_middleware(RequestLoggingMiddleware)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.allowed_origins,
+        allow_origins=s.allowed_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
@@ -128,9 +140,10 @@ def create_application() -> FastAPI:
     @app.get("/health")
     async def health_check():
         """Basic health check."""
+        s = _settings()
         return {
             "status": "healthy",
-            "service": settings.service_name,
+            "service": s.service_name,
             "timestamp": time.time(),
         }
 
@@ -141,14 +154,17 @@ def create_application() -> FastAPI:
             is_ready = await check_supabase_connection()
 
             if is_ready:
+                s = _settings()
                 return {
                     "status": "ready",
-                    "service": settings.service_name,
+                    "service": s.service_name,
                     "checks": {"supabase": "connected"},
                 }
             else:
                 return Response(
-                    content='{"status": "not_ready", "error": "Supabase connection failed"}',
+                    content=(
+                        '{"status": "not_ready", "error": "Supabase connection failed"}'
+                    ),
                     status_code=503,
                     media_type="application/json",
                 )
@@ -164,7 +180,8 @@ def create_application() -> FastAPI:
     @app.get("/health/live")
     async def liveness_check():
         """Liveness check for Kubernetes."""
-        return {"status": "alive", "service": settings.service_name}
+        s = _settings()
+        return {"status": "alive", "service": s.service_name}
 
     return app
 
@@ -178,7 +195,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",
-        port=8000,
-        reload=settings.environment == "development",
+        port=8002,
+        reload=_settings().environment == "development",
         access_log=False,  # We handle logging in middleware
     )

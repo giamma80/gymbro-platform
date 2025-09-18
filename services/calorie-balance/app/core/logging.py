@@ -45,9 +45,9 @@ def add_service_context(
     logger, method_name: str, event_dict: Dict[str, Any]
 ) -> Dict[str, Any]:
     """Add service context to log entries."""
-    settings = get_settings()
-    event_dict["service"] = settings.service_name
-    event_dict["environment"] = settings.environment
+    s = get_settings()
+    event_dict["service"] = s.service_name
+    event_dict["environment"] = s.environment
     return event_dict
 
 

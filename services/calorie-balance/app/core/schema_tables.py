@@ -35,8 +35,8 @@ class SchemaManager:
     def __init__(self, client: Client = None):
         """Initialize schema manager with optional client."""
         self._client = client or get_supabase_client()
-        self._settings = get_settings()
-        self._schema_name = self._settings.database_schema
+        # Lazy access when actually needed
+        self._schema_name = get_settings().database_schema
 
     @property
     def schema_name(self) -> str:

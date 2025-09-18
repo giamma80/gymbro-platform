@@ -12,7 +12,9 @@ from supabase import Client, create_client
 from app.core.config import get_settings
 
 logger = structlog.get_logger()
-settings = get_settings()
+
+def _settings():
+    return get_settings()
 
 # Global Supabase client
 _supabase_client: Optional[Client] = None
@@ -24,21 +26,22 @@ def create_supabase_client() -> Client:
 
     if _supabase_client is None:
         try:
+            s = _settings()
             _supabase_client = create_client(
-                settings.supabase_url, settings.supabase_service_key
+                s.supabase_url, s.supabase_service_key
             )
 
             logger.info(
                 "Supabase client created",
-                service=settings.service_name,
-                url=settings.supabase_url,
+                service=s.service_name,
+                url=s.supabase_url,
             )
 
         except Exception as e:
             logger.error(
                 "Failed to create Supabase client",
                 error=str(e),
-                service=settings.service_name,
+                service=s.service_name,
             )
             raise
 

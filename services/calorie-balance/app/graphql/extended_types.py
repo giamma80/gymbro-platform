@@ -29,11 +29,17 @@ class GoalTypeEnum(Enum):
 
 @strawberry.federation.type(keys=["id"])
 class CalorieGoalType:
-    """GraphQL type for calorie goals with federation support."""
+    """GraphQL type for calorie goals with federation support.
+
+    NOTE: goal_type is exposed as lowercase string (domain enum value)
+    instead of GraphQL Enum name to satisfy acceptance tests expecting
+    'weight_loss' rather than 'WEIGHT_LOSS'. Input types still use the
+    GoalTypeEnum for strong typing on mutations.
+    """
 
     id: strawberry.ID
     user_id: str
-    goal_type: GoalTypeEnum
+    goal_type: str  # lowercase enum value (e.g. "weight_loss")
     daily_calorie_target: float
     daily_deficit_target: Optional[float] = None
     weekly_weight_change_kg: Optional[float] = None

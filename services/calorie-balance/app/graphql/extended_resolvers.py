@@ -1,12 +1,16 @@
-"""
-Extended GraphQL Queries and Mutations for Calorie Balance Service
+"""Extended GraphQL Queries and Mutations for Calorie Balance Service.
 
-Complete query and mutation implementations for Goals, Events, Balance,
-and Analytics following Apollo Federation patterns.
+NOTE: Minimal fixes applied to stabilize metadata serialization and event
+creation for failing acceptance tests. Metadata fields in the GraphQL
+schema are currently typed as String; resolvers were returning dicts,
+causing GraphQL errors ("String cannot represent value: {}"). We now
+coerce any dict/list into a compact JSON string via _json_str helper.
 """
 
 import logging
-from typing import List, Optional
+import json
+from datetime import datetime
+from typing import List, Optional, Any
 
 import strawberry
 
@@ -36,6 +40,26 @@ from .interceptors import log_resolver_execution
 logger = logging.getLogger(__name__)
 
 
+def _json_str(value: Any) -> Optional[str]:
+    """Return value as a JSON string (or None) for GraphQL String fields.
+
+    - If value is already a string, return as-is.
+    - If value is a dict/list, serialize deterministically.
+    - If value is falsy (None/empty), return None to preserve null semantics.
+    """
+    if value in (None, ""):
+        return None
+    if isinstance(value, str):
+        return value
+    try:
+        return json.dumps(value, separators=(",", ":"), sort_keys=True)
+    except Exception:  # pragma: no cover
+        logger.warning(
+            "Failed to serialize metadata to JSON string; coercing to str"
+        )
+        return json.dumps(str(value))
+
+
 @strawberry.type
 class ExtendedCalorieQueries:
     """Extended GraphQL queries for calorie balance operations."""
@@ -45,7 +69,9 @@ class ExtendedCalorieQueries:
     # =======================================================================
 
     @strawberry.field
-    async def get_calorie_goal_by_id(self, id: strawberry.ID) -> CalorieGoalResponse:
+    async def get_calorie_goal_by_id(
+        self, id: strawberry.ID
+    ) -> CalorieGoalResponse:
         """Get calorie goal by ID."""
         try:
             # TODO: Implementation will be injected by service layer
@@ -54,7 +80,9 @@ class ExtendedCalorieQueries:
             )
         except Exception as e:
             return CalorieGoalResponse(
-                success=False, message=f"Error fetching goal: {str(e)}", data=None
+                success=False,
+                message=f"Error fetching goal: {str(e)}",
+                data=None,
             )
 
     @strawberry.field
@@ -93,18 +121,28 @@ class ExtendedCalorieQueries:
                     CalorieGoalType(
                         id=strawberry.ID(str(goal.id)),
                         user_id=user_id,
-                        goal_type=goal.goal_type,
+                        goal_type=str(getattr(goal, "goal_type", "")).lower(),
                         daily_calorie_target=float(goal.daily_calorie_target),
-                        daily_deficit_target=float(goal.daily_deficit_target)
-                        if goal.daily_deficit_target
-                        else None,
-                        weekly_weight_change_kg=float(goal.weekly_weight_change_kg)
-                        if goal.weekly_weight_change_kg
-                        else None,
-                        start_date=goal.start_date.isoformat()
-                        if goal.start_date
-                        else "",
-                        end_date=goal.end_date.isoformat() if goal.end_date else None,
+                        daily_deficit_target=(
+                            float(goal.daily_deficit_target)
+                            if goal.daily_deficit_target
+                            else None
+                        ),
+                        weekly_weight_change_kg=(
+                            float(goal.weekly_weight_change_kg)
+                            if goal.weekly_weight_change_kg
+                            else None
+                        ),
+                        start_date=(
+                            goal.start_date.isoformat()
+                            if goal.start_date
+                            else ""
+                        ),
+                        end_date=(
+                            goal.end_date.isoformat()
+                            if goal.end_date
+                            else None
+                        ),
                         is_active=goal.is_active,
                         ai_optimized=goal.ai_optimized or False,
                         optimization_metadata=goal.optimization_metadata,
@@ -129,7 +167,9 @@ class ExtendedCalorieQueries:
             )
 
     @strawberry.field
-    async def get_current_calorie_goal(self, user_id: str) -> CalorieGoalResponse:
+    async def get_current_calorie_goal(
+        self, user_id: str
+    ) -> CalorieGoalResponse:
         """Get user's current active calorie goal."""
         try:
             # Create service instances manually for GraphQL
@@ -145,14 +185,50 @@ class ExtendedCalorieQueries:
 
             if goal:
                 # Return the active goal
+                from .extended_types import CalorieGoalType
+
+                gql_goal = CalorieGoalType(
+                    id=strawberry.ID(str(goal.id)),
+                    user_id=user_id,
+                    goal_type=str(getattr(goal, "goal_type", "")).lower(),
+                    daily_calorie_target=float(goal.daily_calorie_target),
+                    daily_deficit_target=(
+                        float(goal.daily_deficit_target)
+                        if goal.daily_deficit_target
+                        else None
+                    ),
+                    weekly_weight_change_kg=(
+                        float(goal.weekly_weight_change_kg)
+                        if goal.weekly_weight_change_kg
+                        else None
+                    ),
+                    start_date=(
+                        goal.start_date.isoformat()
+                        if goal.start_date
+                        else ""
+                    ),
+                    end_date=(
+                        goal.end_date.isoformat()
+                        if goal.end_date
+                        else None
+                    ),
+                    is_active=goal.is_active,
+                    ai_optimized=goal.ai_optimized or False,
+                    optimization_metadata=goal.optimization_metadata,
+                    created_at=goal.created_at,
+                    updated_at=goal.updated_at,
+                )
+
                 return CalorieGoalResponse(
                     success=True,
                     message="Current calorie goal retrieved successfully",
-                    data=goal,
+                    data=gql_goal,
                 )
             else:
                 return CalorieGoalResponse(
-                    success=True, message="No active calorie goal found", data=None
+                    success=True,
+                    message="No active calorie goal found",
+                    data=None,
                 )
 
         except Exception as e:
@@ -168,14 +244,18 @@ class ExtendedCalorieQueries:
     # =======================================================================
 
     @strawberry.field
-    async def get_calorie_event_by_id(self, id: strawberry.ID) -> CalorieEventResponse:
+    async def get_calorie_event_by_id(
+        self, id: strawberry.ID
+    ) -> CalorieEventResponse:
         """Get calorie event by ID."""
         try:
             # Implementation will be injected by service layer
             pass
         except Exception as e:
             return CalorieEventResponse(
-                success=False, message=f"Error fetching event: {str(e)}", data=None
+                success=False,
+                message=f"Error fetching event: {str(e)}",
+                data=None,
             )
 
     @strawberry.field
@@ -212,15 +292,31 @@ class ExtendedCalorieQueries:
 
             # Get events directly from repository
             events = await repository.get_events_by_user(
-                user_id=user_id, start_time=start_time, end_time=end_time, limit=limit
+                user_id=user_id,
+                start_time=start_time,
+                end_time=end_time,
+                limit=limit,
             )
 
             total_count = len(events) if events else 0
 
+            # Coerce metadata on each event if attribute present
+            safe_events = []
+            for ev in events or []:
+                if (
+                    getattr(ev, "metadata", None)
+                    and not isinstance(ev.metadata, str)
+                ):
+                    try:
+                        ev.metadata = _json_str(ev.metadata)
+                    except Exception:  # pragma: no cover
+                        ev.metadata = _json_str({})
+                safe_events.append(ev)
+
             return CalorieEventListResponse(
                 success=True,
                 message=f"Found {total_count} events",
-                data=events or [],
+                data=safe_events,
                 total=total_count,
             )
 
@@ -313,7 +409,9 @@ class ExtendedCalorieQueries:
                 start_dt = end_dt - timedelta(days=365)
 
             # Get daily balances with filters
-            balances = await balance_repo.get_date_range(user_id, start_dt, end_dt)
+            balances = await balance_repo.get_date_range(
+                user_id, start_dt, end_dt
+            )
 
             return DailyBalanceListResponse(
                 success=True,
@@ -332,7 +430,9 @@ class ExtendedCalorieQueries:
             )
 
     @strawberry.field
-    async def get_current_daily_balance(self, user_id: str) -> DailyBalanceResponse:
+    async def get_current_daily_balance(
+        self, user_id: str
+    ) -> DailyBalanceResponse:
         """Get user's balance for today."""
         try:
             # Return default balance data with success=True to fix null error
@@ -441,9 +541,11 @@ class ExtendedCalorieQueries:
     ) -> DailyAnalyticsResponse:
         """Get daily analytics for date range."""
         try:
-            # For now, return empty analytics with success=True to fix null error
+            # Return empty analytics structure (prevents null errors)
             return DailyAnalyticsResponse(
-                success=True, message="Daily analytics retrieved successfully", data=[]
+                success=True,
+                message="Daily analytics retrieved successfully",
+                data=[],
             )
         except Exception as e:
             return DailyAnalyticsResponse(
@@ -488,7 +590,9 @@ class ExtendedCalorieQueries:
                 data_point = WeeklyDataPointType(
                     week_start=str(week.get("week_start", "")),
                     week_end=str(week.get("week_end", "")),
-                    avg_daily_consumed=float(week.get("avg_daily_consumed", 0)),
+                    avg_daily_consumed=float(
+                        week.get("avg_daily_consumed", 0)
+                    ),
                     avg_daily_burned=float(week.get("avg_daily_burned", 0)),
                     avg_net_calories=float(week.get("avg_net_calories", 0)),
                     total_weight_change=week.get("total_weight_change"),
@@ -500,11 +604,12 @@ class ExtendedCalorieQueries:
             return WeeklyAnalyticsResponse(
                 success=True,
                 message=(
-                    f"Weekly analytics retrieved successfully " f"for {weeks} weeks"
+                    "Weekly analytics retrieved successfully "
+                    f"for {weeks} weeks"
                 ),
                 data=data_points,
-                metadata=(
-                    f'{{"weeks": {weeks}, ' f'"total_data_points": {len(data_points)}}}'
+                metadata=json.dumps(
+                    {"weeks": weeks, "total_data_points": len(data_points)}
                 ),
             )
 
@@ -592,7 +697,9 @@ class ExtendedCalorieQueries:
         except Exception as e:
             logger.error(f"Error in get_behavioral_patterns: {str(e)}")
             return PatternAnalyticsResponse(
-                success=False, message=f"Error fetching patterns: {str(e)}", data=[]
+                success=False,
+                message=f"Error fetching patterns: {str(e)}",
+                data=[],
             )
 
 
@@ -633,11 +740,15 @@ class ExtendedCalorieMutations:
             )
 
             return CalorieGoalResponse(
-                success=True, message="Goal created successfully", data=goal_data
+                success=True,
+                message="Goal created successfully",
+                data=goal_data,
             )
         except Exception as e:
             return CalorieGoalResponse(
-                success=False, message=f"Error creating goal: {str(e)}", data=None
+                success=False,
+                message=f"Error creating goal: {str(e)}",
+                data=None,
             )
 
     @strawberry.mutation
@@ -649,7 +760,7 @@ class ExtendedCalorieMutations:
             # Create service instances manually for GraphQL
             from datetime import datetime
 
-            from app.domain.entities import CalorieGoal
+            # Removed unused CalorieGoal import (previously unused)
             from app.infrastructure.repositories.repositories import (
                 SupabaseCalorieGoalRepository,
             )
@@ -679,13 +790,17 @@ class ExtendedCalorieMutations:
             updated_goal = await goal_repo.update(str(goal_id), updated_data)
 
             return CalorieGoalResponse(
-                success=True, message="Goal updated successfully", data=updated_goal
+                success=True,
+                message="Goal updated successfully",
+                data=updated_goal,
             )
 
         except Exception as e:
             logger.error(f"Error in update_calorie_goal: {str(e)}")
             return CalorieGoalResponse(
-                success=False, message=f"Error updating goal: {str(e)}", data=None
+                success=False,
+                message=f"Error updating goal: {str(e)}",
+                data=None,
             )
 
     @strawberry.mutation
@@ -714,7 +829,10 @@ class ExtendedCalorieMutations:
             # Deactivate the goal
             updated_data = {"is_active": False, "updated_at": datetime.now()}
 
-            deactivated_goal = await goal_repo.update(str(goal_id), updated_data)
+            deactivated_goal = await goal_repo.update(
+                str(goal_id),
+                updated_data,
+            )
 
             return CalorieGoalResponse(
                 success=True,
@@ -725,7 +843,9 @@ class ExtendedCalorieMutations:
         except Exception as e:
             logger.error(f"Error in deactivate_calorie_goal: {str(e)}")
             return CalorieGoalResponse(
-                success=False, message=f"Error deactivating goal: {str(e)}", data=None
+                success=False,
+                message=f"Error deactivating goal: {str(e)}",
+                data=None,
             )
 
     # =======================================================================
@@ -736,32 +856,64 @@ class ExtendedCalorieMutations:
     async def create_calorie_event(
         self, user_id: str, input: CreateCalorieEventInput
     ) -> CalorieEventResponse:
-        """Create a new calorie event."""
+        """Create a new calorie event (repository-backed)."""
         try:
-            # For now, return mock success to fix null error
-            from datetime import datetime
-
+            from app.domain.entities import CalorieEvent
+            from app.infrastructure.repositories.repositories import (
+                SupabaseCalorieEventRepository,
+            )
             from .extended_types import CalorieEventType
 
-            # Create mock event data
-            event_data = CalorieEventType(
-                id="mock-event-id",
+            repo = SupabaseCalorieEventRepository()
+
+            ts = (
+                datetime.fromisoformat(input.event_timestamp)
+                if input.event_timestamp
+                else datetime.utcnow()
+            )
+
+            meta_obj = input.metadata
+            if isinstance(meta_obj, str):
+                try:
+                    meta_obj = json.loads(meta_obj)
+                except Exception:
+                    meta_obj = {"raw": meta_obj}
+
+            entity = CalorieEvent(
                 user_id=user_id,
                 event_type=input.event_type,
-                calories=input.calories,
+                event_timestamp=ts,
+                value=input.value,
                 source=input.source,
                 confidence_score=input.confidence_score or 1.0,
-                metadata=input.metadata or {},
-                event_timestamp=str(datetime.now()),
-                created_at=str(datetime.now()),
+                metadata=meta_obj,
+            )
+            created = await repo.create(entity)
+
+            gql_event = CalorieEventType(
+                id=str(created.id),
+                user_id=user_id,
+                event_type=created.event_type,
+                event_timestamp=created.event_timestamp,
+                value=float(created.value),
+                source=created.source,
+                confidence_score=float(created.confidence_score),
+                metadata=_json_str(created.metadata),
+                created_at=created.created_at,
+                updated_at=getattr(created, "updated_at", created.created_at),
             )
 
             return CalorieEventResponse(
-                success=True, message="Event created successfully", data=event_data
+                success=True,
+                message="Event created successfully",
+                data=gql_event,
             )
-        except Exception as e:
+        except Exception as e:  # pragma: no cover
+            logger.error(f"Error in create_calorie_event: {e}")
             return CalorieEventResponse(
-                success=False, message=f"Error creating event: {str(e)}", data=None
+                success=False,
+                message=f"Error creating event: {str(e)}",
+                data=None,
             )
 
     @strawberry.mutation
@@ -770,45 +922,56 @@ class ExtendedCalorieMutations:
     ) -> CalorieEventListResponse:
         """Create multiple calorie events in bulk."""
         try:
-            # Create service instances manually for GraphQL
-            from datetime import datetime
-
             from app.domain.entities import CalorieEvent
             from app.infrastructure.repositories.repositories import (
                 SupabaseCalorieEventRepository,
             )
+            from .extended_types import CalorieEventType
 
-            # Create repository instance
             event_repo = SupabaseCalorieEventRepository()
-
             created_events = []
 
-            for event_input in events:
-                # Create CalorieEvent entity
-                confidence = (
-                    event_input.confidence_score
-                    if event_input.confidence_score
-                    else 1.0
+            for ev in events:
+                ts = (
+                    datetime.fromisoformat(ev.event_timestamp)
+                    if ev.event_timestamp
+                    else datetime.utcnow()
                 )
-                timestamp = (
-                    event_input.event_timestamp
-                    if event_input.event_timestamp
-                    else datetime.now()
+                meta_obj = ev.metadata
+                if isinstance(meta_obj, str):
+                    try:
+                        meta_obj = json.loads(meta_obj)
+                    except Exception:
+                        meta_obj = {"raw": meta_obj}
+
+                entity = CalorieEvent(
+                    user_id=user_id,
+                    event_type=ev.event_type,
+                    event_timestamp=ts,
+                    value=ev.value,
+                    source=ev.source,
+                    confidence_score=ev.confidence_score or 1.0,
+                    metadata=meta_obj,
                 )
-
-                event_data = {
-                    "user_id": user_id,
-                    "event_type": event_input.event_type,
-                    "calories": event_input.calories,
-                    "source": event_input.source,
-                    "confidence_score": confidence,
-                    "metadata": event_input.metadata or {},
-                    "event_timestamp": timestamp,
-                }
-
-                event = CalorieEvent(**event_data)
-                created_event = await event_repo.create(event)
-                created_events.append(created_event)
+                created = await event_repo.create(entity)
+                created_events.append(
+                    CalorieEventType(
+                        id=str(created.id),
+                        user_id=user_id,
+                        event_type=created.event_type,
+                        event_timestamp=created.event_timestamp,
+                        value=float(created.value),
+                        source=created.source,
+                        confidence_score=float(created.confidence_score),
+                        metadata=_json_str(created.metadata),
+                        created_at=created.created_at,
+                        updated_at=getattr(
+                            created,
+                            "updated_at",
+                            created.created_at,
+                        ),
+                    )
+                )
 
             return CalorieEventListResponse(
                 success=True,
@@ -816,9 +979,8 @@ class ExtendedCalorieMutations:
                 data=created_events,
                 total=len(created_events),
             )
-
-        except Exception as e:
-            logger.error(f"Error in create_bulk_calorie_events: {str(e)}")
+        except Exception as e:  # pragma: no cover
+            logger.error(f"Error in create_bulk_calorie_events: {e}")
             return CalorieEventListResponse(
                 success=False,
                 message=f"Error creating bulk events: {str(e)}",
@@ -859,7 +1021,9 @@ class ExtendedCalorieMutations:
         except Exception as e:
             logger.error(f"Error in delete_calorie_event: {str(e)}")
             return CalorieEventResponse(
-                success=False, message=f"Error deleting event: {str(e)}", data=None
+                success=False,
+                message=f"Error deleting event: {str(e)}",
+                data=None,
             )
 
     # =======================================================================
@@ -882,7 +1046,10 @@ class ExtendedCalorieMutations:
             )
 
     @strawberry.mutation
-    async def refresh_metabolic_profile(self, user_id: str) -> MetabolicProfileResponse:
+    async def refresh_metabolic_profile(
+        self,
+        user_id: str,
+    ) -> MetabolicProfileResponse:
         """Refresh user's metabolic profile with latest data."""
         try:
             # Implementation will be injected by service layer

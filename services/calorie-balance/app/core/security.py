@@ -13,7 +13,9 @@ import structlog
 
 from app.core.config import get_settings
 
-settings = get_settings()
+
+def _settings():
+    return get_settings()
 logger = structlog.get_logger()
 
 
@@ -57,8 +59,9 @@ def create_jwt_token(
     to_encode = data.copy()
     to_encode.update({"exp": expire})
 
+    s = _settings()
     return jwt.encode(
-        to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM
+        to_encode, s.JWT_SECRET_KEY, algorithm=s.JWT_ALGORITHM
     )
 
 
@@ -72,8 +75,9 @@ def create_access_token(
 def verify_jwt_token(token: str) -> Dict[str, Any]:
     """Verify and decode JWT token."""
     try:
+        s = _settings()
         payload = jwt.decode(
-            token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM]
+            token, s.JWT_SECRET_KEY, algorithms=[s.JWT_ALGORITHM]
         )
         return payload
     except jwt.ExpiredSignatureError:

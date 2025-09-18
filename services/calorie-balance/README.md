@@ -126,6 +126,39 @@ app/
 └── api/              # REST endpoints + Event APIs
 ```
 
+## 🔧 Environment & Configuration Alignment
+
+Questo servizio ora utilizza lo **stesso layout di configurazione** di `user-management`:
+
+- File `.env` con le stesse variabili (cambia solo `DATABASE_SCHEMA=calorie_balance` e `SERVICE_NAME=calorie-balance`).
+- Caricamento settings tramite `pydantic-settings` (`app/core/config.py`).
+- Nessun caricamento anticipato bloccante: le settings non vengono più istanziate a livello modulo (lazy access pattern via helper `_settings()`), evitando errori durante import in tool/script quando le variabili non sono ancora presenti.
+
+### Pattern Lazy Settings
+Nei moduli principali (es. `app/main.py`, `app/core/security.py`, `app/core/database.py`):
+```python
+def _settings():
+  return get_settings()  # istanziato solo al primo accesso
+```
+Motivazione: allineare comportamento a template senza introdurre failure prematuri in fase di introspezione o tooling.
+
+### Aggiornare / Rigenerare `.env`
+Per creare un nuovo file env coerente:
+```bash
+cp services/user-management/.env services/calorie-balance/.env
+sed -i '' 's/user-management/calorie-balance/g' services/calorie-balance/.env
+sed -i '' 's/DATABASE_SCHEMA=user_management/DATABASE_SCHEMA=calorie_balance/' services/calorie-balance/.env
+```
+
+> Nota: le stesse chiavi Supabase vengono riusate finché non viene creato un progetto dedicato; quando disponibile, sostituire `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_KEY`.
+
+### Verifica Rapida
+```bash
+python -c "import importlib; importlib.import_module('services.calorie-balance.app.main'); print('OK')"
+```
+Se appare `OK`, il lazy load funziona (nessun crash per variabili mancanti).
+
+
 ## Domain Model
 
 ### Core Entities

@@ -37,10 +37,10 @@ type CalorieEventResponse {
 type CalorieEventType @key(fields: "id") {
   id: ID!
   userId: String!
-  eventType: EventTypeEnum!
+  eventType: String!
   eventTimestamp: DateTime!
   value: Float!
-  source: EventSourceEnum!
+  source: String!
   confidenceScore: Float!
   metadata: String
   createdAt: DateTime!
@@ -63,7 +63,7 @@ type CalorieGoalResponse {
 type CalorieGoalType @key(fields: "id") {
   id: ID!
   userId: String!
-  goalType: GoalTypeEnum!
+  goalType: String!
   dailyCalorieTarget: Float!
   dailyDeficitTarget: Float
   weeklyWeightChangeKg: Float
@@ -245,6 +245,7 @@ extend type Mutation {
   updateCalorieGoal(goalId: ID!, input: UpdateCalorieGoalInput!): CalorieGoalResponse!
   deactivateCalorieGoal(goalId: ID!): CalorieGoalResponse!
   createCalorieEvent(userId: String!, input: CreateCalorieEventInput!): CalorieEventResponse!
+  updateCalorieGoalActive(userId: String!, goalData: UpdateCalorieGoalInput!): CalorieGoalResponse!
   createBulkCalorieEvents(userId: String!, events: [CreateCalorieEventInput!]!): CalorieEventListResponse!
   deleteCalorieEvent(eventId: ID!): CalorieEventResponse!
   calculateMetabolicProfile(userId: String!, input: MetabolicCalculationInput!): MetabolicProfileResponse!
@@ -275,7 +276,7 @@ extend type Query {
   getUserMetabolicProfile(userId: String!): MetabolicProfileResponse!
   getHourlyAnalytics(userId: String!, targetDate: String!): HourlyAnalyticsResponse!
   getDailyAnalytics(userId: String!, startDate: String!, endDate: String!): DailyAnalyticsResponse!
-  getWeeklyAnalytics(userId: String!, weeks: Int! = 12): WeeklyAnalyticsResponse!
+  getWeeklyAnalytics(userId: String!, weeks: Int! = 12, startDate: String = null, endDate: String = null): WeeklyAnalyticsResponse!
   getBehavioralPatterns(userId: String!, patternTypes: [String!] = null, minConfidence: Float! = 0.7): PatternAnalyticsResponse!
 }
 

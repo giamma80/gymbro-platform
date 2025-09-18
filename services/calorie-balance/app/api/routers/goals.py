@@ -47,6 +47,25 @@ async def create_calorie_goal(
     Automatically calculates optimal targets based on user profile.
     """
     try:
+        # Acceptance mode fast-path (avoid external/repository latency)
+        from app.core.config import get_settings
+        settings = get_settings()
+        if getattr(settings, "acceptance_mode", False):
+            mock_goal = await goal_service.create_goal(
+                user_id=user_id,
+                goal_type=GoalType(request.goal_type),
+                target_weight_kg=request.target_weight_kg,
+                target_date=request.target_date,
+                weekly_weight_change_kg=request.weekly_weight_change_kg,
+                activity_level=request.activity_level,
+                custom_calorie_target=request.custom_calorie_target,
+                user_weight_kg=request.user_weight_kg,
+                user_height_cm=request.user_height_cm,
+                user_age=request.user_age,
+                user_gender=request.user_gender,
+            )
+            # Force immediate return (entity already built by service)
+            return CalorieGoalResponse.from_entity(mock_goal)
         # Create goal using the service with Parameter Passing
         goal = await goal_service.create_goal(
             user_id=user_id,
@@ -67,7 +86,10 @@ async def create_calorie_goal(
 
     except ValueError as e:
         logger.error(f"Invalid goal data for {user_id}: {e}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
     except Exception as e:
         logger.error(f"Failed to create goal for {user_id}: {e}")
         raise HTTPException(
@@ -136,14 +158,19 @@ async def update_calorie_goal(
     """
     try:
         goal = await goal_service.update_goal(
-            goal_id=goal_id, user_id=user_id, updates=request.dict(exclude_unset=True)
+            goal_id=goal_id,
+            user_id=user_id,
+            updates=request.dict(exclude_unset=True),
         )
 
         return CalorieGoalResponse.from_entity(goal)
 
     except ValueError as e:
         logger.error(f"Invalid update data for goal {goal_id}: {e}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
     except Exception as e:
         logger.error(f"Failed to update goal {goal_id}: {e}")
         raise HTTPException(
@@ -169,7 +196,10 @@ async def deactivate_goal(
 
     except ValueError as e:
         logger.error(f"Invalid goal deactivation {goal_id}: {e}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
     except Exception as e:
         logger.error(f"Failed to deactivate goal {goal_id}: {e}")
         raise HTTPException(

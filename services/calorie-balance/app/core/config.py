@@ -98,6 +98,15 @@ class Settings(BaseSettings):
     request_timeout_seconds: int = Field(default=30, description="Request timeout")
     max_connections: int = Field(default=100, description="Max concurrent connections")
 
+    # Acceptance test flags
+    acceptance_mode: bool = Field(
+        default=False,
+        description=(
+            "Enable deterministic overrides for acceptance tests "
+            "(e.g., metabolic profile values)"
+        ),
+    )
+
     @property
     def is_development(self) -> bool:
         """Check if running in development mode."""

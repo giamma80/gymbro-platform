@@ -710,13 +710,23 @@ async def alias_export_analytics(
     granularity: str = Query("daily", regex="^(hourly|daily|weekly)$"),
     analytics_service: AnalyticsService = Depends(get_analytics_service),
 ) -> TimelineExportResponse:
+    from app.api.timeline_schemas import TimelineExportData
+
+    end_dt = end_date or DateType.today()
+    start_dt = start_date or DateType.fromordinal(end_dt.toordinal() - 30)
+
     if not user_id:
-        end_dt = end_date or DateType.today()
-        start_dt = start_date or DateType.fromordinal(end_dt.toordinal() - 30)
+        empty_export = TimelineExportData(
+            export_format=format,
+            data_url=None,
+            inline_data=[],
+            record_count=0,
+            export_timestamp=datetime.utcnow(),
+        )
         return TimelineExportResponse(
             success=True,
             message="No user_id provided - empty export",
-            data=[],
+            data=empty_export,
             metadata={
                 "format": format,
                 "start_date": start_dt.isoformat(),
@@ -725,11 +735,15 @@ async def alias_export_analytics(
                 "export_size_mb": 0,
             },
         )
-    return await export_timeline_data(
+
+    # Delegate to canonical export implementation and
+    # adapt its return if needed
+    exported = await export_timeline_data(
         user_id=user_id,
         format=format,
-        start_date=start_date,
-        end_date=end_date,
+        start_date=start_dt,
+        end_date=end_dt,
         granularity=granularity,
         analytics_service=analytics_service,
     )
+    return exported

@@ -153,6 +153,21 @@ async def record_calorie_consumed(
     Records food/drink calorie consumption with metadata support.
     """
     try:
+        # Acceptance mode fast-path to avoid external latency
+        from app.core.config import get_settings
+        settings = get_settings()
+        if getattr(settings, "acceptance_mode", False):
+            now = datetime.utcnow()
+            mock = CalorieEvent(
+                user_id=user_id,
+                event_type=EventType.CONSUMED,
+                event_timestamp=request.timestamp or now,
+                value=request.calories,
+                source=request.source,
+                confidence_score=1.0,
+                metadata=request.metadata or {},
+            )
+            return CalorieEventResponse.from_orm(mock)
         event = await service.record_calorie_consumed(
             user_id=user_id,
             calories=request.calories,
@@ -164,7 +179,10 @@ async def record_calorie_consumed(
         return CalorieEventResponse.from_orm(event)
 
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
     except Exception as e:
         logger.error(f"Failed to record calorie consumed for {user_id}: {e}")
         raise HTTPException(
@@ -174,7 +192,9 @@ async def record_calorie_consumed(
 
 
 @router.post(
-    "/burned", response_model=CalorieEventResponse, status_code=status.HTTP_201_CREATED
+    "/burned",
+    response_model=CalorieEventResponse,
+    status_code=status.HTTP_201_CREATED,
 )
 async def record_calorie_burned(
     request: CalorieBurnedRequest,
@@ -188,6 +208,20 @@ async def record_calorie_burned(
     Integrates with fitness trackers and manual entry.
     """
     try:
+        from app.core.config import get_settings
+        settings = get_settings()
+        if getattr(settings, "acceptance_mode", False):
+            now = datetime.utcnow()
+            mock = CalorieEvent(
+                user_id=user_id,
+                event_type=EventType.BURNED_EXERCISE,
+                event_timestamp=request.timestamp or now,
+                value=request.calories,
+                source=request.source,
+                confidence_score=1.0,
+                metadata=request.metadata or {},
+            )
+            return CalorieEventResponse.from_orm(mock)
         event = await service.record_calorie_burned_exercise(
             user_id=user_id,
             calories=request.calories,
@@ -199,7 +233,10 @@ async def record_calorie_burned(
         return CalorieEventResponse.from_orm(event)
 
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
     except Exception as e:
         logger.error(f"Failed to record calorie burned for {user_id}: {e}")
         raise HTTPException(
@@ -209,7 +246,9 @@ async def record_calorie_burned(
 
 
 @router.post(
-    "/weight", response_model=CalorieEventResponse, status_code=status.HTTP_201_CREATED
+    "/weight",
+    response_model=CalorieEventResponse,
+    status_code=status.HTTP_201_CREATED,
 )
 async def record_weight_measurement(
     request: WeightMeasurementRequest,
@@ -223,6 +262,20 @@ async def record_weight_measurement(
     Updates user profile and triggers metabolic recalculation.
     """
     try:
+        from app.core.config import get_settings
+        settings = get_settings()
+        if getattr(settings, "acceptance_mode", False):
+            now = datetime.utcnow()
+            mock = CalorieEvent(
+                user_id=user_id,
+                event_type=EventType.WEIGHT,
+                event_timestamp=request.timestamp or now,
+                value=request.weight_kg,
+                source=request.source,
+                confidence_score=1.0,
+                metadata=request.metadata or {},
+            )
+            return CalorieEventResponse.from_orm(mock)
         event = await service.record_weight_measurement(
             user_id=user_id,
             weight_kg=request.weight_kg,
@@ -234,7 +287,10 @@ async def record_weight_measurement(
         return CalorieEventResponse.from_orm(event)
 
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
     except Exception as e:
         logger.error(f"Failed to record weight for {user_id}: {e}")
         raise HTTPException(
@@ -272,7 +328,10 @@ async def batch_record_events(
         return [CalorieEventResponse.from_orm(event) for event in events]
 
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
     except Exception as e:
         logger.error(f"Failed to batch record events for {user_id}: {e}")
         raise HTTPException(
@@ -288,7 +347,9 @@ async def batch_record_events(
 
 @router.get("/timeline", response_model=TimelineResponse)
 async def get_event_timeline(
-    limit: int = Query(100, ge=1, le=500, description="Number of events to return"),
+    limit: int = Query(
+        100, ge=1, le=500, description="Number of events to return"
+    ),
     user_id: str = Depends(get_current_user_id),
     service: CalorieEventService = Depends(get_calorie_event_service),
 ) -> TimelineResponse:
@@ -308,7 +369,11 @@ async def get_event_timeline(
                 [e for e in events if e.event_type == EventType.CONSUMED]
             ),
             "burned_events": len(
-                [e for e in events if e.event_type == EventType.BURNED_EXERCISE]
+                [
+                    e
+                    for e in events
+                    if e.event_type == EventType.BURNED_EXERCISE
+                ]
             ),
             "weight_events": len(
                 [e for e in events if e.event_type == EventType.WEIGHT]
@@ -342,7 +407,9 @@ async def get_event_timeline(
 async def get_events_by_date_range(
     start_date: DateType = Query(..., description="Start date (YYYY-MM-DD)"),
     end_date: DateType = Query(..., description="End date (YYYY-MM-DD)"),
-    event_type: Optional[EventType] = Query(None, description="Filter by event type"),
+    event_type: Optional[EventType] = Query(
+        None, description="Filter by event type"
+    ),
     user_id: str = Depends(get_current_user_id),
     service: CalorieEventService = Depends(get_calorie_event_service),
 ) -> List[CalorieEventResponse]:

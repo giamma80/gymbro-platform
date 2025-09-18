@@ -1,8 +1,10 @@
 # Documentazione Generale - NutriFit Platform
 
+> Appendice Stato Reale (18-09-2025): Operativi solo i microservizi `user-management` (stabile, 22/22 test) e `calorie-balance` (parziale, 37/46 test ~80.4%). Tutte le altre componenti (meal-tracking, health-monitor, notifications, ai-coach, N8N orchestration, mobile app Flutter, AI avanzata, food recognition, real-time subscriptions) sono parte della visione architetturale ma **non ancora implementate**. Le sezioni seguenti mantengono la descrizione completa di design; dove necessario sono state annotate le differenze Visione / Stato Reale.
+
 ## Executive Summary
 
-**NutriFit** è una piattaforma fitness-nutrizionale basata su microservizi cloud-native con **GraphQL Federation** per API unificata e bilanciamento calorico intelligente.
+**NutriFit** è una piattaforma fitness-nutrizionale basata su microservizi cloud-native con **GraphQL Federation** per API unificata e bilanciamento calorico intelligente. (Stato reale: federation attiva tra 2 servizi; funzionalità AI e mobile non operative.)
 
 ### 🌐 GraphQL Federation Architecture
 
@@ -14,30 +16,32 @@
 - **Service Discovery**: Health checks automatici e composizione dinamica
 - **Profile-based Development**: Workflow locale/produzione con environment switching
 
-### Stack Tecnologico Production
+### Stack Tecnologico (Visione vs Stato Reale)
 
-- **GraphQL Federation**: Apollo Gateway v2.5 + automatic schema composition
-- **Backend**: 5 microservizi FastAPI + Python 3.11 + Supabase Cloud
-- **AI Platform**: OpenAI integration + N8N workflow automation
-- **Mobile**: Flutter cross-platform (iOS + Android) con GraphQL client
-- **Infrastructure**: Render.com + Supabase + GitHub Actions CI/CD
+- **GraphQL Federation**: Apollo Gateway v2.5 (ATTIVO: 2 subgraph federati)
+- **Backend**: Visione 5 microservizi | Stato reale: 2 (user-management, calorie-balance parziale)
+- **AI Platform**: Visione (OpenAI + N8N) | Stato reale: non implementata
+- **Mobile**: Visione (Flutter app) | Stato reale: non implementata
+- **Infrastructure**: Render.com + Supabase + GitHub Actions (ATTIVO per servizi esistenti)
 
-### Architettura Benefits
+### Architettura Benefits (Design Target / Stato Reale)
 
-- 🌐 **Unified API**: Single GraphQL endpoint per tutti i client con schema federation
-- 📱 **Mobile Production**: GraphQL client per deployment iOS App Store + Google Play
-- 🔄 **Real-time Sync**: GraphQL subscriptions + WebSocket cross-device
-- 🛡️ **Security**: JWT + encrypted data storage + federated authentication
-- ⚡ **Performance**: Schema composition + CDN optimization + Apollo caching
+- 🌐 **Unified API**: Single GraphQL endpoint (ATTIVO - 2 servizi federati)
+- 📱 **Mobile Production**: (NON ANCORA - client non sviluppato)
+- 🔄 **Real-time Sync**: (NON ANCORA - subscriptions non implementate)
+- 🛡️ **Security**: JWT previsto; in acceptance_mode test bypass autenticazione per stabilità (solo per test)
+- ⚡ **Performance**: Federation attiva; ottimizzazioni CDN/cache pianificate
 
-### Technical Foundation
+### Technical Foundation (Aggiornato)
 
-- ✅ **GraphQL Federation**: Apollo Gateway v2.5 con schema composition e service discovery
-- ✅ **UUID Standards**: Generic UUID cross-service per flessibilità massima
-- ✅ **Parameter Passing**: Pattern implementato per goal calculations
-- ✅ **Cross-Schema FK**: Single source of truth via user_management schema
-- ✅ **Profile-based Development**: Local/prod environment switching
-- ✅ **Mobile Ready**: GraphQL client integration e API consistency preparata
+- ✅ **GraphQL Federation**: Apollo Gateway v2.5 attivo (2 subgraph)
+- ✅ **UUID Standards**: Generic UUID cross-service
+- ✅ **Parameter Passing**: Pattern per goal calculations implementato (calorie-balance parziale)
+- ✅ **Cross-Schema FK**: Single source of truth via schema `user_management`
+- ✅ **Profile-based Development**: Script di avvio profili/local prod
+- 🟡 **Mobile Ready**: Solo preparazione schema/API; nessun client operativo
+- 🟡 **Analytics Calorie Balance**: Parziale (placeholder weekly)
+- 🔐 **acceptance_mode**: Modalità test con auth bypass + valori metabolici deterministici
 
 ### 🌐 GraphQL Federation Technical Implementation
 
@@ -54,14 +58,14 @@
 └─────────────────┴─────────────────┴─────────────────┘
 ```
 
-**Key Features**:
+**Key Features (Reali + Design)**:
 - **Schema Composition**: Automatic introspection e merge di schemi distribuiti
-- **Service Discovery**: Health checks automatici per dependency management
+- **Service Discovery**: Health checks automatici per dependency management (base)
 - **Apollo Studio**: Explorer integrato per testing e documentazione
 - **Profile Switching**: `./start-dev.sh --profile local|prod` per development workflow
 - **Background Processing**: PID management, structured logging (/tmp/*.log)
 
-**Development Workflow**:
+**Development Workflow** (federation attiva, alcuni step futuri non operativi):
 ```bash
 # Local Development (localhost federation)
 ./start-dev.sh start --profile local

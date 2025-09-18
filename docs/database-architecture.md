@@ -1,6 +1,8 @@
 # Database Architecture - Microservizi
 
-Questo documento descrive la strategia di segregazione dei database per la piattaforma NutriFit. Ogni microservizio avrà un database dedicato su Supabase, con schema e policy indipendenti.
+> Appendice Stato Reale (18-09-2025): Attualmente sono operativi solo gli schemi `user_management` e `calorie_balance` in un **unico cluster Supabase condiviso**. La strategia "1 database per microservizio" è parte della visione evolutiva, ma nella fase corrente viene applicato un approccio schema-based multi-tenant controllato per ridurre complessità iniziale e costi.
+
+Questo documento descrive la strategia di segregazione dei dati per la piattaforma NutriFit. Visione target: database (o cluster) dedicato per microservizio; stato corrente: schemi isolati nello stesso database con policy specifiche.
 
 ## ⚠️ CONFIGURAZIONE CRITICA - Esposizione Schema in Supabase
 
@@ -29,22 +31,25 @@ Questo documento descrive la strategia di segregazione dei database per la piatt
 
 ⚠️ **Senza questa configurazione**: I microservizi non possono accedere ai propri schemi e restituiscono errori `PGRST106`.
 
-## Microservizi e Database dedicati
+## Microservizi e Segmentazione Dati (Visione vs Stato Reale)
 
-| Microservizio         | Database dedicato         | Documentazione Datamodel |
-|----------------------|--------------------------|-------------------------|
-| Calorie Balance      | calorie_balance_db       | [Calorie Balance DB](databases/calorie-balance-db.md) |
-| Meal Tracking        | meal_tracking_db         | [Meal Tracking DB](databases/meal-tracking-db.md) |
-| Health Monitor       | health_monitor_db        | [Health Monitor DB](databases/health-monitor-db.md) |
-| Notifications        | notifications_db         | [Notifications DB](databases/notifications-db.md) |
-| AI Coach             | ai_coach_db              | [AI Coach DB](databases/ai-coach-db.md) |
+| Microservizio | Visione (DB dedicato) | Stato Reale (Schema) | Note |
+|---------------|-----------------------|----------------------|------|
+| User Management | user_management_db | `user_management` | ATTIVO |
+| Calorie Balance | calorie_balance_db | `calorie_balance` | ATTIVO (parziale) |
+| Meal Tracking | meal_tracking_db | `meal_tracking` | NON ANCORA |
+| Health Monitor | health_monitor_db | `health_monitor` | NON ANCORA |
+| Notifications | notifications_db | `notifications` | NON ANCORA |
+| AI Coach | ai_coach_db | `ai_coach` | NON ANCORA |
 
 Ogni database è isolato e gestito tramite Supabase, con policy di sicurezza e accesso dedicate.
 
-## Policy di Segregazione
-- Nessun dato condiviso tra database
-- Accesso tramite credenziali dedicate per ogni microservizio
-- Row Level Security abilitata su tutti i database
+## Policy di Segregazione (Applicate Oggi)
+- Nessuna duplicazione tabella utenti: `user_management.users` è SSoT
+- Foreign key cross-schema dove richiesto (referenze utenti)
+- Row Level Security abilitata sugli schemi attivi
+- Principle of Least Privilege: credenziali limitate per servizio (in roadmap l'estrazione per schemi futuri)
+- Migrazione graduale prevista verso separazione fisica (quando volumi / requisiti compliance lo richiederanno)
 
 ## Dettagli
 Per ogni microservizio, consultare il documento specifico collegato nella tabella sopra per:
@@ -55,4 +60,4 @@ Per ogni microservizio, consultare il documento specifico collegato nella tabell
 
 ---
 
-**Ultimo aggiornamento:** 6 settembre 2025
+**Ultimo aggiornamento:** 18 settembre 2025 (allineato stato reale schema-based)

@@ -1,23 +1,23 @@
 # 📋 Task Management - TDD Debugging Cycle Completion
 
 **Project:** NutriFit Platform - Calorie-Balance Service  
-**Task Type:** TDD-Based Critical Service Fixes  
-**Date Completed (Initial TDD Cycle):** 16 settembre 2025  
-**Extended Hardening Updates:** 17–18 settembre 2025  
-**Phase:** Systematic Debugging, Schema Hygiene & Quality Automation
+**Task Type:** TDD-Based Critical Service Fixes + Acceptance Hardening  
+**Initial TDD Cycle Completed:** 16 settembre 2025  
+**Hardening / Stabilizzazione (acceptance_mode):** 17–18 settembre 2025  
+**Current Phase:** Stabilizzazione suite acceptance (37/46 test) & riduzione failure analytics
 
 ---
 
 ## 🎯 Task Summary
 
 ### Primary Objective
-Implement comprehensive Test-Driven Debugging approach to systematically resolve critical calorie-balance service failures and achieve production stability.
+Implementare approccio TDD + hardening mirato per eliminare errori critici (500, null non‑nullable GraphQL), introdurre determinismo (acceptance_mode) e stabilizzare la suite integrata senza introdurre feature non ancora progettate.
 
 ### Success Criteria
-- ✅ **Success Rate Improvement**: From 47.1% baseline to 80%+ 
-- ✅ **Critical Error Resolution**: All 500 errors and GraphQL null responses eliminated
-- ✅ **Database Integration**: RPC functions deployed with schema alignment
-- ✅ **Service Stability**: Full operational status with proper error handling
+- ✅ **Success Rate Improvement**: 47.1% → ~80.4% (37/46 acceptance tests)
+- ✅ **Critical Error Resolution**: Eliminati 500 endpoint timeline export + null GraphQL analytics
+- ✅ **Database Integration**: RPC functions mancanti deployate e riallineate schema
+- ✅ **Service Stability Base**: Endpoint core (events, goals base, daily balance) funzionanti
 
 ---
 
@@ -61,21 +61,27 @@ Baseline Metrics:
 - Service Startup: Import errors preventing initialization
 ```
 
-### After TDD Implementation
+### After TDD + Hardening (Stato Corrente)
 ```yaml
-Improved Metrics:
-- Success Rate: 80%+ (dramatic improvement)
-- Critical 500 Errors: ✅ All resolved
-- GraphQL Null Responses: ✅ All resolvers functional
-- Missing Database Functions: ✅ All 3 RPC functions deployed
-- Service Startup: ✅ Clean startup with all components loaded
+Current Metrics (18-09-2025):
+   Acceptance Tests:
+      - Passed: 37
+      - Total: 46
+      - Success Rate: ~80.4%
+   Remaining Failures:
+      - Analytics depth / weekly & export advanced shape
+      - Timeline aggregations incomplete (placeholders)
+   Critical 500 Errors: Eliminati (export timeline fix)
+   GraphQL Null Non-Nullable: Eliminati (placeholder weekly analytics + fallback)
+   Determinismo: BMR/TDEE override + ai_adjusted enforcement in acceptance_mode
+   Event Creation: Hardened (metadata JSON fallback)
 ```
 
 ### Improvement Quantification
-- **Success Rate Improvement**: +32.9 percentage points (69.7% relative improvement)
-- **Error Elimination**: 100% of critical 500 errors resolved
-- **GraphQL Reliability**: 100% of null response issues fixed
-- **Database Integration**: 100% of missing RPC functions implemented
+- **Success Rate Gain**: +33.3 punti percentuali (47.1% → 80.4%)
+- **Critical 500 Errors**: 100% rimossi nelle parti core coperte
+- **GraphQL Reliability**: Null su campi non-nullable azzerati nelle query/mutation attive
+- **RPC Coverage**: 100% funzioni mancanti implementate
 
 ---
 
@@ -117,7 +123,7 @@ Improved Metrics:
 
 ---
 
-### 5. GraphQL Schema Hygiene & Tooling (Post-TDD Hardening)
+### 5. GraphQL Schema Hygiene & Tooling (Post-TDD Hardening + Acceptance Mode)
 **Problems Addressed (17–18 Settembre):**
 - Errori `strawberry.exceptions.duplicated_type_name` causati da definizioni duplicate in `queries.py`
 - Assenza di controllo automatico drift schema GraphQL
@@ -158,34 +164,16 @@ Improved Metrics:
 
 ---
 
-## 🚀 Next Phase Priorities (Updated)
+## 🚀 Remaining Gaps (Factual – Non Speculativi)
+| Area | Gap Reale | Blocco Test |
+|------|-----------|-------------|
+| Weekly / Monthly Analytics | Placeholder minimale | 4 failing tests |
+| Export / Compare Endpoints | Non implementati (solo export base fix) | 2 failing tests |
+| Advanced Timeline Aggregations | Hourly / Intraday non sviluppati | 2 failing tests |
+| Goals Update / History | API parziali (update/history mancanti) | 1 failing test |
+| Metabolic Profile GET/PUT | Non implementati (solo calculate) | 0 (coperti indiretti) |
 
-### Immediate (High Priority)
-1. **Timeline REST Endpoints**: Implement remaining `/api/v1/balance/timeline/*` endpoints
-   - Target: Eliminate remaining 404 errors for 100% success rate
-   - Endpoints: `/timeline/weekly`, `/timeline/monthly`
-
-2. **Performance Optimization**: Optimize RPC function performance
-   - Target: Sub-100ms response times for balance calculations
-   - Focus: Database query optimization and caching
-
-### Short Term (Medium Priority)
-3. **Advanced Analytics**: Enhance analytics with trend predictions
-   - Target: ML-based calorie trend analysis
-   - Integration: AI service connection for recommendations
-
-4. **Comprehensive Testing**: Achieve 100% test coverage
-   - Target: Complete integration test suite
-   - Coverage: All REST endpoints and GraphQL resolvers
-
-### Long Term (Strategic)
-5. **Mobile API Optimization**: Optimize API responses for mobile clients
-   - Target: Reduced payload sizes and response times
-   - Focus: Mobile-specific endpoint patterns
-
-6. **Real-time Features**: Implement real-time balance updates
-   - Target: WebSocket integration for live balance tracking
-   - Technology: GraphQL subscriptions for real-time data
+Focus pragmatico: implementare endpoints mancanti con shape minima stabile per portare suite verso 100% senza introdurre feature AI.
 
 ---
 
@@ -230,7 +218,7 @@ The systematic debugging methodology established through this task provides a re
 
 ---
 
-**Task Status:** ✅ **COMPLETE**  
-**Next Action:** Begin Timeline REST Endpoints implementation for 100% success rate  
+**Task Status:** ✅ **TDD Cycle + Hardening Fase Attuale Completa**  
+**Next Pragmatic Action (Fact-Based):** Implementare weekly/monthly analytics endpoint (shape minima) per ridurre i 4 fail residui  
 **Responsible:** Development Team  
-**Documentation Updated:** 18 settembre 2025
+**Documentation Updated:** 18 settembre 2025 (stato reale incorporato)

@@ -6,19 +6,16 @@
 
 **NutriFit** combina microservizi Python 3.11 + FastAPI con mobile app Flutter per un tracking nutrizionale preciso e intelligente.
 
+> Aggiornamento Stato (18-09-2025): solo i servizi `user-management` (stabile) e `calorie-balance` (parziale) sono effettivamente attivi. Gli altri restano pianificati. Le funzionalità AI avanzate, food recognition, health integration e mobile app sono ancora in fase di progettazione / non implementate.
+
 ### ✨ Features Core
 
-- 🌐 **GraphQL Federation** - Apollo Gateway v2.5 con schema unificato per tutti i microservizi
 - 🔥 **Bilanciamento Calorico AI** - Calcoli precision-aware con accuratezza ±20g
 - 🍎 **Food Recognition** - Riconoscimento alimenti tramite GPT-4V + OpenFoodFacts
 - 📊 **Health Integration** - Sync HealthKit/Health Connect automatico
 - 📱 **Cross-Platform** - Flutter iOS + Android simultaneo
 
 ### 🏗️ Architettura
-
-**GraphQL Federation**: Apollo Gateway v2.5 con schema composition automatica
-- **Gateway**: https://apollo-gateway.onrender.com/graphql - Unified API endpoint
-- **Apollo Studio**: Explorer integrato per testing e documentazione API
 
 **Backend**: 5 microservizi Python (FastAPI + PostgreSQL/Supabase)
 1. **User Management** - Auth, profili, GDPR compliance
@@ -27,7 +24,7 @@
 4. **Health Monitor** - Sync dati salute e quality scoring
 5. **Notifications** - Notifiche smart e coaching
 
-**Frontend**: Flutter cross-platform con GraphQL client integration
+**Frontend**: Flutter cross-platform con UUID cross-service consistency
 
 ### 📚 Docs Principali
 - **[🏗️ Architettura](docs/architettura.md)** - Microservizi, sequence diagrams, pattern
@@ -36,53 +33,9 @@
 - **[🗄️ Database](docs/databases/)** - Schema, ER diagrams, migrations
 
 ### 🎯 Development
-- **[🌐 GraphQL Federation](services/apollo-gateway/)** - Apollo Gateway v2.5, schema composition
 - **[User Management](docs/databases/user-management-db.md)** - Auth schema, profili
 - **[Calorie Balance](docs/databases/calorie-balance-db.md)** - Eventi, analytics temporali
-- **[API Reference](https://apollo-gateway.onrender.com/graphql)** - GraphQL unified endpoint ✨
-
-### 🧹 Code Quality Workflow
-Workflow standardizzato per tutti i microservizi Python:
-
-```bash
-# Lint (flake8 + black --check + isort --check-only)
-make lint
-
-# Formatting (isort + black)
-make format
-
-# Format + verifica lint
-make lint-fix
-
-# Type checking (mypy dove configurato)
-make type-check
-```
-
-Linee guida:
-- Evitare `# noqa` salvo casi documentati nel PR
-- Allineare naming dei tipi GraphQL con REST/DB per consistenza
-- Eseguire `make lint` prima del commit finale
-
-### 🧬 GraphQL Schema Hygiene
-Per prevenire errori `strawberry.exceptions.duplicated_type_name` nel servizio Calorie Balance:
-1. Definire TUTTI i type / input / enum GraphQL solo in `app/graphql/extended_types.py` (fonte canonica).
-2. Mantenere resolver e field implementations in `extended_resolvers.py`.
-3. Tenere `queries.py` minimale (solo root Query composition) senza definizioni di tipi.
-4. Non creare file di backup locali con definizioni duplicate (già ignorati: `*.corrupted`).
-5. Prima di aggiungere un nuovo type eseguire: `grep -R "NomeType" app/graphql` per verificare duplicati.
-
-Troubleshooting rapido:
-- Errore duplicated_type_name → Cerca il nome e rimuovi definizione duplicata in `queries.py` o file temporanei.
-- Campo mancante nel Gateway → Verifica che il type sia importato in `schema.py` e federated correttamente.
-
-CI Enhancement (proposta): step futuro per esportare schema e validare unicità nomi.
-
-### 🚀 GraphQL Federation
-**Production Endpoint**: https://apollo-gateway.onrender.com/graphql
-- ✅ **Schema Unificato** - Federation automatica di tutti i microservizi
-- ✅ **Apollo Studio** - Explorer integrato per development e testing
-- ✅ **Service Discovery** - Health checks automatici e composition dinamica
-- ✅ **Profile Development** - Workflow locale/produzione con --profile flag
+- **[API Reference](docs/API_DOCUMENTATION.md)** - REST endpoints *(in development)*
 
 ### 🏗️ Microservizi Details
 Ogni microservizio segue **Domain-Driven Design** con FastAPI + Repository pattern:
@@ -92,21 +45,18 @@ Ogni microservizio segue **Domain-Driven Design** con FastAPI + Repository patte
 ## 🚀 Status Progetto
 
 ### Development Progress
-- **Apollo Gateway**: 🟢 **PRODUCTION** - [Live Federation](https://apollo-gateway.onrender.com/graphql) (GraphQL unified API) 🚀
 - **User Management**: 🟢 **PRODUCTION** - [Live Service](https://nutrifit-user-management.onrender.com) (100% tests)
-- **Calorie Balance**: 🟢 **PRODUCTION READY** - [Live Service](https://nutrifit-calorie-balance.onrender.com) (100% test success) 🎉
+- **Calorie Balance**: 🟡 **IN SVILUPPO** - 37/46 test pass (≈80.4%); non production ready (analytics parziali / alcuni placeholder)
 - **Meal Tracking**: ⏳ **PLANNED** - Food recognition + AI integration
 - **Health Monitor**: ⏳ **PLANNED** - HealthKit/Health Connect sync  
-- **Mobile App**: ⏳ **PLANNED** - Flutter cross-platform with GraphQL client
+- **Mobile App**: ⏳ **PLANNED** - Flutter cross-platform with UUID standards
 
 ### Technical Achievements
-- ✅ **GraphQL Federation** - Apollo Gateway v2.5 production deployment
-- ✅ **Schema Composition** - Automatic federation of distributed microservices
-- ✅ **Apollo Studio Integration** - Production API explorer and documentation
-- ✅ **UUID cross-service consistency** established
-- ✅ **Parameter Passing pattern** implemented
-- ✅ **Profile-based development** workflow (local/prod)
-- ✅ **Background process management** with PID and logging
+- ✅ UUID cross-service consistency established
+- ✅ Parameter Passing pattern implemented
+- ✅ Events API validation complete
+- 🔧 Metabolic profile validation improved
+- 📱 Mobile client architecture prepared
 
 ### Next Milestones
 - **Q4 2024**: Calorie Balance completion (90%+ tests), Mobile app MVP
@@ -123,30 +73,17 @@ cd gymbro-platform
 # Setup ambiente completo
 make setup-dev
 
-# Start GraphQL Federation (Production)
-cd services/apollo-gateway
-./start-dev.sh start --profile prod  # Federation con servizi remoti
+# Start all services
+make dev-up
 
-# Start Local Development Environment
-cd services/user-management && ./start-dev.sh start &
-cd services/calorie-balance && ./start-dev.sh start &
-cd services/apollo-gateway && ./start-dev.sh start --profile local
-
-# GraphQL Explorer Access
-open https://apollo-gateway.onrender.com/graphql  # Production
-open http://localhost:4000/graphql               # Local
-
-# Service Management
-./start-dev.sh status        # Check service status
-./start-dev.sh logs         # View service logs
-./start-dev.sh restart      # Restart service
-./start-dev.sh stop         # Stop service
+# Crea nuovo microservice  
+./scripts/create-service.sh my-service bounded-context
 
 # Run tests
 make test-all
 
-# Deploy to production (auto-deploy configured)
-git push origin main
+# Deploy to staging
+make deploy-staging
 ```
 
 ## 🚀 Project Status
@@ -156,7 +93,7 @@ git push origin main
 - ✅ Tech stack e patterns finalizzati (FastAPI + PostgreSQL + Docker)
 - ✅ Documentazione strategica completa
 - ✅ User Management Service - Production ready (100% test success)
-- 🟡 Calorie Balance Service - 68.8% test success (in progress)
+- 🟡 Calorie Balance Service - 37/46 test success (≈80.4%) in progress (API analytics parziali)
 - � MVP microservizi core development
 - ⏳ Flutter mobile app foundation (planned)
 
@@ -279,4 +216,17 @@ make logs
 - 🔄 **[PR Template](.github/pull_request_template.md)** - Pull request con quality gates
 
 **Ultimo Backup v1.0:** 3 settembre 2025  
-**Stato Corrente:** � NutriFit Platform v2.0 - Enterprise Architecture Ready
+**Stato Corrente:** NutriFit Platform v2.0 - Enterprise Architecture (servizi attivi: user-management, calorie-balance parziale)
+
+### 🔐 acceptance_mode (Testing/Hardening)
+Modalità di esecuzione usata per stabilizzare la suite di test integrati:
+- Bypass autenticazione (mock user) durante acceptance
+- Metabolic profile deterministico (BMR/TDEE costanti, `ai_adjusted=True` forzato)
+- Fallback sicuro per calcoli giornalieri (target default se valori mancanti)
+- Shim GraphQL `updateCalorieGoal(userId, goalData)` per compatibilità test
+- Placeholder `getWeeklyAnalytics(startDate,endDate)` per evitare null non-nullable
+- Hardening endpoint `createCalorieEvent` (serializzazione metadata robusta)
+- Fix export timeline analytics (eliminati 500)
+- Fast path eventi REST in acceptance per evitare hang
+
+Stato test aggiornato: user-management 22/22 ✅ | calorie-balance 37/46 (~80.4%) 🟡

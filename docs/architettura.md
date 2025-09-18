@@ -1,20 +1,25 @@
 # Architettura NutriFit Platform v2.0
 
-## 🏗️ Architettura Cloud-Native con Orchestrazione N8N
+> Appendice Stato Reale (18-09-2025): Attualmente **solo i microservizi `user-management` e `calorie-balance` (parziale)** sono attivi. Gli altri componenti (meal-tracking, health-monitor, notifications, ai-coach, orchestrazione N8N, mobile Flutter, MCP server AI avanzato) sono **non ancora implementati** o in fase di progettazione. Le sezioni sottostanti descrivono la visione architetturale completa (design target) e non implicano disponibilità production.
 
-La piattaforma NutriFit adotta un'**architettura a microservizi cloud-native** basata su Python 3.11, con orchestrazione centralizzata tramite **N8N Cloud** e database segregati su **Supabase Cloud**. L'architettura è progettata per scalabilità enterprise, deployment automatizzato su Render.com e testing atomico per servizio.
+## 🏗️ Architettura Cloud-Native con Orchestrazione N8N (Design Target)
 
-### 🌐 Stack Tecnologico Unificato
+La piattaforma NutriFit adotta un'**architettura a microservizi cloud-native** basata su Python 3.11. L'orchestrazione tramite **N8N Cloud** è parte della visione, ma non è ancora attiva negli ambienti correnti. L'architettura reale oggi utilizza: **Supabase** (schemi multipli in un singolo cluster) + microservizi FastAPI (2 attivi) + deployment Render. Gli elementi di orchestrazione e automazione workflow sono pianificati.
 
-- **Backend**: 5 microservizi Python 3.11 + FastAPI atomici
-- **Orchestrazione**: N8N Cloud per workflow complessi e comunicazione inter-service  
-- **Database**: Supabase Cloud con database segregati per microservizio
-- **Gateway**: API Gateway pattern per comunicazione mobile ↔ microservizi
-- **Mobile**: Flutter cross-platform production-ready
-- **Deployment**: Render.com + GitHub Actions CI/CD
-- **AI Integration**: MCP Server per microservizi con logica AI/ML
+### 🌐 Stack Tecnologico (Visione vs Stato Reale)
 
-## �️ Architettura dei Componenti
+| Componente | Visione (Design) | Stato Reale (18-09-2025) |
+|------------|------------------|---------------------------|
+| Backend | 5+ microservizi Python FastAPI | 2 microservizi attivi (user-management, calorie-balance parziale) |
+| Orchestrazione | N8N Cloud | Non ancora integrato |
+| Database | 1 per microservizio (segregati) | Un solo cluster Supabase con schemi `user_management`, `calorie_balance` attivi |
+| Gateway/API | API Gateway + GraphQL Federation | Apollo Gateway attivo, federation tra i 2 servizi |
+| Mobile | Flutter app production-ready | Non implementata (design in docs) |
+| AI/ML | MCP Server + RAG + GPT-4V | Non implementato (placeholder) |
+| Deployment | Render + GitHub Actions CI/CD | Render attivo per servizi esistenti |
+| Observability | Logging strutturato + future tracing | Logging base; tracing non attivo |
+
+## �️ Architettura dei Componenti (Documento di Design)
 
 ### Gateway Pattern per Mobile Communication
 
@@ -92,18 +97,18 @@ graph TB
     DBS --> DB_AI
 ```
 
-### Database Schema-based Strategy
+### Database Schema-based Strategy (Implementato Parzialmente)
 
-Architettura ottimizzata con database Supabase condiviso e schema dedicati per microservizio:
+Strategia attuale: **cluster Supabase condiviso** con schemi dedicati; ad oggi solo due schemi effettivamente popolati/operativi.
 
 | Microservizio | Schema Supabase | Responsabilità |
 |---------------|------------------|----------------|
-| **user-management** | `user_management` | Authentication, user profiles, sessions, GDPR compliance |
-| **calorie-balance** | `calorie_balance` | Energy balance, goals, BMR calculations |
-| **meal-tracking** | `meal_tracking` | Food data, nutrition facts, meal logs |
-| **health-monitor** | `health_monitor` | HealthKit data, metrics, trends |
-| **notifications** | `notifications` | Push tokens, preferences, templates |
-| **ai-coach** | `ai_coach` | AI conversations, knowledge base, RAG vectors |
+| **user-management** | `user_management` | Authentication, user profiles, sessions (ATTIVO) |
+| **calorie-balance** | `calorie_balance` | Energy balance, goals, BMR calculations (PARZIALE) |
+| **meal-tracking** | `meal_tracking` | Food data, nutrition facts, meal logs (NON ANCORA) |
+| **health-monitor** | `health_monitor` | HealthKit data, metrics, trends (NON ANCORA) |
+| **notifications** | `notifications` | Push tokens, preferences, templates (NON ANCORA) |
+| **ai-coach** | `ai_coach` | AI conversations, knowledge base, RAG vectors (NON ANCORA) |
 
 **Vantaggi Schema-based Architecture:**
 - ✅ **Cost-effective**: Database Supabase condiviso riduce costi
@@ -186,7 +191,7 @@ CREATE TABLE calorie_balance.calorie_events (
 | **Safety** | Soft delete prevents data loss | `is_active = false` strategy |
 | **Scalability** | PostgreSQL native cross-schema support | Zero API overhead |
 
-## �🔄 N8N Orchestration e Workflow Management
+## �🔄 N8N Orchestration e Workflow Management (Non Ancora Attivo)
 
 ### Ruolo di N8N Cloud come Orchestratore Centrale
 
@@ -226,7 +231,7 @@ N8N Workflow: Validate → Transform → Distribute to Multiple Services
 Health Monitor + Calorie Balance + Notifications Services ← N8N
 ```
 
-### MCP Server Implementation
+### MCP Server Implementation (Planned)
 
 I microservizi che gestiscono AI/ML espongono **MCP (Model Context Protocol) Server**:
 
@@ -244,7 +249,7 @@ async def analyze_food_data(food_data: FoodAnalysisRequest) -> MCPResponse:
     pass
 ```
 
-## 📱 Sequence Diagrams per Mobile Client
+## 📱 Sequence Diagrams per Mobile Client (Visione Futuro)
 
 I seguenti diagrammi specificano i flussi principali per lo sviluppo del client mobile Flutter.
 
@@ -620,7 +625,7 @@ e CI/CD. Ogni servizio ha un README e ADR (Architectural Decision
 Records) che documentano scelte come l'adozione di un certo DB o
 libreria AI.
 
-## AI e RAG System
+## AI e RAG System (Design Futuro)
 
 L'intelligenza artificiale entra in NutriFit soprattutto sotto forma di
 **chatbot nutrizionale e suggerimenti personalizzati**. Si utilizzerà un

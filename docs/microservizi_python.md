@@ -1,22 +1,26 @@
 # Microservizi Python 3.11 - NutriFit Platform
 
+> Appendice Stato Reale (18-09-2025): Implementati attivamente solo i microservizi `user-management` (stabile) e `calorie-balance` (parziale, hardening). Gli altri (meal-tracking, health-monitor, notifications, ai-coach) sono in fase di design / non implementati. Le sezioni seguenti mantengono la visione completa per consistenza architetturale.
+
 ## Executive Summary
 
-Implementazione completa dei **6 microservizi Python 3.11** per la piattaforma NutriFit, basata su **Domain-Driven Design** e architettura **cloud-native** con **strategia database ibrida**. L'approccio utilizza **Supabase Client** per servizi real-time e **PostgreSQL diretto** per analytics, garantendo performance ottimali e scalabilità.
+Visione architetturale dei **6 microservizi Python 3.11** per la piattaforma NutriFit, basata su **Domain-Driven Design** e architettura **cloud-native**. Stato operativo corrente: 2 servizi attivi (user-management, calorie-balance parziale). Altri componenti descritti come parte del design target, non ancora deployati.
 
-**Architettura Confermata:**
-- ✅ **6 Microservizi Python 3.11** atomici e indipendenti con **User Management Service** centralizzato
-- ✅ **Supabase Client Unificato**: Tutti i servizi utilizzano Supabase Client per consistency e semplicità
-- ✅ **Domain-Driven Design** con Value Objects constraint-aware
-- ✅ **N8N Cloud orchestration** per workflow complessi
-- ✅ **Docker multi-stage** per compatibilità locale/Render
-- ✅ **MCP Server** per microservizi con AI/ML capabilities
+**Architettura (Visione vs Stato Reale)**
+| Elemento | Visione | Stato Reale (18-09-2025) |
+|----------|---------|---------------------------|
+| Microservizi | 6 indipendenti | 2 attivi (user-management, calorie-balance parziale) |
+| Supabase Client Unificato | Tutti i servizi | Applicato ai servizi attivi |
+| N8N Orchestration | Attiva | Non implementata |
+| MCP Server AI | Disponibile | Non implementato |
+| Docker multi-stage | Usato ovunque | In uso per servizi attivi |
+| AI/ML Features | Operative | Non implementate |
 
-**Database Connection Strategy:**
-- 🔄 **Supabase Client Universale**: Tutti i 6 microservizi utilizzano Supabase Client
-- 🎯 **Schema-based Segregation**: Isolamento via schema dedicati (user_management, calorie_balance, etc.)
-- ⚡ **Real-time + Analytics**: Supabase Client supporta entrambi i use case efficacemente
-- 🏗️ **Cross-Schema Foreign Keys**: Integrità referenziale tra schema diversi
+**Database Connection Strategy (Stato Reale)**
+- Schema-based segregation attiva solo per `user_management` e `calorie_balance`
+- Supabase Client in uso; PostgreSQL direct/ibrido in valutazione storica (non generalizzato)
+- Cross-schema FK implementate solo per user references
+- Real-time / subscriptions non ancora operative
 
 **Schema Management Pattern:**
 - 🎯 **Schema SQL Dedicato**: Ogni microservizio opera su schema isolato
